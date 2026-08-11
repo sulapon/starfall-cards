@@ -1,0 +1,2877 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>星穹牌局 · STARFALL CARDS</title>
+<style>
+:root{
+  --bg:#070a18; --panel:#0d1330cc; --panel2:#111a3acc;
+  --cy:#4ef7ff; --mg:#ff4ef0; --gd:#ffd94e; --ok:#6bff8e; --bad:#ff5a6e;
+  --tx:#eaf6ff; --tx2:#9db4d8;
+  --com:#c8f0ff; --unc:#6bff8e; --rare:#ff9d4e;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#0a1030,#04060f);
+  color:var(--tx);
+  font-family:"Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#cv{position:fixed;top:0;bottom:0;left:0;right:0;margin:0 auto;width:min(100vw,480px);height:100vh;height:100dvh;height:var(--vh,100dvh);top:var(--vt,0px);
+  display:block;touch-action:none}
+#vig{position:fixed;top:0;bottom:0;left:0;right:0;margin:0 auto;width:min(100vw,480px);height:100vh;height:100dvh;height:var(--vh,100dvh);top:var(--vt,0px);
+  pointer-events:none;z-index:2;
+  background:radial-gradient(ellipse at 50% 30%,transparent 55%,rgba(2,4,14,.55) 100%),
+             linear-gradient(rgba(4,8,28,.25),rgba(4,8,28,.6))}
+#ui{position:fixed;top:0;bottom:0;left:0;right:0;margin:0 auto;width:min(100vw,480px);height:100vh;height:100dvh;height:var(--vh,100dvh);top:var(--vt,0px);
+  z-index:5;pointer-events:none;display:flex;flex-direction:column}
+#ui>*{pointer-events:auto}
+.hidden{display:none!important}
+
+/* ============ 通用按鈕 ============ */
+.btn{display:inline-block;padding:10px 22px;border-radius:12px;border:1px solid rgba(78,247,255,.5);
+  background:linear-gradient(160deg,#0e2a45,#0a1830);color:var(--cy);font-size:16px;font-weight:700;
+  letter-spacing:1px;cursor:pointer;box-shadow:0 0 12px rgba(78,247,255,.25),inset 0 0 14px rgba(78,247,255,.08);
+  transition:transform .08s,box-shadow .15s;text-align:center}
+.btn:active{transform:scale(.95)}
+.btn.gold{border-color:rgba(255,217,78,.6);color:var(--gd);box-shadow:0 0 12px rgba(255,217,78,.25)}
+.btn.danger{border-color:rgba(255,90,110,.5);color:var(--bad);box-shadow:0 0 12px rgba(255,90,110,.2)}
+.btn.big{font-size:18px;padding:14px 34px}
+.btn:disabled{opacity:.4;filter:grayscale(.6)}
+
+/* ============ 面板 ============ */
+.scr{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:18px;z-index:10;background:radial-gradient(ellipse at 50% 60%,rgba(16,26,64,.88),rgba(5,8,22,.96));
+  overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+.scr.show{display:flex}
+.panel{background:var(--panel);border:1px solid rgba(78,247,255,.28);border-radius:18px;
+  padding:22px;max-width:430px;width:100%;box-shadow:0 0 30px rgba(0,0,0,.5),inset 0 0 40px rgba(78,247,255,.04);
+  margin:auto}
+.title-logo{font-size:44px;font-weight:900;letter-spacing:6px;
+  background:linear-gradient(120deg,var(--cy),var(--mg) 55%,var(--gd));-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 30px rgba(78,247,255,.35);margin-bottom:4px}
+.title-sub{color:var(--tx2);letter-spacing:3px;font-size:14px;margin-bottom:22px}
+.h-line{width:60%;height:1px;margin:14px 0;background:linear-gradient(90deg,transparent,rgba(78,247,255,.6),transparent)}
+
+/* ============ 卡牌 ============ */
+.card{position:relative;width:104px;aspect-ratio:3/4.4;border-radius:12px;padding:7px 7px 9px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;text-align:center;
+  background:linear-gradient(165deg,#13204a,#0b1230 70%);border:1.5px solid rgba(140,180,255,.35);
+  box-shadow:0 4px 14px rgba(0,0,0,.5);transition:transform .1s,box-shadow .12s;color:var(--tx)}
+.card:active{transform:scale(.95)}
+.card.rarity-common{border-color:rgba(200,240,255,.45)}
+.card.rarity-uncommon{border-color:rgba(107,255,142,.55);box-shadow:0 0 14px rgba(107,255,142,.18)}
+.card.rarity-rare{border-color:rgba(255,157,78,.65);box-shadow:0 0 18px rgba(255,157,78,.28)}
+.card.rarity-basic{border-color:rgba(160,190,255,.35)}
+.c-cost{position:absolute;top:-9px;left:-9px;width:28px;height:28px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#7fd6ff,#1e5aa8);color:#fff;font-weight:900;font-size:15px;
+  display:flex;align-items:center;justify-content:center;border:1.5px solid #c6ecff;box-shadow:0 0 10px rgba(78,247,255,.6)}
+.c-icon{font-size:34px;line-height:1;filter:drop-shadow(0 0 6px rgba(78,247,255,.5));margin-top:6px}
+.c-name{font-size:13px;font-weight:800;letter-spacing:.5px;line-height:1.2}
+.c-desc{font-size:11.5px;color:var(--tx2);line-height:1.45;flex:1;display:flex;align-items:center}
+.c-type{font-size:10px;color:var(--cy);letter-spacing:1px;border:1px solid rgba(78,247,255,.4);border-radius:8px;padding:1px 8px}
+.c-type.skill{color:var(--gd);border-color:rgba(255,217,78,.4)}
+.c-type.power{color:var(--mg);border-color:rgba(255,78,240,.4)}
+.c-playable{outline:2px solid rgba(78,247,255,.7);outline-offset:1px}
+.c-badge{position:absolute;top:-8px;right:-8px;background:linear-gradient(135deg,#ffd94e,#ff9d4e);color:#241400;
+  font-size:9px;font-weight:900;border-radius:8px;padding:2px 6px;box-shadow:0 0 8px rgba(255,217,78,.6)}
+.card.upgraded::after{content:"✦";position:absolute;bottom:2px;right:6px;color:var(--gd);font-size:10px}
+.card.dim{opacity:.42;pointer-events:none}
+
+/* ============ 戰鬥 UI ============ */
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;gap:6px;
+  background:linear-gradient(180deg,rgba(5,9,24,.92),rgba(5,9,24,.35));z-index:6}
+/* ============ 全域返回按鈕 ============ */
+#btn-back{position:fixed;left:10px;top:calc(10px + env(safe-area-inset-top));width:46px;height:46px;border-radius:50%;
+  background:rgba(10,18,46,.88);border:1px solid rgba(78,247,255,.5);color:var(--cy);font-size:24px;font-weight:900;
+  z-index:60;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.55);
+  line-height:1;padding:0;cursor:pointer}
+#btn-back:active{transform:scale(.92)}
+#tb-left{display:flex;align-items:center;gap:8px;font-size:14px}
+.energy-pip{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bff2ff,#2090d0);
+  border:1px solid #d6f5ff;box-shadow:0 0 8px rgba(78,247,255,.6)}
+.energy-pip.used{background:#233;border-color:#345;box-shadow:none}
+.tb-num{color:var(--tx2);font-size:13px}
+#pile-counts{color:var(--tx2);font-size:13px;display:flex;gap:10px}
+#pile-counts b{color:var(--tx)}
+#btn-end{font-size:14px;padding:8px 18px;border-color:rgba(107,255,142,.5);color:var(--ok);
+  box-shadow:0 0 10px rgba(107,255,142,.2)}
+#btn-pause{width:38px;height:38px;border-radius:10px;border:1px solid rgba(140,180,255,.4);
+  background:rgba(10,16,40,.8);color:var(--tx);font-size:16px;cursor:pointer}
+/* 結束回合 + 自動結束：位於頂欄右側（不擋手牌、不被底部虛擬鍵蓋住） */
+#end-turn-box{display:flex;align-items:center;gap:6px}
+#end-turn-box #btn-end{font-size:14px;padding:8px 14px;border-radius:12px;
+  background:linear-gradient(160deg,#0e4a2a,#0a2a1a);border-color:rgba(107,255,142,.65);color:var(--ok);
+  box-shadow:0 0 14px rgba(107,255,142,.35)}
+#btn-autoend{font-size:12px;padding:5px 10px;border-radius:10px;border:1px solid rgba(140,180,255,.4);
+  background:rgba(10,16,40,.85);color:var(--tx2);cursor:pointer;letter-spacing:1px}
+#btn-autoend.on{color:var(--ok);border-color:rgba(107,255,142,.65);box-shadow:0 0 10px rgba(107,255,142,.35)}
+#hand{position:absolute;bottom:calc(6px + env(safe-area-inset-bottom, 0px));left:0;right:0;display:flex;justify-content:center;align-items:flex-end;
+  gap:5px;padding:6px 4px 10px;z-index:6;pointer-events:none;min-height:120px}
+#hand .card{width:min(17vw,86px);pointer-events:auto;animation:cardIn .18s ease-out}
+#hand.wrap{flex-wrap:wrap;min-height:220px}
+#hand.wrap .card{width:min(19vw,88px)}
+@keyframes cardIn{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+#potions{position:absolute;left:10px;bottom:calc(150px + env(safe-area-inset-bottom, 0px));display:flex;flex-direction:column;gap:6px;z-index:6}
+#hand.wrap ~ #potions{bottom:calc(248px + env(safe-area-inset-bottom, 0px))}
+.pot{width:48px;height:48px;border-radius:12px;background:linear-gradient(160deg,#2a1038,#160a24);
+  border:1px solid rgba(255,78,240,.5);display:flex;align-items:center;justify-content:center;font-size:22px;
+  cursor:pointer;box-shadow:0 0 10px rgba(255,78,240,.25)}
+#turn-banner{position:absolute;top:22%;left:50%;transform:translateX(-50%);z-index:7;font-size:26px;font-weight:900;
+  letter-spacing:4px;color:var(--cy);text-shadow:0 0 20px rgba(78,247,255,.8);pointer-events:none;opacity:0}
+#turn-banner.show{animation:banFade 1s ease forwards}
+@keyframes banFade{0%{opacity:0;transform:translateX(-50%) scale(.7)}15%{opacity:1}75%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(1.15)}}
+
+/* ============ 地圖 ============ */
+#screen-map{justify-content:flex-start;padding-top:14px}
+#map-title{font-size:21px;font-weight:900;letter-spacing:3px;color:var(--cy);margin-bottom:4px;text-shadow:0 0 14px rgba(78,247,255,.5)}
+#map-act{color:var(--tx2);font-size:13px;margin-bottom:10px}
+#map-canvas{width:min(96vw,420px);flex:1;max-height:74vh;touch-action:none;border-radius:14px}
+
+/* ============ 獎勵/事件/商店 ============ */
+#reward-cards{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:16px 0}
+#reward-cards .card{width:min(22vw,110px)}
+#pick-cards .card{width:min(24vw,104px)}
+#event-text{margin:14px 0 8px;color:var(--tx);line-height:1.8;font-size:16px;text-align:center}
+.event-opt{width:100%;text-align:left;padding:12px 16px;margin:7px 0;border-radius:12px;font-size:15px;
+  background:linear-gradient(160deg,#10203f,#0b1430);border:1px solid rgba(140,180,255,.3);color:var(--tx);cursor:pointer;line-height:1.6}
+.event-opt:hover{border-color:var(--cy)}
+.event-opt .eo-title{font-weight:800;color:var(--cy)}
+.event-opt .eo-req{color:var(--bad);font-size:12px}
+#shop-grid{display:flex;flex-direction:column;gap:8px;margin:14px 0;width:100%}
+.shop-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;
+  background:linear-gradient(160deg,#10203f,#0b1430);border:1px solid rgba(140,180,255,.3);cursor:pointer}
+.shop-item .si-icon{font-size:26px;width:34px;text-align:center}
+.shop-item .si-name{font-weight:800;font-size:15px}
+.shop-item .si-desc{color:var(--tx2);font-size:12px}
+.shop-item .si-price{color:var(--gd);font-weight:800;font-size:15px;margin-left:auto}
+.shop-item.sold{opacity:.35;pointer-events:none}
+#gold-bar{font-size:16px;font-weight:800;color:var(--gd);text-shadow:0 0 10px rgba(255,217,78,.5)}
+
+/* ============ 選單列 ============ */
+.menu-col{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;margin-top:10px}
+.menu-col .btn{width:100%}
+
+/* ============ 數值列 ============ */
+.stat-row{display:flex;justify-content:space-between;width:100%;font-size:14px;padding:6px 0;
+  border-bottom:1px solid rgba(140,180,255,.12);color:var(--tx2)}
+.stat-row b{color:var(--tx)}
+.ach-item{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:10px;
+  background:rgba(16,32,63,.6);border:1px solid rgba(140,180,255,.2);margin:4px 0;font-size:14px}
+.ach-item .ai-icon{font-size:20px;width:28px;text-align:center}
+.ach-item.locked{opacity:.45}
+.row2{display:flex;gap:10px;width:100%}
+.row2 .btn{flex:1}
+
+.tiny{color:var(--tx2);font-size:12px;text-align:center;margin-top:10px}
+.clickable{cursor:pointer}
+.cr-name{font-size:18px;font-weight:900;margin-top:8px}
+.cr-tag{font-size:12px;color:var(--cy);margin-top:2px;letter-spacing:1px}
+.cr-desc{font-size:13px;color:var(--tx2);margin:8px 0;line-height:1.6;text-align:center}
+#title-char-row{display:flex;gap:10px;margin:12px 0}
+.char-btn{width:96px;padding:8px;border-radius:12px;background:linear-gradient(160deg,#101f3e,#0a1228);
+  border:1px solid rgba(140,180,255,.3);cursor:pointer;color:var(--tx);text-align:center}
+.char-btn .cb-icon{font-size:30px}
+.char-btn .cb-name{font-size:12px;font-weight:800;margin-top:3px}
+.char-btn .cb-lock{font-size:11px;color:var(--bad)}
+.char-btn.sel{border-color:var(--cy);box-shadow:0 0 14px rgba(78,247,255,.4)}
+#diff-row{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
+.diff-btn{width:40px;height:40px;border-radius:10px;border:1px solid rgba(140,180,255,.35);
+  background:#0d1533;color:var(--tx);font-weight:800;cursor:pointer;font-size:13px}
+.diff-btn.sel{border-color:var(--gd);color:var(--gd);box-shadow:0 0 12px rgba(255,217,78,.4)}
+.diff-btn.locked{opacity:.3}
+#banner-hint{position:absolute;top:64px;left:0;right:0;text-align:center;font-size:12px;color:rgba(150,190,255,.45);z-index:4;pointer-events:none}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="vig"></div>
+<div id="ui">
+
+  <!-- 戰鬥頂欄 -->
+  <div id="topbar" class="hidden">
+    <div id="tb-left">
+      <div id="energy"></div>
+      <div class="tb-num">回合 <b id="turn-num">1</b></div>
+      <div id="pile-counts">抽牌<b id="pile-draw">0</b> 棄牌<b id="pile-disc">0</b></div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <div id="gold-bar" class="hidden">⛃ <span id="gold-amt">0</span></div>
+      <div id="end-turn-box" class="hidden">
+        <button id="btn-autoend">⚡自動</button>
+        <button id="btn-end" class="btn">結束回合</button>
+      </div>
+      <button id="btn-pause">⏸</button>
+    </div>
+  </div>
+
+  <button id="btn-back" class="hidden">←</button>
+
+  <div id="hand" class="hidden"></div>
+  <div id="potions" class="hidden"></div>
+  <div id="turn-banner"></div>
+
+  <!-- ===== 標題 ===== -->
+  <div class="scr show" id="screen-title">
+    <div class="title-logo">星穹牌局</div>
+    <div class="title-sub">STARFALL CARDS · 星際卡牌 Roguelike</div>
+    <div id="title-char-row"></div>
+    <div id="diff-row"></div>
+    <div class="menu-col">
+      <button class="btn big" id="btn-run">▶ 開始遠征</button>
+      <button class="btn" id="btn-meta">💎 星塵商店</button>
+      <button class="btn" id="btn-ach">🏆 成就</button>
+      <button class="btn" id="btn-help">❓ 說明</button>
+    </div>
+    <div class="tiny" id="title-gems"></div>
+  </div>
+
+  <!-- ===== 地圖 ===== -->
+  <div class="scr" id="screen-map">
+    <div id="map-title">遠征路徑</div>
+    <div id="map-act"></div>
+    <canvas id="map-canvas"></canvas>
+    <div class="tiny">點擊上方可選擇的路徑節點（發亮者）</div>
+  </div>
+
+  <!-- ===== 戰鬥獎勵 ===== -->
+  <div class="scr" id="screen-reward">
+    <div class="panel" style="text-align:center">
+      <div class="title-logo" style="font-size:26px">✦ 勝利 ✦</div>
+      <div class="h-line"></div>
+      <div id="reward-lines"></div>
+      <div class="h-line"></div>
+      <div id="reward-cards" class="hidden"></div>
+      <button class="btn" id="btn-reward-done">繼續</button>
+    </div>
+  </div>
+
+  <!-- ===== 事件 ===== -->
+  <div class="scr" id="screen-event">
+    <div class="panel" style="text-align:center">
+      <div class="title-logo" style="font-size:22px" id="event-icon">❔</div>
+      <div class="cr-name" id="event-title"></div>
+      <div id="event-text"></div>
+      <div id="event-opts"></div>
+    </div>
+  </div>
+
+  <!-- ===== 休息 ===== -->
+  <div class="scr" id="screen-camp">
+    <div class="panel" style="text-align:center">
+      <div class="title-logo" style="font-size:24px">🔥 星港補給站</div>
+      <div class="cr-desc">選擇一項行動：</div>
+      <div id="camp-opts"></div>
+    </div>
+  </div>
+
+  <!-- ===== 商店 ===== -->
+  <div class="scr" id="screen-shop">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="title-logo" style="font-size:22px">🛸 黑市商人</div>
+        <div id="gold-bar">⛃ <span id="gold-amt2">0</span></div>
+      </div>
+      <div id="shop-grid"></div>
+      <div class="row2">
+        <button class="btn" id="btn-shop-skip">離開</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 牌組檢視 ===== -->
+  <div class="scr" id="screen-deck">
+    <div class="panel" style="text-align:center;max-width:480px">
+      <div class="title-logo" style="font-size:22px">🂠 牌組 <span id="deck-count" style="font-size:13px"></span></div>
+      <div id="deck-grid" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0;max-height:60vh;overflow-y:auto"></div>
+      <div class="row2">
+        <button class="btn" id="btn-deck-close">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 結果 ===== -->
+  <div class="scr" id="screen-result">
+    <div class="panel" style="text-align:center">
+      <div id="result-title" class="title-logo" style="font-size:30px"></div>
+      <div class="h-line"></div>
+      <div id="result-stats"></div>
+      <div class="h-line"></div>
+      <div id="result-gems" style="font-size:16px;color:var(--gd);font-weight:800"></div>
+      <div style="margin-top:14px">
+        <button class="btn gold" id="btn-result-next" style="display:none;width:100%">🔥 下一難度</button>
+      </div>
+      <div class="row2" style="margin-top:10px">
+        <button class="btn" id="btn-result-title">回主選單</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 暫停 ===== -->
+  <div class="scr" id="screen-pause">
+    <div class="panel" style="text-align:center">
+      <div class="title-logo" style="font-size:24px">⏸ 暫停</div>
+      <div class="menu-col">
+        <button class="btn" id="btn-resume">繼續戰鬥</button>
+        <button class="btn" id="btn-deck-open">查看牌組</button>
+        <button class="btn" id="btn-map-open">查看地圖</button>
+        <button class="btn danger" id="btn-quit-run">放棄本局</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 星塵商店 ===== -->
+  <div class="scr" id="screen-meta">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="title-logo" style="font-size:22px">💎 星塵商店</div>
+        <div id="gold-bar">💎 <span id="meta-gems">0</span></div>
+      </div>
+      <div id="meta-grid" style="margin:12px 0"></div>
+      <button class="btn" id="btn-meta-back" style="width:100%">返回</button>
+    </div>
+  </div>
+
+  <!-- ===== 成就 ===== -->
+  <div class="scr" id="screen-ach">
+    <div class="panel" style="max-width:440px">
+      <div class="title-logo" style="font-size:22px;text-align:center">🏆 成就</div>
+      <div id="ach-list" style="margin:12px 0"></div>
+      <button class="btn" id="btn-ach-back" style="width:100%">返回</button>
+    </div>
+  </div>
+
+  <!-- ===== 說明 ===== -->
+  <div class="scr" id="screen-help">
+    <div class="panel" style="max-width:440px">
+      <div class="title-logo" style="font-size:22px;text-align:center">❓ 玩法說明</div>
+      <div id="help-text" style="font-size:13px;line-height:1.9;color:var(--tx2);margin:12px 0"></div>
+      <button class="btn" id="btn-help-back" style="width:100%">返回</button>
+    </div>
+  </div>
+
+  <!-- 升級/選牌 遮罩 -->
+  <div class="scr" id="screen-pick">
+    <div class="panel" style="text-align:center">
+      <div id="pick-title" style="font-size:20px;font-weight:900;color:var(--cy);letter-spacing:2px"></div>
+      <div id="pick-cards" style="display:flex;gap:10px;justify-content:center;margin:16px 0;flex-wrap:wrap"></div>
+      <div class="tiny" id="pick-hint"></div>
+    </div>
+  </div>
+
+</div>
+<div id="banner-hint" class="hidden">卡片自動鎖定最前方敵人 · 點擊打牌</div>
+<script>
+/* ===== 星穹牌局 core.js — 迴圈/輸入/粒子/音效/特效 ===== */
+'use strict';
+const G = {
+  W: 720, H: 1280, // 內部邏輯解析度（直屏）
+  cv: null, ctx: null, mc: null, mctx: null,
+  time: 0, raf: 0, lastT: 0, running: false,
+  particles: [], floats: [], shakes: 0, flash: 0,
+  screen: 'title', // title|map|combat|...
+  viewW: 720, viewH: 1280, scale: 1,
+  rng: Math.random,
+};
+
+function $(id){ return document.getElementById(id); }
+
+/* ---------- 尺寸（直屏滿屏無黑邊） ---------- */
+function resizeCanvas(){
+  const cv = G.cv;
+  if (!cv) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const cw = Math.round((cv.clientWidth || innerWidth) * dpr);
+  const ch = Math.round((cv.clientHeight || innerHeight) * dpr);
+  cv.width = cw; cv.height = ch;
+  G.scale = Math.max(cw / G.W, ch / G.H); // cover-fit
+  G.viewW = cw / G.scale; G.viewH = ch / G.scale;
+  if (G.mc){ G.mc.width = cw; G.mc.height = ch; }
+}
+/* 對齊可見視口：網址列/虛擬鍵/鍵盤彈出時即時縮放（Telegram 內建瀏覽器等不吃 dvh 的環境也適用） */
+function fitViewport(){
+  const vv = window.visualViewport;
+  const h = vv && vv.height ? vv.height : innerHeight;
+  const vt = vv && typeof vv.offsetTop === 'number' ? Math.max(0, vv.offsetTop) : 0;
+  const s = document.documentElement.style;
+  s.setProperty('--vh', h + 'px');
+  s.setProperty('--vt', vt + 'px');
+  resizeCanvas();
+}
+window.addEventListener('resize', fitViewport);
+window.addEventListener('orientationchange', () => setTimeout(fitViewport, 220));
+if (window.visualViewport){
+  window.visualViewport.addEventListener('resize', fitViewport);
+  window.visualViewport.addEventListener('scroll', fitViewport);
+}
+function fit(){ // 每幀設定 canvas 變換
+  const s = G.scale;
+  G.ctx.setTransform(s, 0, 0, s, (G.cv.width - G.viewW*s)/2, (G.cv.height - G.viewH*s)/2);
+}
+function toGame(clientX, clientY){
+  const r = G.cv.getBoundingClientRect();
+  const mx = (clientX - r.left) / r.width * G.viewW;
+  const my = (clientY - r.top) / r.height * G.viewH;
+  return [mx, my];
+}
+
+/* ---------- 主迴圈 ---------- */
+function gameLoop(t){
+  G.raf = requestAnimationFrame(gameLoop);
+  const dt = Math.min(0.05, (t - G.lastT) / 1000 || 0.016);
+  G.lastT = t; G.time += dt;
+  // 死亡監視狗：任何路徑（含延遲攻擊計時器）使玩家陣亡時，立即收斂到失敗畫面
+  if (Combat.C && Combat.C.state === 'lost' && !Combat.C.lostDone){
+    Combat.onLose();
+  }
+  // 勝利監視狗：任何路徑（荊棘反傷/燃燒/侵蝕延遲致死）全滅敵人後，立即收斂到勝利獎勵
+  if (Combat.C && Combat.C.state === 'won' && !Combat.C.won){
+    Combat.onWin();
+  }
+  fit();
+  const c = G.ctx;
+  c.clearRect(0, 0, G.viewW, G.viewH);
+  updateFx(dt);
+  if (typeof Render !== 'undefined' && Render.draw) Render.draw(c, dt);
+  drawFx(c);
+}
+function startLoop(){ if (G.running) return; G.running = true; G.lastT = performance.now(); G.raf = requestAnimationFrame(gameLoop); }
+
+/* ---------- 特效：粒子/浮字/震屏/閃光 ---------- */
+function addParticle(p){ G.particles.push(p); }
+function burst(x, y, opts){
+  opts = opts || {};
+  const n = opts.n || 14, col = opts.col || '#4ef7ff', spd = opts.spd || 220, sz = opts.sz || 4, life = opts.life || .5;
+  for (let i = 0; i < n; i++){
+    const a = Math.random() * Math.PI * 2, v = spd * (0.3 + Math.random() * 0.9);
+    G.particles.push({ x, y, vx: Math.cos(a)*v, vy: Math.sin(a)*v, life, t: 0, size: sz*(0.5+Math.random()), col,
+      grav: opts.grav || 0, fade: true });
+  }
+}
+function addFloat(x, y, txt, col, sz){
+  G.floats.push({ x: x + (Math.random()*30-15), y, txt, col: col || '#fff', t: 0, life: .9, sz: sz || 22 });
+}
+function shake(amt){ G.shakes = Math.max(G.shakes, amt || 8); }
+function flashScreen(a){ G.flash = Math.max(G.flash, a || .35); }
+function updateFx(dt){
+  G.shakes = Math.max(0, G.shakes - dt * 34);
+  G.flash = Math.max(0, G.flash - dt * 1.6);
+  const ps = G.particles;
+  for (let i = ps.length - 1; i >= 0; i--){
+    const p = ps[i]; p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt;
+    p.vy += (p.grav || 0) * dt; p.vx *= (1 - dt*1.2); p.vy *= (1 - dt*1.2);
+    if (p.t >= p.life) ps.splice(i, 1);
+  }
+  const fs = G.floats;
+  for (let i = fs.length - 1; i >= 0; i--){
+    const f = fs[i]; f.t += dt; f.y -= dt * 46;
+    if (f.t >= f.life) fs.splice(i, 1);
+  }
+}
+function drawFx(c){
+  // 震屏
+  if (G.shakes > 0){
+    const s = G.shakes;
+    c.setTransform(G.scale, 0, 0, G.scale, (G.cv.width - G.viewW*G.scale)/2 + (Math.random()*2-1)*s,
+      (G.cv.height - G.viewH*G.scale)/2 + (Math.random()*2-1)*s);
+  }
+  for (const p of G.particles){
+    const a = p.fade ? 1 - p.t/p.life : 1;
+    c.globalAlpha = Math.max(0, a);
+    c.fillStyle = p.col;
+    c.beginPath(); c.arc(p.x, p.y, p.size * (1 - p.t/p.life*0.5), 0, 7); c.fill();
+  }
+  c.globalAlpha = 1;
+  c.textAlign = 'center'; c.textBaseline = 'middle';
+  for (const f of G.floats){
+    const a = 1 - f.t/f.life;
+    c.globalAlpha = a;
+    c.font = `900 ${f.sz}px "Segoe UI",sans-serif`;
+    c.lineWidth = 4; c.strokeStyle = 'rgba(0,0,10,.8)';
+    c.strokeText(f.txt, f.x, f.y);
+    c.fillStyle = f.col;
+    c.fillText(f.txt, f.x, f.y);
+  }
+  c.globalAlpha = 1;
+  if (G.flash > 0){
+    c.fillStyle = `rgba(255,255,255,${G.flash})`;
+    c.fillRect(-40, -40, G.viewW + 80, G.viewH + 80);
+  }
+}
+
+/* ---------- WebAudio 合成音效 ---------- */
+const AudioSys = {
+  ctx: null, muted: false, _gain: null,
+  init(){
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    try {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this._gain = this.ctx.createGain(); this._gain.gain.value = 0.28; this._gain.connect(this.ctx.destination);
+    } catch(e){}
+  },
+  resume(){ this.init(); },
+  tone(freq, dur, type, vol, slide){
+    if (!this.ctx || this.muted) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = type || 'square'; o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, slide), t + dur);
+    g.gain.setValueAtTime(vol || .5, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g); g.connect(this._gain);
+    o.start(t); o.stop(t + dur + .02);
+  },
+  noise(dur, vol, freq){
+    if (!this.ctx || this.muted) return;
+    const t = this.ctx.currentTime;
+    const len = Math.floor(this.ctx.sampleRate * dur);
+    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * (1 - i/len);
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = freq || 1200;
+    const g = this.ctx.createGain(); g.gain.value = vol || .4;
+    src.connect(f); f.connect(g); g.connect(this._gain); src.start(t);
+  },
+  play(name){
+    if (this.muted) return;
+    switch(name){
+      case 'click': this.tone(660, .06, 'square', .3); break;
+      case 'card': this.tone(520, .08, 'triangle', .4); this.tone(780, .1, 'triangle', .25, 900); break;
+      case 'hit': this.noise(.12, .5, 900); this.tone(180, .1, 'sawtooth', .4, 60); break;
+      case 'heavy': this.noise(.3, .7, 500); this.tone(90, .3, 'sawtooth', .6, 40); break;
+      case 'block': this.tone(300, .1, 'triangle', .35, 480); break;
+      case 'heal': this.tone(440, .15, 'sine', .4, 660); this.tone(660, .2, 'sine', .3, 880); break;
+      case 'coin': this.tone(1200, .07, 'square', .25); this.tone(1600, .1, 'square', .2, 1900); break;
+      case 'buff': this.tone(240, .18, 'sawtooth', .3, 520); break;
+      case 'debuff': this.tone(340, .18, 'square', .3, 120); break;
+      case 'power': this.tone(200, .25, 'sawtooth', .4, 700); this.tone(300, .3, 'sine', .3, 900); break;
+      case 'burn': this.noise(.25, .4, 2200); break;
+      case 'shoot': this.tone(900, .09, 'square', .2, 300); break;
+      case 'explode': this.noise(.4, .7, 300); this.tone(60, .4, 'sawtooth', .7, 25); break;
+      case 'win': this.tone(523, .18, 'triangle', .4); setTimeout(()=>this.tone(659,.18,'triangle',.4),120); setTimeout(()=>this.tone(784,.3,'triangle',.5),240); break;
+      case 'lose': this.tone(330, .3, 'sawtooth', .4, 120); setTimeout(()=>this.tone(220,.5,'sawtooth',.4,80),250); break;
+      case 'boss': this.tone(70, .8, 'sawtooth', .7, 40); this.noise(.6, .5, 200); break;
+      case 'upgrade': this.tone(600, .1, 'triangle', .4); setTimeout(()=>this.tone(900,.15,'triangle',.4),90); break;
+      case 'error': this.tone(160, .15, 'square', .35, 110); break;
+    }
+  }
+};
+['touchstart','mousedown','keydown'].forEach(evt => document.addEventListener(evt, () => AudioSys.resume(), { once: false, passive: true }));
+
+/* ---------- 小工具 ---------- */
+function rnd(a, b){ return a + Math.random() * (b - a); }
+function rndi(a, b){ return Math.floor(rnd(a, b + 1)); }
+function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+function pickW(entries, weightFn){
+  let total = 0; const ws = [];
+  for (const e of entries){ const w = weightFn(e); ws.push(w); total += w; }
+  let r = Math.random() * total;
+  for (let i = 0; i < entries.length; i++){ r -= ws[i]; if (r <= 0) return entries[i]; }
+  return entries[entries.length - 1];
+}
+function clamp(v, a, b){ return v < a ? a : v > b ? b : v; }
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function fmt(n){ return Math.round(n); }
+function showScreen(name){
+  document.querySelectorAll('.scr').forEach(s => s.classList.remove('show'));
+  const el = $('screen-' + name); if (el) el.classList.add('show');
+  G.screen = name;
+  // 全域返回按鈕：首頁/戰鬥獎勵（必經步驟）/戰鬥（已有 ⏸ 暫停）不顯示
+  const bk = $('btn-back');
+  if (bk) bk.classList.toggle('hidden', name === 'title' || name === 'reward' || name === 'combat');
+}
+function onTap(el, fn){
+  // 只綁 click：touch-action:none + viewport 禁用縮放下無 300ms 延遲，且避免 touchend+click 雙觸發
+  el.addEventListener('click', fn);
+}
+/* ===== 星穹牌局 c1_char.js — 角色 ===== */
+'use strict';
+
+const CHARACTERS = {
+  xia: {
+    id: 'xia', name: '星焰女帝 · 曦', icon: '🔥', unlock: 0,
+    tag: '烈焰 · 爆發', color: '#ff7a3d',
+    desc: '以燃燒灼燒敵人，配合「歸零爆發」瞬間引爆所有燃燒層數，節奏明快、爆發力十足的攻擊型艦長。',
+    maxHp: 72, energy: 3,
+    starterRelic: 'ember_charm',
+    starterDeck: ['strike','strike','strike','strike','guard','guard','guard','ember','blaze','flame_slash','fire_rain'],
+    pool: {
+      common: ['flame_slash','fire_rain','blaze_shield','spark','fuel'],
+      uncommon: ['double_burst','inferno','phoenix','sun_mode','fire_nova'],
+      rare: ['zero_burst','solar_wind','fire_avatar']
+    }
+  },
+  yan: {
+    id: 'yan', name: '虛空獵手 · 魘', icon: '⚔️', unlock: 800,
+    tag: '連擊 · 侵蝕', color: '#b06bff',
+    desc: '低費多段攻擊與侵蝕毒素，透過抽牌引擎打出無限連段；攻擊次數越多越恐怖。',
+    maxHp: 66, energy: 3,
+    starterRelic: 'venom_ring',
+    starterDeck: ['slash','slash','slash','slash','dodge','dodge','pierce','venom_edge','rapid_slash','shadow_step'],
+    pool: {
+      common: ['rapid_slash','venom_blade','shadow_step','lucky_cut','smoke_bomb'],
+      uncommon: ['triple_slash','poison_burst','void_slash','wind_step','kidney_blow'],
+      rare: ['reaper','hundred_cuts','void_pact']
+    }
+  },
+  ling: {
+    id: 'ling', name: '機械賢者 · 零', icon: '🤖', unlock: 2000,
+    tag: '護盾 · 充能', color: '#4ed5ff',
+    desc: '以護甲與能量引擎穩紮穩打，堆疊能量裝甲反傷磨死對手；防禦反擊流的代表。',
+    maxHp: 78, energy: 3,
+    starterRelic: 'power_core',
+    starterDeck: ['pulse','pulse','pulse','pulse','barrier','barrier','overclock','repair','magnet_beam','heavy_shield'],
+    pool: {
+      common: ['magnet_beam','heavy_shield','recharge','emp','nano_repair'],
+      uncommon: ['double_cannon','energy_armor','overload_pulse','defense_protocol','target_lock'],
+      rare: ['orbital_cannon','fortress_mode','miracle_core']
+    }
+  }
+};
+
+/* 開局獎勵：圖鑑用 */
+const CARD_BASIC_COUNT = { xia: 4, yan: 4, ling: 4 }; // 用於成就統計
+/* ===== 星穹牌局 c2_cards.js — 卡牌資料（曦 / 魘）===== */
+'use strict';
+const CARDS = {};
+
+function defCard(c){ CARDS[c.id] = c; }
+
+/* ---------- 星焰女帝 · 曦：燃燒/爆發 ---------- */
+defCard({ id:'strike', name:'打擊', icon:'⚔️', type:'attack', cost:1, rarity:'basic',
+  dmg:6, target:'enemy', desc:'造成 {dmg} 點傷害。', up:{dmg:8} });
+defCard({ id:'guard', name:'守護', icon:'🛡️', type:'skill', cost:1, rarity:'basic',
+  block:5, target:'self', desc:'獲得 {block} 點護甲。', up:{block:8} });
+defCard({ id:'blaze', name:'燃焰', icon:'🔥', type:'attack', cost:1, rarity:'basic',
+  dmg:8, target:'enemy', desc:'造成 {dmg} 點傷害。', up:{dmg:11} });
+defCard({ id:'ember', name:'餘燼', icon:'🔥', type:'skill', cost:1, rarity:'basic',
+  applyEnemy:{burn:4}, target:'enemy', desc:'施加 {st:burn} 層燃燒。', up:{applyEnemy:{burn:6}} });
+
+defCard({ id:'flame_slash', name:'烈焰斬', icon:'⚔️', type:'attack', cost:1, rarity:'common',
+  dmg:9, applyEnemy:{burn:2}, target:'enemy', desc:'造成 {dmg} 點傷害，施加 {st:burn} 層燃燒。',
+  up:{dmg:12, applyEnemy:{burn:3}} });
+defCard({ id:'fire_rain', name:'火雨', icon:'🌧️', type:'attack', cost:1, rarity:'common',
+  dmg:5, applyEnemy:{burn:1}, target:'all', desc:'對所有敵人造成 {dmg} 點傷害並施加 {st:burn} 層燃燒。',
+  up:{dmg:7, applyEnemy:{burn:2}} });
+defCard({ id:'blaze_shield', name:'灼熱護盾', icon:'🛡️', type:'skill', cost:1, rarity:'common',
+  block:7, applySelf:{thorns:2}, target:'self', desc:'獲得 {block} 點護甲和 {sa:thorns} 層荊棘。',
+  up:{block:10, applySelf:{thorns:3}} });
+defCard({ id:'spark', name:'星火燎原', icon:'✨', type:'skill', cost:1, rarity:'common',
+  applyEnemy:{burn:6}, target:'all', desc:'對所有敵人施加 {st:burn} 層燃燒。', up:{applyEnemy:{burn:9}} });
+defCard({ id:'fuel', name:'燃盡燃料', icon:'⛽', type:'skill', cost:0, rarity:'common',
+  draw:2, target:'self', desc:'抽 {draw} 張牌。', up:{draw:3} });
+
+defCard({ id:'double_burst', name:'雙重爆裂', icon:'💥', type:'attack', cost:1, rarity:'uncommon',
+  dmg:5, hits:2, applyEnemy:{burn:1}, target:'enemy', desc:'造成 {dmg} 點傷害 {hits} 次，每次施加 {st:burn} 層燃燒。',
+  up:{dmg:7, applyEnemy:{burn:2}} });
+defCard({ id:'inferno', name:'炎爆術', icon:'☄️', type:'attack', cost:2, rarity:'uncommon',
+  dmg:13, applyEnemy:{burn:3}, target:'enemy', exhaust:true, desc:'造成 {dmg} 點傷害，施加 {st:burn} 層燃燒。消耗。',
+  up:{dmg:17, applyEnemy:{burn:4}} });
+defCard({ id:'phoenix', name:'餘燼重生', icon:'🐦', type:'skill', cost:1, rarity:'uncommon',
+  heal:6, target:'self', exhaust:true, desc:'回復 {heal} 點生命。消耗。', up:{heal:10} });
+defCard({ id:'sun_mode', name:'燃焰模式', icon:'☀️', type:'power', cost:1, rarity:'uncommon',
+  power:{id:'str', n:2}, target:'self', desc:'獲得 {sa:str} 點力量。', up:{power:{id:'str', n:3}} });
+defCard({ id:'fire_nova', name:'火焰新星', icon:'✴️', type:'attack', cost:2, rarity:'uncommon',
+  dmg:8, target:'all', desc:'對所有敵人造成 {dmg} 點傷害。', up:{dmg:11} });
+
+defCard({ id:'zero_burst', name:'歸零爆發', icon:'💥', type:'attack', cost:1, rarity:'rare',
+  special:'burnburst', mul:2, target:'enemy', exhaust:true,
+  desc:'引爆目標所有燃燒層數，每層造成 {mul} 點傷害。消耗。', up:{mul:3} });
+defCard({ id:'solar_wind', name:'太陽風', icon:'☀️', type:'power', cost:1, rarity:'rare',
+  power:{id:'burnAura', n:3}, target:'self', desc:'每回合開始時，對所有敵人施加 {p:burn} 層燃燒。',
+  up:{power:{id:'burnAura', n:4}} });
+defCard({ id:'fire_avatar', name:'烈焰化身', icon:'👹', type:'power', cost:2, rarity:'rare',
+  power:{id:'burnEnd', n:3}, target:'self', desc:'每回合結束時，對所有敵人施加 {p:burn} 層燃燒。',
+  up:{power:{id:'burnEnd', n:4}} });
+
+/* ---------- 虛空獵手 · 魘：連擊/侵蝕 ---------- */
+defCard({ id:'slash', name:'斬擊', icon:'🗡️', type:'attack', cost:1, rarity:'basic',
+  dmg:5, target:'enemy', desc:'造成 {dmg} 點傷害。', up:{dmg:7} });
+defCard({ id:'dodge', name:'閃避', icon:'🌪️', type:'skill', cost:1, rarity:'basic',
+  block:4, draw:1, target:'self', desc:'獲得 {block} 點護甲，抽 {draw} 張牌。', up:{block:6} });
+defCard({ id:'pierce', name:'穿刺', icon:'🗡️', type:'attack', cost:1, rarity:'basic',
+  dmg:7, target:'enemy', desc:'造成 {dmg} 點傷害。', up:{dmg:9} });
+defCard({ id:'venom_edge', name:'侵蝕刃', icon:'☣️', type:'attack', cost:1, rarity:'basic',
+  dmg:3, applyEnemy:{pois:3}, target:'enemy', desc:'造成 {dmg} 點傷害，施加 {ea:pois} 層侵蝕。',
+  up:{dmg:5, applyEnemy:{pois:4}} });
+
+defCard({ id:'rapid_slash', name:'連環斬', icon:'⚔️', type:'attack', cost:1, rarity:'common',
+  dmg:3, hits:2, target:'enemy', desc:'造成 {dmg} 點傷害 {hits} 次。', up:{dmg:4} });
+defCard({ id:'venom_blade', name:'毒刃', icon:'☣️', type:'attack', cost:1, rarity:'common',
+  dmg:4, applyEnemy:{pois:4}, target:'enemy', desc:'造成 {dmg} 點傷害，施加 {ea:pois} 層侵蝕。',
+  up:{dmg:6, applyEnemy:{pois:5}} });
+defCard({ id:'shadow_step', name:'暗影步', icon:'🌑', type:'skill', cost:0, rarity:'common',
+  draw:2, target:'self', desc:'抽 {draw} 張牌。', up:{draw:3} });
+defCard({ id:'lucky_cut', name:'幸運一擊', icon:'🍀', type:'attack', cost:1, rarity:'common',
+  dmg:7, target:'enemy', desc:'造成 {dmg} 點傷害。', up:{dmg:9} });
+defCard({ id:'smoke_bomb', name:'煙幕彈', icon:'💨', type:'skill', cost:1, rarity:'common',
+  applyEnemy:{weak:1}, target:'all', desc:'所有敵人獲得 {ea:weak} 層虛弱。', up:{applyEnemy:{weak:2}} });
+
+defCard({ id:'triple_slash', name:'三連斬', icon:'⚔️⚔️', type:'attack', cost:1, rarity:'uncommon',
+  dmg:2, hits:3, target:'enemy', desc:'造成 {dmg} 點傷害 {hits} 次。', up:{dmg:3} });
+defCard({ id:'poison_burst', name:'劇毒爆發', icon:'🟢', type:'skill', cost:1, rarity:'uncommon',
+  applyEnemy:{pois:5}, target:'all', desc:'對所有敵人施加 {ea:pois} 層侵蝕。', up:{applyEnemy:{pois:7}} });
+defCard({ id:'void_slash', name:'虛空斬', icon:'🌌', type:'attack', cost:1, rarity:'uncommon',
+  dmg:10, applyEnemy:{vuln:1}, target:'enemy', desc:'造成 {dmg} 點傷害，施加 {ea:vuln} 層易傷。',
+  up:{dmg:13, applyEnemy:{vuln:2}} });
+defCard({ id:'wind_step', name:'疾風步', icon:'💨', type:'skill', cost:1, rarity:'uncommon',
+  block:8, draw:1, target:'self', desc:'獲得 {block} 點護甲，抽 {draw} 張牌。', up:{block:11} });
+defCard({ id:'kidney_blow', name:'腎擊', icon:'💢', type:'attack', cost:1, rarity:'uncommon',
+  dmg:9, applyEnemy:{weak:2}, target:'enemy', desc:'造成 {dmg} 點傷害，施加 {ea:weak} 層虛弱。',
+  up:{dmg:12, applyEnemy:{weak:3}} });
+
+defCard({ id:'reaper', name:'收割者', icon:'🪓', type:'attack', cost:1, rarity:'rare',
+  special:'poisburst', mul:2, target:'enemy', exhaust:true,
+  desc:'引爆目標所有侵蝕層數，每層造成 {mul} 點傷害。消耗。', up:{mul:3} });
+defCard({ id:'hundred_cuts', name:'百影百裂', icon:'🌪️', type:'attack', cost:1, rarity:'rare',
+  dmg:2, hits:5, target:'enemy', desc:'造成 {dmg} 點傷害 {hits} 次。', up:{dmg:3} });
+defCard({ id:'void_pact', name:'虛空契約', icon:'📜', type:'power', cost:1, rarity:'rare',
+  power:{id:'drawBonus', n:2}, target:'self', desc:'每回合開始時多抽 {p:draw} 張牌。',
+  up:{power:{id:'drawBonus', n:3}} });
+/* ===== 星穹牌局 c3_cards2.js — 卡牌（零 + 無色）與描述產生器 ===== */
+'use strict';
+
+/* ---------- 機械賢者 · 零：護盾/充能 ---------- */
+defCard({ id:'pulse', name:'脈衝砲', icon:'🔫', type:'attack', cost:1, rarity:'basic',
+  dmg:6, target:'enemy', desc:'造成 {dmg} 點傷害。', up:{dmg:8} });
+defCard({ id:'barrier', name:'屏障', icon:'🛡️', type:'skill', cost:1, rarity:'basic',
+  block:5, target:'self', desc:'獲得 {block} 點護甲。', up:{block:8} });
+defCard({ id:'overclock', name:'過載', icon:'⚡', type:'skill', cost:0, rarity:'basic',
+  gainEnergy:1, draw:1, target:'self', desc:'獲得 {en} 點能量，抽 {draw} 張牌。', up:{draw:2} });
+defCard({ id:'repair', name:'修理', icon:'🔧', type:'skill', cost:1, rarity:'basic',
+  heal:4, target:'self', desc:'回復 {heal} 點生命。', up:{heal:6} });
+
+defCard({ id:'magnet_beam', name:'磁力束', icon:'🧲', type:'attack', cost:1, rarity:'common',
+  dmg:7, draw:1, target:'enemy', desc:'造成 {dmg} 點傷害，抽 {draw} 張牌。', up:{dmg:9} });
+defCard({ id:'heavy_shield', name:'重型護盾', icon:'🛡️', type:'skill', cost:1, rarity:'common',
+  block:9, target:'self', desc:'獲得 {block} 點護甲。', up:{block:12} });
+defCard({ id:'recharge', name:'回充', icon:'⚡', type:'skill', cost:0, rarity:'common',
+  gainEnergy:2, target:'self', exhaust:true, desc:'獲得 {en} 點能量。消耗。', up:{gainEnergy:3} });
+defCard({ id:'emp', name:'電磁脈衝', icon:'🌩️', type:'skill', cost:1, rarity:'common',
+  applyEnemy:{weak:1, vuln:1}, target:'all', desc:'所有敵人獲得 {ea:weak} 層虛弱和 {ea:vuln} 層易傷。',
+  up:{applyEnemy:{weak:2, vuln:2}} });
+defCard({ id:'nano_repair', name:'奈米修復', icon:'💊', type:'skill', cost:1, rarity:'common',
+  heal:6, target:'self', desc:'回復 {heal} 點生命。', up:{heal:9} });
+
+defCard({ id:'double_cannon', name:'雙聯砲', icon:'🔫🔫', type:'attack', cost:1, rarity:'uncommon',
+  dmg:4, hits:2, target:'enemy', desc:'造成 {dmg} 點傷害 {hits} 次。', up:{dmg:5} });
+defCard({ id:'energy_armor', name:'能量裝甲', icon:'⚡', type:'skill', cost:1, rarity:'uncommon',
+  block:6, applySelf:{thorns:3}, target:'self', desc:'獲得 {block} 點護甲和 {sa:thorns} 層荊棘。',
+  up:{block:9, applySelf:{thorns:4}} });
+defCard({ id:'overload_pulse', name:'超載脈衝', icon:'💥', type:'attack', cost:2, rarity:'uncommon',
+  dmg:12, block:6, target:'enemy', exhaust:true, desc:'造成 {dmg} 點傷害，獲得 {block} 點護甲。消耗。',
+  up:{dmg:16, block:9} });
+defCard({ id:'defense_protocol', name:'防禦協議', icon:'📋', type:'power', cost:1, rarity:'uncommon',
+  power:{id:'blockEnd', n:2}, target:'self', desc:'每回合結束時獲得 {p:block} 點護甲。',
+  up:{power:{id:'blockEnd', n:3}} });
+defCard({ id:'target_lock', name:'目標鎖定', icon:'🎯', type:'skill', cost:1, rarity:'uncommon',
+  applyEnemy:{vuln:2}, draw:1, target:'enemy', desc:'施加 {ea:vuln} 層易傷，抽 {draw} 張牌。',
+  up:{applyEnemy:{vuln:3}, draw:2} });
+
+defCard({ id:'orbital_cannon', name:'軌道砲', icon:'🛰️', type:'attack', cost:2, rarity:'rare',
+  dmg:16, target:'all', desc:'對所有敵人造成 {dmg} 點傷害。', up:{dmg:22} });
+defCard({ id:'fortress_mode', name:'堡壘模式', icon:'🏰', type:'power', cost:1, rarity:'rare',
+  power:{id:'blockStart', n:4}, target:'self', desc:'每回合開始時獲得 {p:block} 點護甲。',
+  up:{power:{id:'blockStart', n:6}} });
+defCard({ id:'miracle_core', name:'奇蹟核心', icon:'🔮', type:'power', cost:1, rarity:'rare',
+  power:{id:'energyStart', n:1, draw:0}, target:'self',
+  desc:'每回合開始時獲得 {p:energy} 點能量。',
+  upDesc:'每回合開始時獲得 {p:energy} 點能量，抽 {p:draw} 張牌。',
+  up:{power:{id:'energyStart', n:1, draw:1}} });
+defCard({ id:'thunder_fall', name:'隕星雷霆', icon:'☄️', type:'attack', cost:3, rarity:'rare',
+  dmg:22, target:'enemy', desc:'造成 {dmg} 點傷害。', up:{dmg:28} });
+
+/* ---------- 無色卡（各角色共有，獎勵池低機率出現） ---------- */
+defCard({ id:'starfall_wrath', name:'星穹之怒', icon:'🌠', type:'attack', cost:3, rarity:'rare',
+  dmg:18, target:'all', desc:'對所有敵人造成 {dmg} 點傷害。', up:{dmg:24} });
+defCard({ id:'time_stop', name:'時間停滯', icon:'⏳', type:'skill', cost:1, rarity:'rare',
+  special:'extraTurn', target:'self', exhaust:true, desc:'額外獲得一個回合。消耗。', up:{cost:0} });
+defCard({ id:'purify', name:'淨化', icon:'✨', type:'skill', cost:0, rarity:'uncommon',
+  special:'purify', target:'self', desc:'移除自身所有虛弱、易傷等減益狀態。' });
+defCard({ id:'emergency_repair', name:'應急修復', icon:'🚑', type:'skill', cost:1, rarity:'common',
+  heal:8, target:'self', exhaust:true, desc:'回復 {heal} 點生命。消耗。', up:{heal:12} });
+defCard({ id:'lucky_charm', name:'幸運符', icon:'🍀', type:'skill', cost:0, rarity:'common',
+  draw:1, target:'self', desc:'抽 {draw} 張牌。', up:{draw:2} });
+defCard({ id:'battery', name:'能量電池', icon:'🔋', type:'skill', cost:0, rarity:'common',
+  gainEnergy:1, target:'self', exhaust:true, desc:'獲得 {en} 點能量。消耗。', up:{gainEnergy:2} });
+defCard({ id:'gravity_field', name:'重力場', icon:'🪐', type:'skill', cost:1, rarity:'uncommon',
+  block:5, applyEnemy:{weak:1}, target:'all', desc:'獲得 {block} 點護甲，所有敵人獲得 {ea:weak} 層虛弱。',
+  up:{block:8, applyEnemy:{weak:2}} });
+defCard({ id:'double_edge', name:'雙刃劍', icon:'⚔️', type:'attack', cost:0, rarity:'uncommon',
+  dmg:8, selfHp:3, target:'enemy', desc:'造成 {dmg} 點傷害，自身失去 {selfhp} 點生命。',
+  up:{dmg:12, selfHp:4} });
+
+/* ---------- 描述產生器（含升級值） ---------- */
+function mergeUp(base, up){
+  const r = Object.assign({}, base);
+  for (const k in up){
+    if (up[k] && typeof up[k] === 'object' && !Array.isArray(up[k]) && base[k] && typeof base[k] === 'object'){
+      r[k] = Object.assign({}, base[k], up[k]);
+    } else r[k] = up[k];
+  }
+  return r;
+}
+function cardDesc(v, isUp){
+  const tpl = (isUp && v.upDesc) ? v.upDesc : v.desc;
+  const m = {
+    dmg: v.dmg, block: v.block, draw: v.draw, heal: v.heal, en: v.gainEnergy,
+    hits: v.hits, mul: v.mul, selfhp: v.selfHp
+  };
+  const A = v.applyEnemy || {}, S = v.applySelf || {}, P = v.power || {};
+  return tpl.replace(/\{(\w+)(?::(\w+))?\}/g, (all, key, sub) => {
+    if (key === 'st') return A[sub] || 0;
+    if (key === 'ea') return A[sub] || 0;
+    if (key === 'sa') return S[sub] !== undefined ? S[sub] : (P.id === sub ? P.n : 0);
+    if (key === 'p') return P[sub] !== undefined ? P[sub] : (P.n !== undefined ? P.n : 0);
+    return m[key] !== undefined ? m[key] : all;
+  });
+}
+/* 強化後的實際數值物件（戰鬥邏輯用；isUp = 該卡是否已升級） */
+function cardVals(c, isUp){ return isUp ? mergeUp(c, c.up) : c; }
+/* ===== 星穹牌局 c4_relics.js — 遺物 ===== */
+'use strict';
+const RELICS = {};
+function defRelic(r){ RELICS[r.id] = r; }
+
+defRelic({ id:'stardust_core', name:'星塵核心', icon:'🔮', rarity:'rare', tag:'turnStartEnergy',
+  desc:'每回合開始時獲得 1 點能量。' });
+defRelic({ id:'magnet_glove', name:'磁力手套', icon:'🧤', rarity:'common', tag:'goldMult',
+  desc:'獲得金幣 +25%。' });
+defRelic({ id:'battery_pack', name:'應急電池', icon:'🔋', rarity:'common', tag:'firstEnergy',
+  desc:'每場戰鬥的第一回合獲得 +2 能量。' });
+defRelic({ id:'ammo_belt', name:'彈藥帶', icon:'🎒', rarity:'uncommon', tag:'firstDraw',
+  desc:'每場戰鬥的第一回合多抽 3 張牌。' });
+defRelic({ id:'med_nano', name:'醫療奈米', icon:'💉', rarity:'common', tag:'healAfterCombat',
+  desc:'每場戰鬥結束後回復 3 點生命。' });
+defRelic({ id:'lucky_coin', name:'幸運幣', icon:'🪙', rarity:'common', tag:'lootChance',
+  desc:'每場戰鬥結束時有 30% 機率額外獲得 15 金幣。' });
+defRelic({ id:'thorn_armor', name:'荊棘甲', icon:'🌵', rarity:'common', tag:'combatStartThorns',
+  desc:'戰鬥開始時獲得 2 層荊棘。' });
+defRelic({ id:'ember_charm', name:'燃燒護符', icon:'🧿', rarity:'starter', tag:'combatStartBurn', starter:true,
+  desc:'戰鬥開始時對所有敵人施加 2 層燃燒。（曦的起始遺物）' });
+defRelic({ id:'venom_ring', name:'侵蝕戒指', icon:'💍', rarity:'starter', tag:'combatStartPois', starter:true,
+  desc:'戰鬥開始時對所有敵人施加 2 層侵蝕。（魘的起始遺物）' });
+defRelic({ id:'power_core', name:'能源核心', icon:'⚙️', rarity:'starter', tag:'firstEnergy1', starter:true,
+  desc:'每場戰鬥的第一回合獲得 +1 能量。（零的起始遺物）' });
+defRelic({ id:'siphon_chip', name:'汲能晶片', icon:'🧬', rarity:'uncommon', tag:'firstHitDraw',
+  desc:'每回合第一次攻擊命中時抽 1 張牌。' });
+defRelic({ id:'flex_shield', name:'彈性護盾', icon:'🛡️', rarity:'common', tag:'turnStartBlock2',
+  desc:'每回合開始時獲得 2 點護甲。' });
+defRelic({ id:'tac_visor', name:'戰術目鏡', icon:'🥽', rarity:'uncommon', tag:'combatStartStr',
+  desc:'戰鬥開始時獲得 1 點力量。' });
+defRelic({ id:'space_pack', name:'空間腰包', icon:'👝', rarity:'uncommon', tag:'maxPotions',
+  desc:'藥水欄位 +1。' });
+defRelic({ id:'greed_fang', name:'貪婪之牙', icon:'🦷', rarity:'uncommon', tag:'killGold',
+  desc:'擊殺敵人時有 15% 機率掉落 6 金幣。' });
+defRelic({ id:'void_shard', name:'虛空碎片', icon:'🪨', rarity:'rare', tag:'zeroCostDraw',
+  desc:'打出費用為 0 的牌時，抽 1 張牌。' });
+defRelic({ id:'energy_soup', name:'元氣湯', icon:'🍲', rarity:'common', tag:'combatHeal5',
+  desc:'每場戰鬥開始時回復 5 點生命。' });
+defRelic({ id:'iron_amulet', name:'鐵血護符', icon:'📿', rarity:'rare', tag:'maxHpMult',
+  desc:'獲得時立即提升 15% 最大生命。' });
+defRelic({ id:'beginner_rune', name:'初學者符', icon:'🧧', rarity:'common', tag:'shopDiscount',
+  desc:'商店價格 -15%。' });
+defRelic({ id:'double_dice', name:'雙面骰', icon:'🎲', rarity:'uncommon', tag:'cardChoice',
+  desc:'卡牌獎勵的選項 +1（改為 4 選 1）。' });
+defRelic({ id:'prism', name:'折射稜鏡', icon:'🔷', rarity:'uncommon', tag:'firstAtkBuff',
+  desc:'每回合打出的第一張攻擊牌命中時，隨機獲得 1 點力量或敏捷。' });
+defRelic({ id:'capacitor', name:'蓄電池', icon:'🔌', rarity:'rare', tag:'energyCap',
+  desc:'獲得時立即提升 1 點能量上限。' });
+defRelic({ id:'reaper_scythe', name:'死神鐮刀', icon:'⚰️', rarity:'uncommon', tag:'killHeal',
+  desc:'擊殺敵人時回復 2 點生命。' });
+defRelic({ id:'humming_pendant', name:'蜂鳥掛墜', icon:'🐦', rarity:'rare', tag:'drawBonus',
+  desc:'每回合多抽 1 張牌。' });
+defRelic({ id:'black_hole', name:'黑洞引擎', icon:'🕳️', rarity:'rare', tag:'emptyBlockEnd',
+  desc:'每回合結束時若護甲為 0，獲得 3 點護甲。' });
+/* ===== 星穹牌局 c5_enemies.js — 敵人 ===== */
+'use strict';
+const ENEMIES = {};
+function defEnemy(e){ ENEMIES[e.id] = e; }
+
+/* 意圖: atk 攻擊 / def 防禦 / buf 強化 / deb 弱化玩家 / heal 治療
+   pat2 = 半血以下切換的模式 */
+
+/* ---------- 第一幕 · 碎星帶 星盜 ---------- */
+defEnemy({ id:'raider', name:'掠奪者', icon:'🏴‍☠️', act:1, tier:'normal', hp:46, col:'#ff9d4e',
+  pat:[{i:'atk',d:7},{i:'atk',d:7},{i:'def',b:6}] });
+defEnemy({ id:'gunner', name:'脈衝炮手', icon:'🔫', act:1, tier:'normal', hp:38, col:'#ffd94e',
+  pat:[{i:'atk',d:5,h:2},{i:'def',b:5},{i:'atk',d:5,h:2},{i:'buf',s:{str:1}}] });
+defEnemy({ id:'assault', name:'突擊艇', icon:'🚀', act:1, tier:'normal', hp:60, col:'#b06bff',
+  pat:[{i:'atk',d:8},{i:'def',b:8},{i:'atk',d:9}] });
+defEnemy({ id:'navigator', name:'星盜領航員', icon:'🧭', act:1, tier:'elite', hp:92, col:'#ff5a6e',
+  pat:[{i:'buf',s:{str:2}},{i:'atk',d:12},{i:'def',b:10},{i:'atk',d:13}] });
+defEnemy({ id:'twin_gunboat', name:'雙聯炮艇', icon:'🛶', act:1, tier:'elite', hp:78, col:'#4ef7ff',
+  pat:[{i:'atk',d:6,h:2},{i:'def',b:7},{i:'atk',d:8,h:2},{i:'deb',s:{weak:1}}] });
+defEnemy({ id:'ironfang', name:'星盜魁首「鐵牙」', icon:'👑', act:1, tier:'boss', hp:150, col:'#ff7a3d',
+  pat:[{i:'atk',d:10,h:2},{i:'def',b:10},{i:'buf',s:{str:2}},{i:'atk',d:15}],
+  pat2:[{i:'atk',d:12,h:2},{i:'atk',d:19},{i:'deb',s:{vuln:1}},{i:'atk',d:12,h:2}] });
+
+/* ---------- 第二幕 · 虛空艦塢 機械軍團 ---------- */
+defEnemy({ id:'sentry', name:'哨戒機械', icon:'🛰️', act:2, tier:'normal', hp:70, col:'#7dff9e',
+  pat:[{i:'atk',d:9},{i:'def',b:8},{i:'atk',d:10}] });
+defEnemy({ id:'heavy_mech', name:'重裝機兵', icon:'🤖', act:2, tier:'normal', hp:95, col:'#4ed5ff',
+  pat:[{i:'def',b:12},{i:'atk',d:12},{i:'def',b:12},{i:'atk',d:15}] });
+defEnemy({ id:'bomber', name:'轟炸無人機', icon:'💣', act:2, tier:'normal', hp:55, col:'#ffd94e',
+  pat:[{i:'atk',d:7,h:2},{i:'atk',d:7,h:2},{i:'buf',s:{str:2}}] });
+defEnemy({ id:'bastion', name:'堡壘守衛', icon:'🏰', act:2, tier:'elite', hp:132, col:'#6bff8e',
+  pat:[{i:'def',b:15},{i:'buf',s:{str:2}},{i:'atk',d:16},{i:'heal',h:8}] });
+defEnemy({ id:'hacker_core', name:'駭客中樞', icon:'💻', act:2, tier:'elite', hp:112, col:'#ff4ef0',
+  pat:[{i:'deb',s:{weak:2}},{i:'atk',d:12},{i:'deb',s:{vuln:2}},{i:'atk',d:13}] });
+defEnemy({ id:'devourer', name:'虛空吞噬者', icon:'👁️', act:2, tier:'boss', hp:215, col:'#b06bff',
+  pat:[{i:'atk',d:14},{i:'def',b:12},{i:'buf',s:{str:2}},{i:'atk',d:10,h:2},{i:'atk',d:18}],
+  pat2:[{i:'atk',d:10,h:3},{i:'atk',d:22},{i:'deb',s:{weak:1},d:16},{i:'atk',d:10,h:3}] });
+
+/* ---------- 第三幕 · 歸零聖殿 教團 ---------- */
+defEnemy({ id:'executioner', name:'處刑者', icon:'🗡️', act:3, tier:'normal', hp:102, col:'#ff5a6e',
+  pat:[{i:'atk',d:14},{i:'def',b:10},{i:'atk',d:15}] });
+defEnemy({ id:'oracle', name:'預言僧', icon:'🔮', act:3, tier:'normal', hp:88, col:'#ff9d4e',
+  pat:[{i:'deb',s:{vuln:1}},{i:'atk',d:12},{i:'heal',h:10},{i:'atk',d:12}] });
+defEnemy({ id:'zealot', name:'狂信者', icon:'🔥', act:3, tier:'normal', hp:120, col:'#ff4ef0',
+  pat:[{i:'atk',d:10,h:2},{i:'atk',d:10,h:2},{i:'buf',s:{str:2}},{i:'atk',d:16}] });
+defEnemy({ id:'deacon', name:'聖殿執事', icon:'⚜️', act:3, tier:'elite', hp:165, col:'#4ef7ff',
+  pat:[{i:'deb',s:{weak:2}},{i:'atk',d:16},{i:'def',b:14},{i:'atk',d:10,h:2}] });
+defEnemy({ id:'inquisitor', name:'審判官', icon:'⚖️', act:3, tier:'elite', hp:185, col:'#ffd94e',
+  pat:[{i:'buf',s:{str:3}},{i:'atk',d:18},{i:'def',b:12},{i:'atk',d:14,h:2}] });
+defEnemy({ id:'zero', name:'歸零者「零」', icon:'🕳️', act:3, tier:'boss', hp:310, col:'#e06bff',
+  pat:[{i:'atk',d:16},{i:'def',b:14},{i:'deb',s:{vuln:2}},{i:'atk',d:12,h:2},{i:'atk',d:20}],
+  pat2:[{i:'atk',d:14,h:3},{i:'atk',d:24},{i:'deb',s:{weak:2}},{i:'heal',h:20},{i:'atk',d:16,h:2}] });
+
+/* 每幕敵人群 */
+const ACT_POOLS = {
+  1: {
+    normal: ['raider','gunner','assault'],
+    elite: ['navigator','twin_gunboat'],
+    boss: 'ironfang'
+  },
+  2: {
+    normal: ['sentry','heavy_mech','bomber'],
+    elite: ['bastion','hacker_core'],
+    boss: 'devourer'
+  },
+  3: {
+    normal: ['executioner','oracle','zealot'],
+    elite: ['deacon','inquisitor'],
+    boss: 'zero'
+  }
+};
+/* ===== 星穹牌局 c6_acts.js — 幕與事件 ===== */
+'use strict';
+const ACTS = {
+  1: { name:'碎星帶 · 星盜之亂', sub:'第一幕', bg:['#0a0e2a','#1a0a2e'], neb:'#7a3dff',
+       bossLine:'擊敗星盜魁首「鐵牙」' },
+  2: { name:'虛空艦塢 · 機械軍團', sub:'第二幕', bg:['#041024','#04281f'], neb:'#00c8a0',
+       bossLine:'擊敗虛空吞噬者' },
+  3: { name:'歸零聖殿 · 教團之地', sub:'第三幕', bg:['#180a24','#2a0410'], neb:'#ff4ef0',
+       bossLine:'擊敗歸零者「零」' }
+};
+
+/* 事件：eff 型別 — heal/loseHp/gold/card/relic/potion/removeCard/upgradeCard/fight/gamble/nothing
+   fight: {tier:'elite'|'normal', n:敵人數, loot:'bonus'|'normal'} */
+const EVENTS = [
+  { id:'merchant_ship', icon:'🛸', title:'流浪商船',
+    text:'一艘孤零零的商船飄在碎星帶中。商人探出頭：「嘿，客人！我這有好貨，只要 40 金幣，就賣你一件寶貝。」',
+    opts:[
+      { t:'掏出 40 金幣買下（獲得隨機遺物）', req:{gold:40}, eff:{type:'relic', pay:40} },
+      { t:'搖頭離開', eff:{type:'nothing'} }
+    ]},
+  { id:'distress', icon:'🆘', title:'遇難求救',
+    text:'一艘運輸艇發出求救訊號，船身正冒著濃煙。內部的船員看起來撐不了多久。',
+    opts:[
+      { t:'冒險救援（失去 8 生命，獲得 60 金幣，20% 獲得遺物）', eff:{type:'heal', v:-8, gold:60, relicChance:0.2} },
+      { t:'無視求救，繼續航行', eff:{type:'nothing'} }
+    ]},
+  { id:'energy_rift', icon:'⚡', title:'能量裂痕',
+    text:'空間中出現一道裂縫，狂暴的星塵能量從中湧出，既危險又誘人。',
+    opts:[
+      { t:'汲取能量（回復 14 生命）', eff:{type:'heal', v:14} },
+      { t:'採集結晶（獲得 1 張隨機稀有卡）', eff:{type:'card', rng:'rare'} },
+      { t:'小心繞開', eff:{type:'nothing'} }
+    ]},
+  { id:'statue', icon:'🗿', title:'神秘雕像',
+    text:'一座古銀河帝國的石雕矗立在虛空中，眼睛閃著幽光。當地傳說：向它祈禱，命運會回應——但未必是善意的回應。',
+    opts:[
+      { t:'虔誠祈禱（50% 回復 24 生命 / 50% 失去 12 生命）', eff:{type:'gamble', win:{heal:24}, lose:{loseHp:12}} },
+      { t:'保持距離', eff:{type:'nothing'} }
+    ]},
+  { id:'smuggler', icon:'🕶️', title:'走私販',
+    text:'一個披著斗篷的走私販湊過來：「藥水、好貨，應有盡有！30 金幣，通通給你！」他身後似乎跟著幾個打手。',
+    opts:[
+      { t:'付 30 金幣交易（獲得 1 藥水 + 1 隨機卡）', req:{gold:30}, eff:{type:'potion', pay:30, card:true} },
+      { t:'搶劫他（與精英戰鬥）', eff:{type:'fight', tier:'elite', n:1, loot:'bonus'} }
+    ]},
+  { id:'hangar', icon:'📦', title:'廢棄機庫',
+    text:'半損壞的機庫大門虛掩著，內部閃爍著指示燈。裡面可能藏著物資——也可能藏著麻煩。',
+    opts:[
+      { t:'簡單搜刮（獲得 1 藥水）', eff:{type:'potion'} },
+      { t:'徹底搜索（與 2 名敵人戰鬥，獎勵更好）', eff:{type:'fight', tier:'normal', n:2, loot:'bonus'} }
+    ]},
+  { id:'inn', icon:'🏨', title:'星辰旅店',
+    text:'一家漂浮的旅店掛著暖黃的招牌。老闆熱情招呼：「住一晚恢復元氣？或者幫我趕走碼頭的太空鼠？」',
+    opts:[
+      { t:'好好休息（回復 18 生命）', eff:{type:'heal', v:18} },
+      { t:'幫老闆除害（戰鬥，獲得 45 金幣）', eff:{type:'fight', tier:'normal', n:1, loot:'gold45'} }
+    ]},
+  { id:'old_friend', icon:'🤝', title:'舊友重逢',
+    text:'一個熟悉的身影出現在前方——是你多年前的戰友。「嘿！好久不見！這個送你，就當敘舊。」',
+    opts:[
+      { t:'收下卡牌（獲得 1 張隨機普通卡）', eff:{type:'card', rng:'common'} },
+      { t:'收下金幣（35 金幣）', eff:{type:'gold', v:35} }
+    ]},
+  { id:'void_mirage', icon:'🌫️', title:'虛空幻象',
+    text:'虛空中浮現一座金碧輝煌的寶庫幻影。傳說這是古文明的考驗：貪婪者付出血的代價，勇者得到回報。',
+    opts:[
+      { t:'伸手探入（50% 獲得遺物 / 50% 失去 15 生命）', eff:{type:'gamble', win:{relic:1}, lose:{loseHp:15}} },
+      { t:'拒絕誘惑', eff:{type:'nothing'} }
+    ]},
+  { id:'data_temple', icon:'🏛️', title:'數據聖堂',
+    text:'一座漂浮的資料庫保存著上古戰術晶片。修復這些晶片能讓你的卡牌突破極限。',
+    opts:[
+      { t:'強化一張卡牌（自選強化）', eff:{type:'upgradeCard'} },
+      { t:'販賣資料（獲得 40 金幣）', eff:{type:'gold', v:40} }
+    ]},
+  { id:'hunter', icon:'🥷', title:'追殺者',
+    text:'一個黑斗篷的賞金獵人出現在航道上，刀光閃爍：「你的人頭，值不少錢。投降，或者死。」',
+    opts:[
+      { t:'正面迎戰（精英戰鬥，必定掉遺物）', eff:{type:'fight', tier:'elite', n:1, loot:'bonus'} },
+      { t:'交出一件遺物保命（失去 1 隨機遺物）', eff:{type:'loseRelic'} }
+    ]},
+  { id:'med_station', icon:'🏥', title:'醫療無人站',
+    text:'一座自動醫療站發出柔和的光。掃描後，螢幕顯示：「歡迎。可提供治療服務，或協助移除植入物。」',
+    opts:[
+      { t:'接受治療（回復 35% 最大生命）', eff:{type:'healPct', v:35} },
+      { t:'切除多餘卡牌（免費刪除一張牌）', eff:{type:'removeCard'} }
+    ]}
+];
+/* ===== 星穹牌局 g1_combat.js — 戰鬥引擎 ===== */
+'use strict';
+const Combat = {
+  C: null,
+  start(nodeType, enemies, opts){
+    opts = opts || {};
+    const run = Run;
+    const C = this.C = {
+      nodeType, enemies: [], player: null, state: 'player',
+      turn: 1, extraTurn: false, noDamage: true, won: false,
+      opts
+    };
+    // 玩家
+    C.player = {
+      hp: run.hp, maxHp: run.maxHp, block: 0, energy: 0, maxEnergy: run.energyCap,
+      buffs: {}, powers: {},
+      deck: shuffle(run.deck.map(c => Object.assign({}, c))),
+      draw: [], hand: [], disc: [], exhaust: [],
+      firstAttackDone: false
+    };
+    const P = C.player;
+    // 敵人（複製數據 + 倍率）
+    for (const { def, m } of enemies){
+      const hp = Math.round(def.hp * (m || 1));
+      C.enemies.push({
+        def, hp, maxHp: hp, block: 0, buffs: {}, idx: 0, phase2: false,
+        flashT: 0, lunge: 0, dead: false, slot: C.enemies.length
+      });
+    }
+    // 起始遺物效果
+    if (run.hasRelic('ember_charm')) C.enemies.forEach(e => this.addStatus(e, { burn: 2 }));
+    if (run.hasRelic('venom_ring')) C.enemies.forEach(e => this.addStatus(e, { pois: 2 }));
+    if (run.hasRelic('thorn_armor')) P.buffs.thorns = (P.buffs.thorns || 0) + 2;
+    if (run.hasRelic('tac_visor')) P.buffs.str = (P.buffs.str || 0) + 1;
+    if (run.hasRelic('energy_soup')) this.healPlayer(5);
+    if (run.hasRelic('black_hole')){} // 回合結束時處理
+    // 第一回合開始
+    this.playerTurnStart();
+    AudioSys.play('boss');
+    UI.enterCombat();
+  },
+  /* ---------- 回合流程 ---------- */
+  playerTurnStart(){
+    const C = this.C, P = C.player;
+    // 安全網：若敵方已全滅卻未進入勝利（如燃燒/侵蝕致死漏判），立即收斂
+    this.checkEnemiesDead();
+    if (C.state === 'won'){ this.onWin(); return; }
+    if (C.turn > 1){
+      if (C.extraTurn) { C.extraTurn = false; UI.banner('⏳ 額外回合'); }
+    }
+    // 護甲不隨回合重置：沒被打穿前持續疊加直到戰鬥結束
+    P.energy = P.maxEnergy;
+    // 每回合開始賦能
+    if (Run.hasRelic('stardust_core')) P.energy += 1;
+    if (C.turn === 1){
+      if (Run.hasRelic('battery_pack')) P.energy += 2;
+      if (Run.hasRelic('power_core')) P.energy += 1;
+      if (Run.hasRelic('ammo_belt')) this.draw(3);
+    }
+    if (Run.hasRelic('flex_shield')) P.block += 2;
+    // 能力
+    const pw = P.powers;
+    if (pw.energyStart) { P.energy += pw.energyStart; if (pw.energyDraw) this.draw(pw.energyDraw); }
+    if (pw.blockStart) P.block += pw.blockStart;
+    if (pw.burnAura) C.enemies.forEach(e => this.addStatus(e, { burn: pw.burnAura }));
+    // 每回合開始的傷害（如燃燒對玩家 -- 玩家身上無 burn，略）
+    P.firstAttackDone = false;
+    let drawN = 5 + (pw.drawBonus || 0);
+    if (Run.hasRelic('humming_pendant')) drawN += 1;
+    this.draw(drawN);
+    C.state = 'player';
+    UI.refreshCombat();
+    UI.sortHand();
+    this.maybeAutoEnd();
+  },
+  draw(n){
+    const P = this.C.player;
+    for (let i = 0; i < n; i++){
+      if (P.hand.length >= 10) break;
+      if (!P.draw.length){
+        if (P.deck.length){ P.draw = shuffle(P.deck); P.deck = []; }
+        else if (P.disc.length){ P.draw = shuffle(P.disc); P.disc = []; }
+        else break;
+      }
+      P.hand.push(P.draw.pop());
+    }
+  },
+  /* ---------- 打牌 ---------- */
+  playCard(i){
+    const C = this.C;
+    if (C.state !== 'player' || !C.enemies.length) return false;
+    const P = C.player;
+    const card = P.hand[i];
+    if (!card) return false;
+    const data = CARDS[card.id];
+    if (!data) return false;
+    const v = cardVals(data, card.up);
+    if (P.energy < v.cost){ AudioSys.play('error'); UI.toast('能量不足！'); return false; }
+    if (data.target === 'enemy' && !C.enemies.some(e => !e.dead)) return false;
+    P.energy -= v.cost;
+    P.hand.splice(i, 1);
+    // 執行效果
+    this.resolveCard(data, v, card);
+    // 費用 0 抽牌（虛空碎片）
+    if (v.cost === 0 && Run.hasRelic('void_shard')) this.draw(1);
+    // 進棄牌/消耗
+    if (data.exhaust) P.exhaust.push(card); else P.disc.push(card);
+    Run.cardsPlayed++;
+    Save.stats.cardsPlayed++;
+    if (Save.stats.cardsPlayed >= 500) Save.unlock('cards_500');
+    // 檢查結束
+    this.checkEnemiesDead();
+    if (C.state === 'won'){ this.onWin(); return true; }
+    if (C.state === 'lost'){ this.onLose(); return true; }
+    UI.refreshCombat();
+    this.maybeAutoEnd();
+    return true;
+  },
+  resolveCard(data, v, card){
+    const C = this.C, P = C.player;
+    const isAttack = data.type === 'attack';
+    // 目標
+    let targets = [];
+    if (data.target === 'all') targets = C.enemies.filter(e => !e.dead);
+    else if (data.target === 'enemy') targets = [this.frontEnemy()];
+    const tgt = targets[0];
+    // 攻擊（爆發卡無 dmg 欄位，跳過通用迴圈）
+    if (isAttack){
+      const firstAttackThisTurn = !P.firstAttackDone;
+      if (v.dmg !== undefined){
+        for (let h = 0; h < (v.hits || 1); h++){
+          for (const e of targets){
+            if (e.dead) continue;
+            this.hitEnemy(e, v.dmg, data, v, h);
+          }
+        }
+      }
+      if (firstAttackThisTurn && tgt){
+        P.firstAttackDone = true;
+        if (Run.hasRelic('siphon_chip')) this.draw(1);
+        if (Run.hasRelic('prism')){
+          const b = Math.random() < 0.5 ? 'str' : 'dex';
+          P.buffs[b] = (P.buffs[b] || 0) + 1;
+          AudioSys.play('buff');
+          FX.statusUp(360, 750, b === 'str' ? '力量+1' : '敏捷+1', '#6bff8e');
+        }
+      }
+    }
+    // 燃燒/侵蝕爆發（獨立於 isAttack：劇毒爆發是 skill 型）
+    if (data.special === 'burnburst' || data.special === 'poisburst'){
+      const e = this.frontEnemy();
+      if (e){
+        const key = data.special === 'burnburst' ? 'burn' : 'pois';
+        const st = e.buffs[key] || 0;
+        if (st > 0){ this.hitEnemy(e, st * v.mul, data, v, 0); e.buffs[key] = 0; }
+      }
+    }
+    // 狀態施加
+    if (v.applyEnemy) targets.forEach(e => this.addStatus(e, v.applyEnemy));
+    if (v.applySelf) this.addStatus(P, v.applySelf);
+    // 護甲/治療/抽牌/能量
+    if (v.block) P.block += v.block;
+    if (v.heal) this.healPlayer(v.heal);
+    if (v.draw) this.draw(v.draw);
+    if (v.gainEnergy) P.energy += v.gainEnergy;
+    if (v.selfHp){ this.damagePlayer(v.selfHp, true); }
+    // 能力（用 v.power：升級後的能力值才生效）
+    if (v.power) this.applyPower(v.power);
+    // 特殊
+    if (data.special === 'extraTurn') C.extraTurn = true;
+    if (data.special === 'purify'){ delete P.buffs.weak; delete P.buffs.vuln; FX.statusUp(360, 750, '淨化', '#4ef7ff'); }
+    // 特效聲音
+    if (isAttack){ AudioSys.play('hit'); shake(4); } else if (data.type === 'power'){ AudioSys.play('power'); }
+    else { AudioSys.play('card'); }
+  },
+  applyPower(p){
+    const P = this.C.player;
+    const pw = P.powers;
+    switch (p.id){
+      case 'str': P.buffs.str = (P.buffs.str || 0) + p.n; FX.statusUp(360, 750, '力量+' + p.n, '#ff9d4e'); break;
+      case 'burnAura': pw.burnAura = (pw.burnAura || 0) + p.n; break;
+      case 'burnEnd': pw.burnEnd = (pw.burnEnd || 0) + p.n; break;
+      case 'drawBonus': pw.drawBonus = (pw.drawBonus || 0) + p.n; break;
+      case 'blockEnd': pw.blockEnd = (pw.blockEnd || 0) + p.n; break;
+      case 'blockStart': pw.blockStart = (pw.blockStart || 0) + p.n; break;
+      case 'energyStart': pw.energyStart = (pw.energyStart || 0) + p.n; pw.energyDraw = p.draw || 0; break;
+    }
+    AudioSys.play('power');
+    FX.powerRing(360, 830, '#4ef7ff');
+    shake(3);
+  },
+  epos(e){ return Render.epos(e.slot, this.C.enemies.length); },
+  hitEnemy(e, baseDmg, data, v, hitIdx){
+    const P = this.C.player;
+    let dmg = baseDmg + (P.buffs.str || 0);
+    if (P.buffs.weak) dmg = Math.round(dmg * 0.75);
+    if (e.buffs.vuln) dmg = Math.round(dmg * 1.5);
+    dmg = Math.max(0, dmg);
+    this.dealToEnemy(e, dmg);
+    if (dmg >= 50) Save.unlock('big_hit');
+    const p = this.epos(e);
+    FX.slash(p.x, p.y - 16, Math.random() * 6.28, e.def.col, dmg);
+    e.flashT = 0.16;
+  },
+  /* ---------- 傷害/狀態 ---------- */
+  frontEnemy(){
+    return this.C.enemies.find(e => !e.dead) || null;
+  },
+  dealToEnemy(e, dmg){
+    const p = this.epos(e);
+    if (e.block >= dmg){ e.block -= dmg; FX.blockHit(p.x, p.y - 40); }
+    else {
+      dmg -= e.block; e.block = 0;
+      e.hp -= dmg;
+      addFloat(p.x, p.y - 24, String(dmg), '#ffd94e', 20);
+      if (e.hp <= 0){
+        e.hp = 0; e.dead = true;
+        const t = e.def.tier === 'boss' ? 'boss' : e.def.tier === 'elite' ? 'elite' : 'normal';
+        FX.explode(p.x, p.y - 16, e.def.col);
+        AudioSys.play('explode'); shake(6);
+        Run.kills++; Save.stats.kills++;
+        if (Save.stats.kills >= 100) Save.unlock('kills_100');
+        Run.gemsCollected += t === 'normal' ? 2 : 5;
+        if (Run.hasRelic('greed_fang') && Math.random() < 0.15){ Run.gold += 6; addFloat(p.x, p.y - 70, '+6⛃', '#ffd94e', 16); }
+        if (Run.hasRelic('reaper_scythe')) this.healPlayer(2);
+        Combat.C.opts.killedBoss = Combat.C.opts.killedBoss || (e.def.tier === 'boss');
+      }
+    }
+  },
+  addStatus(target, st){
+    for (const k in st){
+      target.buffs[k] = (target.buffs[k] || 0) + st[k];
+    }
+    if (st.burn && target.def && st.burn >= 20) Save.unlock('burn_20');
+  },
+  healPlayer(n){
+    if (!this.C) return;
+    const P = this.C.player;
+    if (P.hp <= 0) return;
+    P.hp = Math.min(P.maxHp, P.hp + n);
+    AudioSys.play('heal');
+    addFloat(360, 830, '+' + n, '#6bff8e', 18);
+  },
+  damagePlayer(n, ignoreBlock){
+    if (!this.C) return;
+    const P = this.C.player, C = this.C;
+    let d = n;
+    if (!ignoreBlock && P.block > 0){
+      if (P.block >= d){ P.block -= d; d = 0; } else { d -= P.block; P.block = 0; }
+    }
+    if (d > 0){
+      P.hp -= d;
+      C.noDamage = false;
+      addFloat(360, 810, '-' + d, '#ff5a6e', 22);
+      shake(7);
+      AudioSys.play('hit');
+      if (P.hp <= 0){ P.hp = 0; C.state = 'lost'; }
+    }
+  },
+  /* ---------- 敵人回合 ---------- */
+  endTurn(){
+    const C = this.C;
+    if (C.state !== 'player') return;
+    // 結束玩家回合：棄光手牌
+    const P = C.player;
+    P.disc = P.disc.concat(P.hand); P.hand = [];
+    // 玩家回合結束狀態結算
+    this.endOfTurnPlayer(P);
+    if (C.state === 'lost'){ this.onLose(); return; }
+    C.state = 'enemy';
+    UI.refreshCombat();
+    if (C.extraTurn){
+      C.turn++;
+      this.playerTurnStart();
+      return;
+    }
+    // 敵人行動
+    for (const e of C.enemies){
+      if (e.dead) continue;
+      this.enemyAct(e);
+    }
+    C.enemies = C.enemies.filter(e => !e.dead);
+    if (C.state === 'lost'){ this.onLose(); return; }
+    // 敵人回合結束：燃燒/侵蝕/狀態
+    for (const e of C.enemies){
+      this.endOfTurnEnemy(e);
+    }
+    // 檢查全滅
+    this.checkEnemiesDead();
+    if (C.state === 'won'){ this.onWin(); return; }
+    C.turn++;
+    this.playerTurnStart();
+  },
+  enemyAct(e){
+    const C = this.C, P = C.player;
+    const pat = (e.phase2 && e.def.pat2) ? e.def.pat2 : e.def.pat;
+    const it = pat[e.idx % pat.length];
+    e.idx++;
+    const dmgMul = 1 + (Run.diff || 0) * 0.08;
+    const act = (() => {
+      if (it.i === 'atk'){
+        let d = Math.round((it.d + (e.buffs.str || 0)) * dmgMul);
+        if (e.buffs.weak) d = Math.round(d * 0.75);
+        if (P.buffs.vuln) d = Math.round(d * 1.5);
+        const hits = it.h || 1;
+        e.lunge = 0.25;
+        const p = this.epos(e);
+        const cid = this.C; // 綁定本場戰鬥：結束後殘留攻擊一律作廢（防燒死後幽靈攻擊卡死）
+        for (let h = 0; h < hits; h++){
+          setTimeout(() => {
+            if (this.C !== cid || cid.state === 'won' || cid.state === 'lost') return;
+            FX.slashDash(p.x, p.y, 360, 800, e.def.col);
+            this.damagePlayer(d);
+            AudioSys.play('shoot');
+            if (P.buffs.thorns){ this.dealToEnemy(e, P.buffs.thorns); this.checkEnemiesDead(); if (C.state === 'won'){ this.onWin(); return; } }
+          }, h * 160);
+        }
+        FX.intentWarn(p.x, p.y, it.d, e.def.col);
+      } else if (it.i === 'def'){
+        const p = this.epos(e);
+        e.block += it.b;
+        FX.blockHit(p.x, p.y - 40);
+        AudioSys.play('block');
+      } else if (it.i === 'buf'){
+        const p = this.epos(e);
+        this.addStatus(e, it.s);
+        FX.statusUp(p.x, p.y - 50, intentLabel(it.s), '#ff9d4e');
+        AudioSys.play('buff');
+      } else if (it.i === 'deb'){
+        const p = this.epos(e);
+        if (it.d){ // 攻擊附帶弱化
+          let d = Math.round((it.d + (e.buffs.str || 0)) * dmgMul);
+          if (P.buffs.vuln) d = Math.round(d * 1.5);
+          this.damagePlayer(d);
+        }
+        this.addStatus(P, it.s);
+        FX.statusUp(360, 750, intentLabel(it.s), '#ff5a6e');
+        AudioSys.play('debuff');
+      } else if (it.i === 'heal'){
+        const p = this.epos(e);
+        const h = Math.min(e.maxHp - e.hp, it.h);
+        e.hp += h;
+        addFloat(p.x, p.y - 50, '+' + h, '#6bff8e', 16);
+        AudioSys.play('heal');
+      }
+    })();
+    // Boss 狂暴階段
+    if (!e.phase2 && e.def.pat2 && e.hp <= e.maxHp * 0.5){
+      e.phase2 = true; e.idx = 0;
+      UI.banner('⚠️ ' + e.def.name + ' 狂暴化！');
+      AudioSys.play('boss'); shake(10);
+    }
+  },
+  endOfTurnPlayer(P){
+    // 能力：回合結束護甲
+    if (P.powers.blockEnd) P.block += P.powers.blockEnd;
+    if (P.powers.burnEnd) this.C.enemies.forEach(e => { if (!e.dead) this.addStatus(e, { burn: P.powers.burnEnd }); });
+    if (Run.hasRelic('black_hole') && P.block === 0) P.block += 3;
+    // 玩家受到燃燒/侵蝕（目前無來源，保留鉤子）
+    if (P.buffs.burn){ this.damagePlayer(P.buffs.burn, true); P.buffs.burn = Math.max(0, P.buffs.burn - 1); }
+    if (P.buffs.pois){ this.damagePlayer(P.buffs.pois, true); P.buffs.pois = Math.max(0, P.buffs.pois - 1); }
+    if (P.buffs.regen){ this.healPlayer(P.buffs.regen); }
+    if (P.buffs.weak) P.buffs.weak = Math.max(0, P.buffs.weak - 1);
+    if (P.buffs.vuln) P.buffs.vuln = Math.max(0, P.buffs.vuln - 1);
+    const C = this.C;
+    if (P.hp <= 0){ P.hp = 0; C.state = 'lost'; }
+  },
+  endOfTurnEnemy(e){
+    if (e.dead) return;
+    const p = this.epos(e);
+    if (e.buffs.burn){ this.dealToEnemy(e, e.buffs.burn); e.buffs.burn = Math.max(0, e.buffs.burn - 1); FX.burnFx(p.x, p.y - 20); }
+    if (e.buffs.pois){ this.dealToEnemy(e, e.buffs.pois); e.buffs.pois = Math.max(0, e.buffs.pois - 1); FX.poisFx(p.x, p.y - 20); }
+    if (e.buffs.weak) e.buffs.weak = Math.max(0, e.buffs.weak - 1);
+    if (e.buffs.vuln) e.buffs.vuln = Math.max(0, e.buffs.vuln - 1);
+  },
+  checkEnemiesDead(){
+    const C = this.C;
+    if (C.enemies.every(e => e.dead)){
+      C.state = 'won';
+      if (C.player.hp <= 0){ C.state = 'lost'; }
+    }
+    if (C.player && C.player.hp <= 0) C.state = 'lost';
+  },
+  /* ---------- 勝敗/獎勵 ---------- */
+  onWin(){
+    const C = this.C, run = Run;
+    if (C.won) return; C.won = true;
+    AudioSys.play('win');
+    const tier = C.nodeType;
+    const floor = run.floor;
+    let gold = tier === 'normal' ? 16 + floor * 2 + rndi(0, 8) : tier === 'elite' ? 38 + floor * 3 + rndi(0, 10) : 75 + rndi(0, 20);
+    if (run.hasRelic('magnet_glove')) gold = Math.round(gold * 1.25);
+    if (run.hasRelic('lucky_coin') && Math.random() < 0.3) gold += 15;
+    run.gold += gold;
+    let gems = tier === 'normal' ? 3 : tier === 'elite' ? 6 : 15;
+    run.gemsCollected += gems;
+    if (run.nodeType === 'event'){ run.actGems = (run.actGems || 0) + gems; }
+    // 後續計算（成就）
+    if (C.opts.killedBoss) run.bossKilled = true;
+    // 獲勝獎勵 UI
+    const lines = [`⛃ 金幣 +${gold}`, `💎 星塵 +${gems}`];
+    if (C.noDamage && tier === 'elite') { Save.unlock('no_dmg_elite'); lines.push('🏆 無傷擊敗精英！'); }
+    if (C.opts.killedBoss && C.turn <= 3) Save.unlock('one_turn_boss');
+    if (run.hasRelic('med_nano')){ run.hp = Math.min(run.maxHp, run.hp + 3); lines.push('💉 醫療奈米 +3 HP'); }
+    UI.showReward(lines, tier, C.opts);
+  },
+  onLose(){
+    const C = this.C;
+    if (!C || C.lostDone) return; C.lostDone = true;
+    const run = Run;
+    AudioSys.play('lose');
+    run.hp = 0;
+    run.endRun(false);
+  },
+  /* ---------- 藥水 ---------- */
+  usePotion(idx){
+    const C = this.C;
+    if (C.state !== 'player') return;
+    const p = Run.potions[idx];
+    if (!p) return;
+    if (p.count <= 0) return;
+    p.count--;
+    Run.potions = Run.potions.filter(x => x.count > 0);
+    if (p.id === 'heal') this.healPlayer(30);
+    if (p.id === 'energy'){ C.player.energy += 3; AudioSys.play('buff'); }
+    if (p.id === 'aoe'){
+      for (const e of C.enemies) if (!e.dead){ this.hitEnemy(e, 15, null, null, 0); }
+      AudioSys.play('explode'); shake(6);
+    }
+    UI.refreshCombat();
+      },
+      /* 自動結束回合：開啟時，無牌可打（或能量歸零）自動結束 */
+      maybeAutoEnd(){
+        if (!UI.autoEnd || !this.C || this.C.state !== 'player') return;
+        const P = this.C.player;
+        const affordable = P.hand.some(c => {
+          const d = CARDS[c.id];
+          return d && cardVals(d, c.up).cost <= P.energy;
+        });
+        if (P.energy <= 0 || !affordable){
+          clearTimeout(this._aeT);
+          this._aeT = setTimeout(() => {
+            if (this.C && this.C.state === 'player' && UI.autoEnd){
+              UI.toast('⚡ 自動結束回合');
+              this.endTurn();
+            }
+          }, 450);
+        }
+      },
+    };
+function intentLabel(s){
+  let out = '';
+  for (const k in s){ out += ({ str:'力量', dex:'敏捷', weak:'虛弱', vuln:'易傷', burn:'燃燒', pois:'侵蝕' })[k] + '+' + s[k] + ' '; }
+  return out.trim();
+}
+/* FX 命名空間（動畫，Render 消費） */
+const FX = {
+  anims: [],
+  slash(x, y, ang, col, dmg){
+    this.anims.push({ type:'slash', x, y, ang, col, t: 0, dmg: dmg || 0 });
+  },
+  slashDash(x1, y1, x2, y2, col){
+    this.anims.push({ type:'dash', x1, y1, x2, y2, col, t: 0 });
+  },
+  blockHit(x, y){
+    this.anims.push({ type:'shield', x, y, t: 0 });
+    burst(x, y, { n: 8, col: '#7dff9e', spd: 160, sz: 3, life: .35 });
+  },
+  statusUp(x, y, txt, col){ addFloat(x, y, txt, col, 16); },
+  powerRing(x, y, col){ this.anims.push({ type:'ring', x, y, col, t: 0 }); },
+  explode(x, y, col){
+    burst(x, y, { n: 26, col, spd: 320, sz: 5, life: .7 });
+    burst(x, y, { n: 12, col: '#ffffff', spd: 200, sz: 3, life: .5 });
+    this.anims.push({ type:'boom', x, y, col, t: 0 });
+  },
+  burnFx(x, y){ burst(x, y, { n: 10, col: '#ff7a3d', spd: 120, sz: 4, life: .6, grav: -60 }); },
+  poisFx(x, y){ burst(x, y, { n: 10, col: '#6bff8e', spd: 130, sz: 4, life: .6 }); },
+  intentWarn(x, y, d, col){ this.anims.push({ type:'warn', x, y, d, col, t: 0 }); },
+  update(dt){
+    for (let i = this.anims.length - 1; i >= 0; i--){
+      this.anims[i].t += dt;
+      if (this.anims[i].t > .45) this.anims.splice(i, 1);
+    }
+  },
+  draw(c){
+    for (const a of this.anims){
+      const p = a.t / .45;
+      if (a.type === 'slash'){
+        c.save();
+        c.translate(a.x, a.y); c.rotate(a.ang);
+        c.globalAlpha = 1 - p;
+        c.strokeStyle = a.col; c.lineWidth = 5 * (1 - p) + 1; c.lineCap = 'round';
+        const r = 60 + p * 70;
+        c.beginPath(); c.arc(0, 0, r, -0.7, 0.7); c.stroke();
+        c.strokeStyle = '#fff'; c.lineWidth = 2 * (1 - p);
+        c.beginPath(); c.arc(0, 0, r * .8, -0.5, 0.5); c.stroke();
+        c.restore();
+      } else if (a.type === 'dash'){
+        c.globalAlpha = 1 - p;
+        c.strokeStyle = a.col; c.lineWidth = 9 * (1 - p) + 2; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(a.x1, a.y1); c.lineTo(a.x2, a.y2); c.stroke();
+        c.strokeStyle = '#fff'; c.lineWidth = 3 * (1 - p);
+        c.beginPath(); c.moveTo(a.x1, a.y1); c.lineTo(a.x2, a.y2); c.stroke();
+        c.globalAlpha = 1;
+      } else if (a.type === 'shield'){
+        c.globalAlpha = 1 - p;
+        c.strokeStyle = '#7dff9e'; c.lineWidth = 3;
+        c.beginPath(); c.arc(a.x, a.y, 26 + p * 18, 0, 7); c.stroke();
+        c.globalAlpha = 1;
+      } else if (a.type === 'ring'){
+        c.globalAlpha = 1 - p;
+        c.strokeStyle = a.col; c.lineWidth = 4;
+        c.beginPath(); c.arc(a.x, a.y, 20 + p * 120, 0, 7); c.stroke();
+        c.globalAlpha = 1;
+      } else if (a.type === 'boom'){
+        c.globalAlpha = 1 - p;
+        c.fillStyle = a.col;
+        c.beginPath(); c.arc(a.x, a.y, 40 * (1 - p * .7) + 10, 0, 7); c.fill();
+        c.globalAlpha = 1;
+      } else if (a.type === 'warn'){
+        c.globalAlpha = (Math.sin(a.t * 46) * 0.4 + 0.6) * (1 - p * .5);
+        c.fillStyle = a.col;
+        c.save(); c.translate(a.x, a.y);
+        c.font = '900 46px sans-serif'; c.textAlign = 'center';
+        c.fillText('‼', 0, 0);
+        c.restore();
+        c.globalAlpha = 1;
+      }
+    }
+  }
+};
+/* ===== 星穹牌局 g2_map.js — 路徑地圖生成 ===== */
+'use strict';
+const MapGen = {
+  FLOORS: 8, SLOTS: 3,
+  generate(act){
+    const floors = [];
+    const bossFloor = this.FLOORS + 1; // 第 9 層 = Boss
+    // 起點
+    const start = { id: 0, f: 0, s: 1, type: 'start', next: [] };
+    const nodes = [start];
+    let idc = 1;
+    const grid = [];
+    for (let f = 1; f <= this.FLOORS; f++){
+      const row = [];
+      for (let s = 0; s < this.SLOTS; s++){
+        const type = this.rollType(f, act);
+        const n = { id: idc++, f, s, type, next: [], prev: [] };
+        nodes.push(n); row.push(n);
+      }
+      grid.push(row);
+    }
+    const boss = { id: idc++, f: bossFloor, s: 1, type: 'boss', next: [], prev: [] };
+    nodes.push(boss);
+    // 連線：每層相鄰 slot 差 <=1
+    const last = grid[grid.length - 1];
+    for (const n of last) boss.prev.push(n); // 最後一層都能通 Boss
+    boss.prev.forEach(p => p.next.push(boss));
+    let prev = [start];
+    for (const row of grid){
+      for (const p of prev){
+        const targets = row.filter(n => Math.abs(n.s - p.s) <= 1);
+        for (const t of targets){ p.next.push(t); t.prev.push(p); }
+      }
+      prev = row;
+    }
+    // 確保每個節點至少一條出路
+    for (const n of nodes) if (!n.next.length){
+      const rowAbove = grid.find(r => r.some(x => x.f === n.f + 1)) || [boss];
+      const t = rowAbove.find(x => Math.abs(x.s - n.s) <= 1) || rowAbove[0];
+      n.next.push(t); t.prev.push(n);
+    }
+    return { nodes, boss, act };
+  },
+  rollType(f, act){
+    const w = {
+      combat: 46, elite: f >= 4 ? 14 : 10, event: 20, camp: 16, shop: 12
+    };
+    let total = 0; for (const k in w) total += w[k];
+    let r = Math.random() * total;
+    for (const k in w){ r -= w[k]; if (r <= 0) return k; }
+    return 'combat';
+  },
+  /* 遭遇敵人 */
+  makeEncounter(tier, act, diff){
+    const pool = ACT_POOLS[act];
+    const m = 1 + diff * 0.14; // 敵人生命倍率
+    if (tier === 'boss') return [{ def: ENEMIES[pool.boss], m }];
+    if (tier === 'elite'){
+      const e = ENEMIES[pick(pool.elite)];
+      return [{ def: e, m }];
+    }
+    const n = Math.random() < 0.45 ? 2 : 1;
+    const es = [];
+    for (let i = 0; i < n; i++) es.push({ def: ENEMIES[pick(pool.normal)], m });
+    return es;
+  }
+};
+
+/* 地圖渲染：獨立 canvas */
+const MapView = {
+  NODE_R: 30,
+  draw(){
+    const cv = $('map-canvas'), c = cv.getContext('2d');
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
+    if (cv.width !== W || cv.height !== H){ cv.width = W; cv.height = H; }
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.clearRect(0, 0, W, H);
+    const M = Run.map;
+    if (!M) return;
+    const mapW = W, mapH = H - 10 * dpr;
+    const px = s => mapW / 2 + (s - 1) * (mapW / 3.4);
+    const py = f => 24 * dpr + (f / (MapGen.FLOORS + 1)) * (mapH - 48 * dpr);
+    const iconOf = t => ({ combat:'⚔️', elite:'💀', event:'❔', camp:'🔥', shop:'🛒', boss:'👑', start:'🚀' }[t] || '·');
+    c.save();
+    // 連線
+    c.strokeStyle = 'rgba(120,150,220,.25)'; c.lineWidth = 2 * dpr;
+    for (const n of M.nodes){
+      if (n.type === 'start') continue;
+      for (const nx of n.next){
+        c.beginPath(); c.moveTo(px(n.s), py(n.f)); c.lineTo(px(nx.s), py(nx.f)); c.stroke();
+      }
+    }
+    // 節點
+    for (const n of M.nodes){
+      const x = px(n.s), y = py(n.f);
+      const isCur = Run.node && Run.node.id === n.id;
+      const avail = Run.node && Run.node.next && Run.node.next.some(t => t.id === n.id);
+      const visited = Run.visited && Run.visited[n.id];
+      let col = 'rgba(70,90,160,.55)';
+      let r = this.NODE_R * dpr * 0.9;
+      if (isCur) col = '#4ef7ff';
+      else if (avail) col = '#ffd94e';
+      else if (visited) col = 'rgba(70,90,160,.35)';
+      // 光暈
+      if (isCur || avail){
+        c.shadowColor = isCur ? '#4ef7ff' : '#ffd94e';
+        c.shadowBlur = 22 * dpr;
+      }
+      c.fillStyle = col;
+      c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+      c.shadowBlur = 0;
+      c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 1.5 * dpr;
+      c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke();
+      c.font = `${Math.round(22 * dpr)}px sans-serif`;
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(iconOf(n.type), x, y + 1 * dpr);
+    }
+    c.restore();
+  },
+  hitTest(e){
+    const r = $('map-canvas').getBoundingClientRect();
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    const M = Run.map;
+    if (!M || !Run.node) return null;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const mapW = r.width, mapH = r.height - 10 * dpr;
+    const px = s => mapW / 2 + (s - 1) * (mapW / 3.4);
+    const py = f => 24 * dpr + (f / (MapGen.FLOORS + 1)) * (mapH - 48 * dpr);
+    // 觸控熱區加大（手指友善）
+    const hitR = Math.max(30, this.NODE_R * 0.9 + 18);
+    for (const n of M.nodes){
+      if (!Run.node.next || !Run.node.next.some(t => t.id === n.id)) continue;
+      const x = px(n.s), y = py(n.f);
+      if (Math.hypot(mx - x, my - y) <= hitR) return n;
+    }
+    return null;
+  }
+};
+/* ===== 星穹牌局 g3_run.js — 局內流程 ===== */
+'use strict';
+const Run = {
+  started: false, char: null, charDef: null, diff: 0,
+  hp: 0, maxHp: 0, gold: 0, energyCap: 3,
+  deck: [], relics: [], potions: [],
+  act: 1, floor: 1, map: null, node: null, visited: {},
+  kills: 0, cardsPlayed: 0, gemsCollected: 0, actGems: 0,
+  bossKilled: false, maxGoldSeen: 0, bossTurn: 0,
+
+  hasRelic(id){ return this.relics.indexOf(id) !== -1; },
+  freeRelicId(){ return Object.keys(RELICS).filter(id => !RELICS[id].starter); },
+
+  newRun(charId, diff){
+    const cd = CHARACTERS[charId];
+    this.started = true; this.char = charId; this.charDef = cd;
+    this.diff = diff || 0;
+    this.maxHp = cd.maxHp + Save.metaLv('maxHpUp') * 10;
+    this.hp = this.maxHp;
+    this.energyCap = cd.energy + (Save.metaLv('startEnergy') > 0 ? 1 : 0);
+    this.gold = Save.metaLv('startGold') * 30;
+    this.deck = cd.starterDeck.map(id => ({ id, up: false }));
+    this.relics = [cd.starterRelic];
+    this.potions = [];
+    this.act = 1; this.floor = 1;
+    this.node = null; this.visited = {};
+    this.kills = 0; this.cardsPlayed = 0; this.gemsCollected = 0; this.actGems = 0;
+    this.bossKilled = false; this.maxGoldSeen = 0;
+    this.map = MapGen.generate(1);
+    this.node = this.map.nodes[0]; // start
+    this.visited[this.node.id] = true;
+    Save.save();
+  },
+  /* ---------- 節點進入 ---------- */
+  enterNode(n){
+    if (!n) return;
+    this.node = n;
+    this.visited[n.id] = true;
+    this.floor = n.f;
+    const t = n.type;
+    if (t === 'start'){ UI.showMap(); return; }
+    if (t === 'combat' || t === 'elite' || t === 'boss'){
+      const tier = t === 'boss' ? 'boss' : t;
+      Combat.start(tier, MapGen.makeEncounter(tier, this.act, this.diff), {});
+      return;
+    }
+    if (t === 'event'){ UI.showEvent(pick(EVENTS)); return; }
+    if (t === 'camp'){ UI.showCamp(); return; }
+    if (t === 'shop'){ UI.showShop(); return; }
+  },
+  canTravel(){ return this.node && this.node.next && this.node.next.length > 0; },
+  travelTo(n){
+    if (!this.node.next.some(x => x.id === n.id)) return;
+    UI.hideTop();
+    this.enterNode(n);
+  },
+  /* ---------- 戰鬥後 ---------- */
+  afterCombat(nodeType, bossDef){
+    const isBoss = nodeType === 'boss';
+    if (isBoss){
+      if (bossDef && bossDef.id === 'zero') Save.unlock('zero_kill');
+      // 第 3 幕 Boss 通關 = 勝利
+      if (this.act >= 3){
+        this.endRun(true);
+        return;
+      }
+      // 進入下一幕
+      this.act++;
+      Save.stats.bestAct = Math.max(Save.stats.bestAct, this.act);
+      this.hp = this.maxHp; // 過幕全回復
+      UI.toast('進入 ' + ACTS[this.act].name);
+      this.map = MapGen.generate(this.act);
+      this.node = this.map.nodes[0];
+      this.visited = {}; this.visited[this.node.id] = true;
+      UI.showMap();
+      return;
+    }
+    UI.showMap();
+  },
+  /* ---------- 獲得 ---------- */
+  addGems(n){ this.gemsCollected += n; },
+  gainRelic(id){
+    this.relics.push(id);
+    UI.toast('獲得遺物：' + RELICS[id].name);
+    // 立即生效
+    if (RELICS[id].tag === 'maxHpMult'){ this.maxHp = Math.round(this.maxHp * 1.15); this.hp = Math.min(this.maxHp, this.hp); }
+    if (RELICS[id].tag === 'energyCap'){ this.energyCap += 1; }
+    if (this.relics.length >= 10) Save.unlock('relics_10');
+  },
+  randomRelic(){
+    const pool = this.freeRelicId().filter(id => this.relics.indexOf(id) === -1);
+    if (!pool.length) return null;
+    const id = pick(pool);
+    this.gainRelic(id);
+    return id;
+  },
+  addCard(id){ this.deck.push({ id, up: false }); },
+  randomCard(rarity){
+    const pool = this.charDef.pool[rarity] || [];
+    return pick(pool);
+  },
+  gainPotion(){
+    const id = pick(['heal', 'energy', 'aoe']);
+    if (this.potions.length >= 2 + (this.hasRelic('space_pack') ? 1 : 0)){
+      return null;
+    }
+    const p = this.potions.find(x => x.id === id);
+    if (p) p.count++; else this.potions.push({ id, count: 1 });
+    return id;
+  },
+  gainGold(v){
+    this.gold += v;
+    this.maxGoldSeen = Math.max(this.maxGoldSeen, this.gold);
+    if (this.gold >= 1000) Save.unlock('gold_1000');
+  },
+  loseRelic(){
+    if (this.relics.length <= 1){ this.hp -= 8; UI.toast('沒有遺物可交，失去 8 生命'); return null; }
+    const pool = this.relics.slice(1); // 保留起始遺物
+    const id = pick(pool);
+    this.relics = this.relics.filter(x => x !== id);
+    UI.toast('失去遺物：' + RELICS[id].name);
+    return id;
+  },
+  upgradeOneCard(cardObj){ cardObj.up = true; },
+  deckUpgraded(){ return this.deck.filter(c => c.up).length; },
+
+  /* ---------- 事件效果 ---------- */
+  resolveEvent(opt){
+    const eff = opt.eff;
+    const next = () => { UI.showMap(); };
+    switch (eff.type){
+      case 'nothing': next(); break;
+      case 'heal':
+        if (eff.v > 0){ this.hp = Math.min(this.maxHp, this.hp + eff.v); UI.toast('回復 ' + eff.v + ' 生命'); }
+        else { this.hp += eff.v; UI.toast('失去 ' + (-eff.v) + ' 生命'); if (this.hp <= 0) return this.endRun(false); }
+        if (eff.gold) this.gainGold(eff.gold);
+        if (eff.relicChance && Math.random() < eff.relicChance) this.randomRelic();
+        next(); break;
+      case 'healPct':
+        const h = Math.round(this.maxHp * eff.v / 100);
+        this.hp = Math.min(this.maxHp, this.hp + h);
+        UI.toast('回復 ' + h + ' 生命');
+        next(); break;
+      case 'gold': this.gainGold(eff.v); next(); break;
+      case 'card':
+        UI.pickCardReward(eff.rng, 1, () => { this.resolveEvent({ eff: { type: 'nothing' } }); });
+        break;
+      case 'relic':
+        if (eff.pay){ this.gold -= eff.pay; }
+        this.randomRelic();
+        next(); break;
+      case 'potion':
+        if (eff.pay) this.gold -= eff.pay;
+        const p = this.gainPotion();
+        if (!p && eff.card) UI.pickCardReward('common', 1, next);
+        else if (eff.card){ UI.pickCardReward('common', 1, next); }
+        else next();
+        break;
+      case 'removeCard': UI.pickDeck('remove', null, next); break;
+      case 'upgradeCard': UI.pickDeck('upgrade', null, next); break;
+      case 'fight': {
+        const tier = eff.tier;
+        const enemies = eff.n === 2
+          ? [{ def: ENEMIES[pick(ACT_POOLS[this.act].normal)], m: 1 + this.diff * 0.14 }, { def: ENEMIES[pick(ACT_POOLS[this.act].normal)], m: 1 + this.diff * 0.14 }]
+          : MapGen.makeEncounter(tier, this.act, this.diff);
+        Combat.start(eff.tier, enemies, { eventLoot: eff.loot });
+        break;
+      }
+      case 'gamble':
+        if (Math.random() < 0.5){
+          if (eff.win.relic) this.randomRelic();
+          else if (eff.win.heal) { this.hp = Math.min(this.maxHp, this.hp + eff.win.heal); UI.toast('命運眷顧：回復 ' + eff.win.heal + ' 生命'); }
+        } else {
+          if (eff.lose.loseHp){ this.hp -= eff.lose.loseHp; UI.toast('付出代價：失去 ' + eff.lose.loseHp + ' 生命'); if (this.hp <= 0) return this.endRun(false); }
+        }
+        next(); break;
+      case 'loseRelic': this.loseRelic(); next(); break;
+    }
+  },
+
+  /* ---------- 商店 ---------- */
+  shopStock: null,
+  makeShop(){
+    const pool = this.freeRelicId().filter(id => RELICS[id].rarity !== 'rare');
+    const relics = shuffle(pool).slice(0, 2);
+    const cards = [];
+    for (let i = 0; i < 4; i++){
+      const r = pickW(['common', 'uncommon', 'rare'], r => r === 'common' ? 5 : r === 'uncommon' ? 3 : 1);
+      cards.push(this.randomCard(r));
+    }
+    this.shopStock = {
+      cards, relics, potion: pick(['heal', 'energy', 'aoe']),
+      removePrice: 75
+    };
+  },
+  shopPrice(base){ return Math.round(base * (this.hasRelic('beginner_rune') ? 0.85 : 1)); },
+  buyCard(idx){
+    const it = this.shopStock.cards[idx];
+    if (it === null) return;
+    const price = this.shopPrice({ common: 45, uncommon: 70, rare: 115 }[CARDS[it].rarity]);
+    if (this.gold < price){ UI.toast('金幣不足！'); return; }
+    this.gold -= price;
+    this.addCard(it);
+    this.shopStock.cards[idx] = null;
+    UI.renderShop();
+  },
+  buyRelic(i){
+    const it = this.shopStock.relics[i];
+    if (it === null) return;
+    if (this.relics.indexOf(it) !== -1) return;
+    const price = this.shopPrice(145);
+    if (this.gold < price){ UI.toast('金幣不足！'); return; }
+    this.gold -= price;
+    this.gainRelic(it);
+    this.shopStock.relics[i] = null;
+    UI.renderShop();
+  },
+  buyPotion(){
+    const price = this.shopPrice(45);
+    if (this.gold < price){ UI.toast('金幣不足！'); return; }
+    this.gold -= price;
+    this.gainPotion();
+    UI.renderShop();
+  },
+  buyRemove(){
+    if (this.deck.length <= 5){ UI.toast('牌組太少，不能刪牌'); return; }
+    if (this.gold < this.shopStock.removePrice){ UI.toast('金幣不足！'); return; }
+    this.gold -= this.shopStock.removePrice;
+    UI.pickBack = () => UI.showShop();
+    UI.pickDeck('remove', null, () => UI.showShop());
+  },
+
+  /* ---------- 休息點 ---------- */
+  doCamp(opt){
+    if (opt === 'heal'){
+      const h = Math.round(this.maxHp * 0.3);
+      this.hp = Math.min(this.maxHp, this.hp + h);
+      UI.toast('回復 ' + h + ' 生命');
+      UI.showMap();
+    } else if (opt === 'upgrade'){
+      UI.pickDeck('upgrade', null, () => UI.showMap());
+    } else if (opt === 'remove'){
+      UI.pickDeck('remove', null, () => UI.showMap());
+    }
+  },
+
+  /* ---------- 結束 ---------- */
+  endRun(win){
+    this.started = false;
+    let gems = this.gemsCollected;
+    if (win){
+      gems += 60 + this.act * 20;
+      Save.stats.wins++;
+      Save.unlock('first_win');
+      if (this.diff >= 3) Save.unlock('win_diff3');
+      Save.stats.winChars = Save.stats.winChars || {};
+      Save.stats.winChars[this.char] = 1;
+      if (Save.stats.winChars.xia && Save.stats.winChars.yan && Save.stats.winChars.ling) Save.unlock('win_all');
+    } else {
+      gems = Math.max(5, Math.round(gems * 0.5));
+    }
+    const mult = 1 + Save.metaLv('starMult') * 0.2;
+    const finalGems = Math.round(gems * mult);
+    Save.addGems(finalGems);
+    Save.stats.runs++;
+    Save.stats.totalGems += finalGems;
+    Save.stats.bestAct = Math.max(Save.stats.bestAct, this.act);
+    Save.stats.maxKills = Math.max(Save.stats.maxKills, this.kills);
+    Save.save();
+    UI.showResultWin(win, finalGems);
+  }
+};
+/* ===== 星穹牌局 g4_save.js — 存檔/成就 ===== */
+'use strict';
+const Save = {
+  KEY: 'starcards_save_v1',
+  gems: 0,
+  meta: {},
+  stats: { runs: 0, wins: 0, kills: 0, cardsPlayed: 0, bestAct: 0, maxKills: 0, totalGems: 0, winChars: {} },
+  ach: {},
+  load(){
+    try {
+      const d = JSON.parse(localStorage.getItem(this.KEY) || '{}');
+      if (d.v !== 1) throw 0;
+      this.gems = d.gems || 0;
+      this.meta = d.meta || {};
+      this.stats = Object.assign(this.stats, d.stats || {});
+      this.ach = d.ach || {};
+    } catch(e){
+      this.gems = 0; this.meta = {}; this.ach = {};
+    }
+  },
+  save(){
+    try {
+      localStorage.setItem(this.KEY, JSON.stringify({ v: 1, gems: this.gems, meta: this.meta,
+        stats: this.stats, ach: this.ach }));
+    } catch(e){}
+  },
+  addGems(n){ this.gems += n; this.save(); },
+  spendGems(n){
+    if (this.gems < n) return false;
+    this.gems -= n; this.save(); return true;
+  },
+  metaLv(id){ return this.meta[id] || 0; },
+  buyMeta(id){
+    const m = META_UPGRADES.find(x => x.id === id);
+    const lv = this.metaLv(id);
+    if (lv >= m.max) return false;
+    const cost = m.costs[lv];
+    if (!this.spendGems(cost)) return false;
+    this.meta[id] = lv + 1;
+    this.save();
+    return true;
+  },
+  diffUnlocked(n){ return n === 0 || this.metaLv('diff') >= n; },
+  unlock(id){
+    if (this.ach[id]) return;
+    const a = ACHIEVEMENTS.find(x => x.id === id);
+    if (!a) return;
+    this.ach[id] = 1;
+    this.save();
+    UI.toast('🏆 成就解鎖：' + a.name);
+    AudioSys.play('win');
+  }
+};
+
+const META_UPGRADES = [
+  { id:'startGold', name:'開局資金', icon:'⛃', max:3, costs:[200,400,800],
+    desc:'每局開始時 +30 金幣', lvDesc: l => `每局開始時 +${30 * l} 金幣` },
+  { id:'maxHpUp', name:'強化機體', icon:'❤️', max:3, costs:[150,350,700],
+    desc:'最大生命 +10', lvDesc: l => `最大生命 +${10 * l}` },
+  { id:'startEnergy', name:'能量核心', icon:'⚡', max:1, costs:[1200],
+    desc:'能量上限 +1', lvDesc: () => '能量上限 +1' },
+  { id:'starMult', name:'星塵共振', icon:'💎', max:3, costs:[300,600,1200],
+    desc:'星塵獲得 +20%', lvDesc: l => `星塵獲得 +${20 * l}%` },
+  { id:'diff', name:'高難度解鎖', icon:'🔥', max:5, costs:[150,300,500,800,1200],
+    desc:'解鎖難度階梯（敵人數值上升，星塵獎勵不變）', lvDesc: l => `已解鎖難度 ${l}` }
+];
+
+const ACHIEVEMENTS = [
+  { id:'first_win', name:'初次勝利', icon:'🏆', desc:'通關一局遠征' },
+  { id:'zero_kill', name:'歸零者隕落', icon:'🕳️', desc:'擊敗最終Boss「歸零者」' },
+  { id:'win_all', name:'王牌艦長', icon:'👑', desc:'以三位艦長各通關一次' },
+  { id:'kills_100', name:'百斬獵人', icon:'⚔️', desc:'累計擊殺 100 名敵人' },
+  { id:'cards_500', name:'洗牌大師', icon:'🂠', desc:'累計打出 500 張牌' },
+  { id:'gold_1000', name:'富可敵國', icon:'⛃', desc:'單局持有 1000 金幣' },
+  { id:'no_dmg_elite', name:'完美獵殺', icon:'🎯', desc:'無傷擊敗一名精英敵人' },
+  { id:'big_hit', name:'一擊必殺', icon:'💥', desc:'單次攻擊造成 50 點以上傷害' },
+  { id:'relics_10', name:'遺物收藏家', icon:'📿', desc:'單局持有 10 個遺物' },
+  { id:'burn_20', name:'燎原之火', icon:'🔥', desc:'一次施加 20 層燃燒' },
+  { id:'win_diff3', name:'地獄航行', icon:'☠️', desc:'在難度 3 以上通關' },
+  { id:'one_turn_boss', name:'秒殺Boss', icon:'⏱️', desc:'3 回合內擊敗 Boss' }
+];
+/* ===== 星穹牌局 r1_render.js — Canvas 渲染 ===== */
+'use strict';
+const Render = {
+  stars: [], neb: [],
+  init(){
+    for (let i = 0; i < 90; i++) this.stars.push({ x: Math.random(), y: Math.random(), s: Math.random() * 1.8 + .4, sp: .02 + Math.random() * .05, ph: Math.random() * 7 });
+    for (let i = 0; i < 3; i++) this.neb.push({ x: Math.random(), y: .3 + Math.random() * .4, r: 120 + Math.random() * 160, col: ['#7a3dff', '#00c8a0', '#ff4ef0'][i] });
+  },
+  /* 敵人位置（依數量分配） */
+  epos(slot, n){
+    let x = 360, y = 300;
+    if (n === 2) x = slot === 0 ? 260 : 460;
+    if (n === 3) x = 155 + slot * 205;
+    return { x, y };
+  },
+  W: 720, H: 1280,
+  draw(c, dt){
+    const act = Run.started ? (ACTS[Run.act] || ACTS[1]) : ACTS[1];
+    this.drawBG(c, act, dt);
+    if (Combat.C && G.screen === 'combat' || (Combat.C && G.screen === 'reward' && Combat.C.state === 'won')) this.drawCombat(c, dt);
+    FX.update(dt);
+    FX.draw(c);
+    // 玩家受擊暗紅邊
+    if (Combat.C && Combat.C.player && Combat.C.player.hp <= Combat.C.player.maxHp * 0.3){
+      c.globalAlpha = .12 + Math.sin(G.time * 5) * .05;
+      c.fillStyle = '#ff2020';
+      c.fillRect(0, 0, this.W, this.H);
+      c.globalAlpha = 1;
+    }
+  },
+  drawBG(c, act, dt){
+    const g = c.createLinearGradient(0, 0, 0, this.H);
+    g.addColorStop(0, act.bg[0]); g.addColorStop(1, act.bg[1]);
+    c.fillStyle = g; c.fillRect(0, 0, this.W, this.H);
+    // 星雲
+    for (const n of this.neb){
+      const rx = n.x * this.W + Math.sin(G.time * .08 + n.r) * 20;
+      const ry = n.y * this.H + Math.cos(G.time * .06) * 30;
+      const rg = c.createRadialGradient(rx, ry, 0, rx, ry, n.r);
+      rg.addColorStop(0, n.col + '33'); rg.addColorStop(1, 'transparent');
+      c.fillStyle = rg; c.fillRect(rx - n.r, ry - n.r, n.r * 2, n.r * 2);
+    }
+    // 星
+    for (const s of this.stars){
+      const y = (s.y * this.H + G.time * 14 * s.sp) % this.H;
+      const tw = .5 + .5 * Math.sin(G.time * 2 + s.ph);
+      c.globalAlpha = tw * .8;
+      c.fillStyle = s.s > 1.4 ? '#cfe8ff' : '#8fb8e8';
+      c.fillRect(s.x * this.W, y, s.s, s.s * 2.2);
+    }
+    c.globalAlpha = 1;
+  },
+  drawCombat(c, dt){
+    const C = Combat.C, P = C.player;
+    // 敵方
+    C.enemies.forEach((e, i) => {
+      const p = this.epos(e.slot, C.enemies.length);
+      this.drawEnemy(c, e, p, dt);
+    });
+    // 玩家
+    this.drawPlayer(c, P, dt);
+  },
+  drawEnemy(c, e, p, dt){
+    if (e.dead) return;
+    const r = e.def.tier === 'boss' ? 66 : e.def.tier === 'elite' ? 48 : 40;
+    const bob = Math.sin(G.time * 3 + e.slot * 2) * 5;
+    const lunge = e.lunge > 0 ? Math.sin((.25 - e.lunge) / .25 * Math.PI) * 26 : 0;
+    const x = p.x, y = p.y + bob + lunge;
+    const col = e.def.col;
+    // 光暈
+    const gr = c.createRadialGradient(x, y, r * .3, x, y, r * 1.7);
+    gr.addColorStop(0, col + '55'); gr.addColorStop(1, 'transparent');
+    c.fillStyle = gr;
+    c.beginPath(); c.arc(x, y, r * 1.7, 0, 7); c.fill();
+    // 本體
+    c.save();
+    c.translate(x, y);
+    if (e.flashT > 0){ c.globalAlpha = Math.min(1, e.flashT * 6); }
+    c.fillStyle = col;
+    c.shadowColor = col; c.shadowBlur = 16;
+    c.beginPath();
+    if (e.def.tier === 'boss'){
+      // 核心 + 旋轉環
+      c.arc(0, 0, r, 0, 7); c.fill();
+      c.rotate(G.time * 1.2);
+      c.strokeStyle = '#fff'; c.lineWidth = 3; c.globalAlpha = .8;
+      for (let i = 0; i < 3; i++){
+        c.rotate(2.094);
+        c.beginPath(); c.arc(0, 0, r * 1.25, 0, 1.4); c.stroke();
+      }
+    } else if (e.def.tier === 'elite'){
+      // 六邊形
+      for (let i = 0; i < 6; i++){
+        const a = i / 6 * 6.283 + .3;
+        const px = Math.cos(a) * r, py = Math.sin(a) * r;
+        if (i === 0) c.moveTo(px, py); else c.lineTo(px, py);
+      }
+      c.closePath(); c.fill();
+    } else {
+      // 圓形 + 尖角（船型）
+      c.arc(0, 0, r * .85, 0, 7); c.fill();
+      c.beginPath(); c.moveTo(0, -r * 1.35); c.lineTo(r * .55, -r * .2); c.lineTo(-r * .55, -r * .2); c.closePath(); c.fill();
+    }
+    c.shadowBlur = 0;
+    // 眼睛
+    c.fillStyle = '#fff';
+    c.beginPath(); c.arc(-r * .3, -r * .15, r * .13, 0, 7); c.arc(r * .3, -r * .15, r * .13, 0, 7); c.fill();
+    c.fillStyle = '#101426';
+    c.beginPath(); c.arc(-r * .3, -r * .1, r * .06, 0, 7); c.arc(r * .3, -r * .1, r * .06, 0, 7); c.fill();
+    c.restore();
+    // 燃燒火焰
+    if (e.buffs.burn){ c.fillStyle = 'rgba(255,122,61,.7)'; c.beginPath(); c.arc(x - r * .5, y + r * .8, 6 + Math.sin(G.time * 8) * 2, 0, 7); c.fill(); c.beginPath(); c.arc(x + r * .5, y + r * .8, 5 + Math.cos(G.time * 7) * 2, 0, 7); c.fill(); }
+    // HP 條
+    const bw = e.def.tier === 'boss' ? 170 : 110;
+    const bh = 15, bx = x - bw / 2, by = y - r - 42;
+    c.fillStyle = 'rgba(0,0,20,.65)'; c.fillRect(bx - 1, by - 1, bw + 2, bh + 2);
+    c.fillStyle = '#3a2a4a'; c.fillRect(bx, by, bw, bh);
+    const hpR = e.hp / e.maxHp;
+    const hg = c.createLinearGradient(bx, 0, bx + bw, 0);
+    hg.addColorStop(0, '#ff5a6e'); hg.addColorStop(1, '#ffd94e');
+    c.fillStyle = hg; c.fillRect(bx, by, bw * Math.max(0, hpR), bh);
+    if (e.block > 0){
+      c.fillStyle = 'rgba(90,200,255,.85)';
+      c.fillRect(bx, by - 3, bw * Math.min(1, e.block / 30), 3);
+    }
+    c.strokeStyle = 'rgba(255,255,255,.4)'; c.lineWidth = 1;
+    c.strokeRect(bx - 1, by - 1, bw + 2, bh + 2);
+    // 血量數字（條上方，加大 + 深色底襯）
+    c.font = '900 24px sans-serif'; c.textAlign = 'center';
+    const hpw = 34 + String(e.hp).length * 13;
+    c.fillStyle = 'rgba(0,0,20,.6)';
+    c.beginPath(); c.roundRect(x - hpw / 2, by - 24, hpw, 24, 7); c.fill();
+    c.fillStyle = '#fff';
+    c.fillText(String(e.hp), x, by - 7);
+    // 名稱（加大）
+    c.fillStyle = 'rgba(234,246,255,.95)'; c.font = '900 22px "Segoe UI",sans-serif';
+    c.textAlign = 'center';
+    c.fillText(e.def.name, x, by - 34);
+    // 意圖（下一動）
+    this.drawIntent(c, e, x, by + bh + 26);
+    // Buffs
+    this.drawBuffs(c, e.buffs, x, y + r + 46, e.def.tier === 'boss');
+  },
+  drawIntent(c, e, x, y){
+    if (e.dead) return;
+    const pat = (e.phase2 && e.def.pat2) ? e.def.pat2 : e.def.pat;
+    const it = pat[e.idx % pat.length];
+    const icon = it.i === 'atk' ? '⚔️' : it.i === 'def' ? '🛡️' : it.i === 'buf' ? '⬆️' : it.i === 'deb' ? '💀' : '✚';
+    const d = it.d || '';
+    c.font = '24px sans-serif'; c.textAlign = 'center';
+    c.fillStyle = 'rgba(0,0,20,.5)';
+    const w = 56;
+    c.beginPath(); c.roundRect(x - w / 2, y - 19, w, 38, 9); c.fill();
+    c.fillText(icon, x, y + 8);
+    if (d){ c.font = '900 18px sans-serif'; c.fillStyle = '#ffd94e'; c.fillText(String(d), x, y + 24); }
+  },
+  drawBuffs(c, buffs, x, y, big, huge){
+    c.font = '13px "Segoe UI",sans-serif'; c.textAlign = 'center';
+    let i = 0;
+    const cols = { str:'#ff9d4e', dex:'#4ef7ff', weak:'#b06bff', vuln:'#ff5a6e', burn:'#ff7a3d', pois:'#6bff8e', regen:'#6bff8e', thorns:'#9dffb0' };
+    const names = { str:'力', dex:'敏', weak:'虛', vuln:'易', burn:'燃', pois:'侵', regen:'再', thorns:'荊' };
+    for (const k in buffs){
+      if (!buffs[k]) continue;
+      const bw = huge ? 78 : big ? 64 : 56;
+      const bx = x + (i - 1.5) * bw;
+      c.fillStyle = cols[k] + '33';
+      c.beginPath(); c.roundRect(bx - 13, y - (huge ? 24 : 21), bw + (huge ? 18 : 16), huge ? 48 : 42, huge ? 10 : 9); c.fill();
+      c.fillStyle = cols[k];
+      c.font = '900 ' + (huge ? 28 : 24) + 'px sans-serif';
+      c.fillText(names[k] + buffs[k], bx + 2, y + (huge ? 6 : 5));
+      i++;
+    }
+    c.font = '13px sans-serif';
+  },
+  drawPlayer(c, P, dt){
+    const x = 360;
+    let y = 800; // 手機基準：上移避免被下方手牌遮擋
+    // 短視窗（桌面/橫屏）動態上移，確保血條/狀態不被手牌蓋住（預留 200px）
+    const hl = this.handLogical || 180;
+    if (G.viewH - hl - 200 < y) y = Math.max(430, G.viewH - hl - 200);
+    // 玩家光暈
+    const col = Run.charDef ? Run.charDef.color : '#4ef7ff';
+    const gr = c.createRadialGradient(x, y, 10, x, y, 90);
+    gr.addColorStop(0, col + '44'); gr.addColorStop(1, 'transparent');
+    c.fillStyle = gr; c.beginPath(); c.arc(x, y, 90, 0, 7); c.fill();
+    c.save(); c.translate(x, y);
+    c.shadowColor = col; c.shadowBlur = 18;
+    c.fillStyle = col;
+    if (Run.char === 'xia'){
+      c.beginPath(); c.moveTo(0, -34); c.lineTo(20, 26); c.lineTo(0, 14); c.lineTo(-20, 26); c.closePath(); c.fill();
+      c.fillStyle = '#ffd94e';
+      c.beginPath(); c.moveTo(0, -34); c.lineTo(6, 6); c.lineTo(0, 14); c.lineTo(-6, 6); c.closePath(); c.fill();
+    } else if (Run.char === 'yan'){
+      c.beginPath(); c.moveTo(0, -38); c.lineTo(24, 0); c.lineTo(0, 12); c.lineTo(-24, 0); c.closePath(); c.fill();
+      c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.moveTo(0, -38); c.lineTo(0, 12); c.stroke();
+    } else {
+      c.beginPath(); c.moveTo(0, -34); c.lineTo(28, -20); c.lineTo(28, 16); c.lineTo(0, 32); c.lineTo(-28, 16); c.lineTo(-28, -20); c.closePath(); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.85)';
+      c.beginPath(); c.arc(0, -4, 8, 0, 7); c.fill();
+    }
+    c.shadowBlur = 0; c.restore();
+    // 護甲盾
+    if (P.block > 0){
+      c.strokeStyle = 'rgba(157,255,176,.75)'; c.lineWidth = 3;
+      c.beginPath(); c.arc(x, y, 46, .5, 2.6); c.stroke();
+      c.fillStyle = '#7dff9e'; c.font = '900 20px sans-serif'; c.textAlign = 'center';
+      c.fillText(String(P.block), x, y + 64);
+    }
+    // HP 條（加高 + 數字加大）
+    const bw = 240, bx = x - bw / 2, by = y + 84;
+    c.fillStyle = 'rgba(0,0,20,.65)'; c.fillRect(bx - 1, by - 1, bw + 2, 26 + 2);
+    c.fillStyle = '#2a1a2a'; c.fillRect(bx, by, bw, 26);
+    const hpR = Math.max(0, P.hp / P.maxHp);
+    const hg = c.createLinearGradient(bx, 0, bx + bw, 0);
+    hg.addColorStop(0, hpR > .5 ? '#6bff8e' : '#ffd94e'); hg.addColorStop(1, hpR > .5 ? '#2fd46a' : '#ff7a3d');
+    c.fillStyle = hg; c.fillRect(bx, by, bw * hpR, 26);
+    c.strokeStyle = 'rgba(255,255,255,.4)'; c.strokeRect(bx - 1, by - 1, bw + 2, 28);
+    c.fillStyle = '#fff'; c.font = '900 26px sans-serif'; c.textAlign = 'center';
+    c.fillText(`${P.hp} / ${P.maxHp}`, x, by + 20);
+    // 玩家 Buffs（huge 版：28px，下移避開加高的血條）
+    this.drawBuffs(c, P.buffs, x, y + 148, true, true);
+    // 能量（加大）
+    c.font = '900 24px sans-serif';
+    c.fillStyle = P.energy > 0 ? '#4ef7ff' : '#678';
+    c.fillText('⚡ ' + P.energy, x, y - 58);
+  }
+};
+/* ===== 星穹牌局 u1_ui.js — 畫面控制/卡片/戰鬥 UI ===== */
+'use strict';
+const UI = {
+  selChar: 'xia', selDiff: 0, toastTimer: 0,
+
+  /* ---------- 初始化 ---------- */
+  init(){
+    G.cv = $('cv'); G.ctx = G.cv.getContext('2d');
+    G.mc = $('map-canvas'); G.mctx = G.mc.getContext('2d');
+    Save.load();
+    Render.init();
+    fitViewport();
+    window.addEventListener('resize', resizeCanvas);
+    this.bind();
+    this.renderTitleChars();
+    this.renderDiff();
+    this.showTitle();
+    startLoop();
+  },
+
+  toast(msg){
+    const el = $('banner-hint');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => el.classList.add('hidden'), 2200);
+  },
+  banner(msg){
+    const el = $('turn-banner');
+    el.textContent = msg;
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+  },
+
+  /* ---------- 主選單 ---------- */
+  renderTitleChars(){
+    const row = $('title-char-row');
+    row.innerHTML = '';
+    for (const id in CHARACTERS){
+      const c = CHARACTERS[id];
+      const b = document.createElement('div');
+      b.className = 'char-btn' + (this.selChar === id ? ' sel' : '');
+      b.innerHTML = `<div class="cb-icon">${c.icon}</div><div class="cb-name">${c.name.split('·')[1] || c.name}</div>` +
+        (c.unlock > 0 && Save.gems < c.unlock ? `<div class="cb-lock">🔒 ${c.unlock}💎</div>` : '');
+      if (c.unlock === 0 || Save.gems >= c.unlock){
+        onTap(b, () => {
+          this.selChar = id;
+          this.renderTitleChars();
+          AudioSys.play('click');
+        });
+      } else {
+        b.style.opacity = .5;
+      }
+      row.appendChild(b);
+    }
+  },
+  renderDiff(){
+    const row = $('diff-row');
+    row.innerHTML = '';
+    for (let d = 0; d <= 5; d++){
+      const b = document.createElement('div');
+      const unlocked = Save.diffUnlocked(d);
+      b.className = 'diff-btn' + (this.selDiff === d ? ' sel' : '') + (unlocked ? '' : ' locked');
+      b.textContent = d === 0 ? '★' : '☠' + d;
+      b.title = '難度 ' + d;
+      if (unlocked) onTap(b, () => { this.selDiff = d; this.renderDiff(); AudioSys.play('click'); });
+      row.appendChild(b);
+    }
+  },
+  showTitle(){
+    showScreen('title');
+    $('title-gems').textContent = `💎 星塵：${Save.gems}　🏆 成就：${Object.keys(Save.ach).length}/${ACHIEVEMENTS.length}　🏁 勝場：${Save.stats.wins}`;
+  },
+
+  /* ---------- 地圖 ---------- */
+  showMap(){
+    showScreen('map');
+    $('map-title').textContent = Run.node && Run.node.type === 'boss' ? '最終決戰' : ACTS[Run.act].name;
+    $('map-act').textContent = ACTS[Run.act].sub + ' · 第 ' + Run.floor + ' 層' +
+      (Run.node && Run.node.type === 'boss' ? ' · ' + ACTS[Run.act].bossLine : '') +
+      ' · 難度 ' + Run.diff;
+    const cv = $('map-canvas');
+    cv.onclick = e => {
+      const n = MapView.hitTest(e);
+      if (n) this.travelTo(n);
+    };
+    this.hideTop();
+    setTimeout(() => MapView.draw(), 30);
+  },
+  travelTo(n){
+    if (!Run.node.next.some(x => x.id === n.id)) return;
+    AudioSys.play('click');
+    Run.travelTo(n);
+  },
+  hideTop(){
+    $('topbar').classList.add('hidden');
+    $('hand').classList.add('hidden');
+    $('end-turn-box').classList.add('hidden');
+    $('potions').classList.add('hidden');
+    $('banner-hint').classList.add('hidden');
+  },
+
+  /* ---------- 戰鬥 ---------- */
+  enterCombat(){
+    showScreen('combat');
+    $('topbar').classList.remove('hidden');
+    $('hand').classList.remove('hidden');
+    $('end-turn-box').classList.remove('hidden');
+    $('potions').classList.remove('hidden');
+    $('banner-hint').classList.remove('hidden');
+    $('banner-hint').textContent = '卡片自動鎖定最前方敵人 · 點擊打牌';
+    this.refreshCombat();
+  },
+  refreshCombat(){
+    Render.handLogical = (($('hand').classList.contains('wrap') ? 232 : 132)) / (G.scale || 1);
+    const C = Combat.C;
+    if (!C) return;
+    const P = C.player;
+    // 能量（超過上限時顯示實際顆數，不再被 maxEnergy 蓋掉）
+    const en = $('energy');
+    en.innerHTML = '';
+    for (let i = 0; i < Math.max(P.maxEnergy, P.energy); i++){
+      const d = document.createElement('div');
+      d.className = 'energy-pip' + (i < P.energy ? '' : ' used');
+      en.appendChild(d);
+    }
+    $('turn-num').textContent = C.turn;
+    $('pile-draw').textContent = P.draw.length;
+    $('pile-disc').textContent = P.disc.length;
+    $('gold-amt').textContent = Run.gold;
+    this.renderHand();
+    this.renderPotions();
+  },
+  sortHand(){
+    const C = Combat.C;
+    if (!C) return;
+    C.player.hand.sort((a, b) => {
+      const A = CARDS[a.id], B = CARDS[b.id];
+      return (A.cost - B.cost) || (A.type === 'attack' ? 0 : 1) - (B.type === 'attack' ? 0 : 1);
+    });
+    this.renderHand();
+  },
+  renderHand(){
+    const C = Combat.C;
+    if (!C) return;
+    const box = $('hand');
+    box.innerHTML = '';
+    if (C.player.hand.length > 6) box.classList.add('wrap'); else box.classList.remove('wrap');
+    C.player.hand.forEach((card, i) => {
+      const data = CARDS[card.id];
+      if (!data) return; // 防呆：無效卡直接跳過（不崩潰）
+      const el = this.cardEl(card, { clickable: true });
+      const v = cardVals(data, card.up);
+      if (v.cost > C.player.energy) el.classList.add('dim');
+      onTap(el, () => { Combat.playCard(i); });
+      box.appendChild(el);
+    });
+  },
+  renderPotions(){
+    const C = Combat.C;
+    if (!C) return;
+    const box = $('potions');
+    box.innerHTML = '';
+    const maxP = 2 + (Run.hasRelic('space_pack') ? 1 : 0);
+    Run.potions.forEach((p, i) => {
+      const d = document.createElement('div');
+      d.className = 'pot';
+      d.textContent = p.id === 'heal' ? '🩸' : p.id === 'energy' ? '⚡' : '💥';
+      d.title = (p.id === 'heal' ? '奈米修復液：回復 30 生命' : p.id === 'energy' ? '過載電池：+3 能量' : '燃燒彈藥：對所有敵人造成 15 傷害') + `（剩 ${p.count}）`;
+      onTap(d, () => Combat.usePotion(i));
+      box.appendChild(d);
+    });
+    for (let i = Run.potions.length; i < maxP; i++){
+      const d = document.createElement('div');
+      d.className = 'pot';
+      d.style.opacity = .18;
+      d.textContent = '·';
+      box.appendChild(d);
+    }
+  },
+
+  /* ---------- 卡片 DOM ---------- */
+  cardEl(card, opts){
+    opts = opts || {};
+    const data = typeof card === 'string' ? CARDS[card] : CARDS[card.id];
+    if (!data) return document.createElement('span');
+    const v = cardVals(data, !!card.up);
+    const el = document.createElement('div');
+    el.className = 'card rarity-' + data.rarity + (card.up ? ' upgraded' : '');
+    el.innerHTML = `
+      <div class="c-cost">${v.cost}</div>
+      <div class="c-icon">${data.icon}</div>
+      <div class="c-name">${data.name}${card.up ? ' ✦' : ''}</div>
+      <div class="c-desc">${cardDesc(v, !!card.up)}</div>
+      <div class="c-type ${data.type}">${data.type === 'attack' ? '攻擊' : data.type === 'skill' ? '技能' : '能力'}</div>`;
+    if (opts.clickable) el.classList.add('c-playable');
+    return el;
+  },
+
+  /* ---------- 獎勵 ---------- */
+  showReward(lines, tier, opts){
+    showScreen('reward');
+    const C = Combat.C;
+    const box = $('reward-lines');
+    box.innerHTML = lines.map(l => `<div style="margin:4px 0;font-size:15px">${l}</div>`).join('');
+    // 卡牌獎勵
+    const cardBox = $('reward-cards');
+    cardBox.innerHTML = '';
+    cardBox.classList.remove('hidden');
+    const n = 3 + (tier === 'boss' ? 1 : 0) + (Run.hasRelic('double_dice') ? 1 : 0);
+    const choices = this.genCardChoices(n);
+    let sel = null; // 目前選取的卡（可隨時換選，確定才入牌組）
+    const setSel = (idx) => {
+      sel = idx;
+      document.querySelectorAll('#reward-cards .card').forEach((d, j) => {
+        d.style.outline = j === idx ? '3px solid #6bff8e' : '';
+        d.style.opacity = j === idx ? 1 : 0.3;
+      });
+    };
+    choices.forEach((id, i) => {
+      const el = this.cardEl({ id, up: false });
+      onTap(el, () => {
+        AudioSys.play('card');
+        setSel(i);
+      });
+      cardBox.appendChild(el);
+    });
+    const btn = $('btn-reward-done');
+    btn.onclick = () => {
+      if (sel === null){ this.toast('先選一張牌！'); return; }
+      Run.addCard(choices[sel]);
+      AudioSys.play('click');
+      // 先取 tier / boss 資料再清空戰鬥
+      const C0 = Combat.C;
+      const nt = C0 ? C0.nodeType : 'normal';
+      const bossDef = C0 && C0.enemies[0] ? C0.enemies[0].def : null;
+      Combat.C = null;
+      Run.afterCombat(nt, bossDef);
+    };
+  },
+  genCardChoices(n){
+    const poolMap = { common: 55, uncommon: 32, rare: 13 };
+    const out = [];
+    for (let i = 0; i < n; i++){
+      const r = pickW(['common', 'uncommon', 'rare'], r => poolMap[r]);
+      out.push(Math.random() < 0.12 ? pick(Object.keys(CARDS).filter(id => CARDS[id].rarity === r)) : Run.randomCard(r));
+    }
+    return out;
+  }
+};
+/* ===== 星穹牌局 u1b_ui2.js — 事件/商店/選牌/結果/雜項 ===== */
+'use strict';
+/* 擴充 UI 物件（u1_ui.js 定義） */
+Object.assign(UI, {
+
+  /* ---------- 事件 ---------- */
+  showEvent(evt){
+    showScreen('event');
+    $('event-icon').textContent = evt.icon;
+    $('event-title').textContent = evt.title;
+    $('event-text').textContent = evt.text;
+    const box = $('event-opts');
+    box.innerHTML = '';
+    evt.opts.forEach(opt => {
+      const d = document.createElement('div');
+      d.className = 'event-opt';
+      let req = '';
+      if (opt.req){
+        if (opt.req.gold !== undefined && Run.gold < opt.req.gold) req = `<div class="eo-req">需要 ${opt.req.gold} 金幣（不足）</div>`;
+      }
+      d.innerHTML = `<div class="eo-title">${opt.t}</div>${req}`;
+      const disabled = req !== '';
+      if (disabled){ d.style.opacity = .4; }
+      onTap(d, () => {
+        if (disabled){ AudioSys.play('error'); return; }
+        if (opt.req && opt.req.gold !== undefined){ Run.gold -= opt.req.gold; }
+        AudioSys.play('click');
+        Run.resolveEvent(opt);
+      });
+      box.appendChild(d);
+    });
+  },
+
+  /* ---------- 休息點 ---------- */
+  showCamp(){
+    showScreen('camp');
+    const box = $('camp-opts');
+    box.innerHTML = '';
+    const opts = [
+      { t: '🔥 強化卡牌（自選一張強化）', k: 'upgrade' },
+      { t: '💉 修復機體（回復 30% 生命）', k: 'heal' },
+      { t: '🗑️ 刪除卡牌（移除一張）', k: 'remove' }
+    ];
+    opts.forEach(o => {
+      const d = document.createElement('div');
+      d.className = 'event-opt';
+      d.innerHTML = `<div class="eo-title">${o.t}</div>`;
+      onTap(d, () => { AudioSys.play('click'); Run.doCamp(o.k); });
+      box.appendChild(d);
+    });
+  },
+
+  /* ---------- 商店 ---------- */
+  showShop(){
+    if (!Run.shopStock) Run.makeShop();
+    showScreen('shop');
+    this.renderShop();
+  },
+  renderShop(){
+    const S = Run.shopStock;
+    if (!S) return;
+    $('gold-amt2').textContent = Run.gold;
+    const grid = $('shop-grid');
+    grid.innerHTML = '';
+    const priceOf = c => ({ common: 45, uncommon: 70, rare: 115 }[CARDS[c].rarity]);
+    S.cards.forEach((id, i) => {
+      if (id === null) return;
+      const d = document.createElement('div');
+      d.className = 'shop-item';
+      d.innerHTML = `<div class="si-icon">${CARDS[id].icon}</div>
+        <div><div class="si-name">${CARDS[id].name} <span class="tiny">(${CARDS[id].rarity === 'rare' ? '稀有' : CARDS[id].rarity === 'uncommon' ? '罕見' : '普通'})</span></div>
+        <div class="si-desc">${cardDesc(CARDS[id], false)}</div></div>
+        <div class="si-price">${Run.shopPrice(priceOf(id))}⛃</div>`;
+      onTap(d, () => Run.buyCard(i));
+      grid.appendChild(d);
+    });
+    S.relics.forEach((id, i) => {
+      if (id === null || Run.relics.indexOf(id) !== -1) return;
+      const d = document.createElement('div');
+      d.className = 'shop-item';
+      d.innerHTML = `<div class="si-icon">${RELICS[id].icon}</div>
+        <div><div class="si-name">${RELICS[id].name}</div><div class="si-desc">${RELICS[id].desc}</div></div>
+        <div class="si-price">${Run.shopPrice(145)}⛃</div>`;
+      onTap(d, () => Run.buyRelic(i));
+      grid.appendChild(d);
+    });
+    if (S.potion){
+      const d = document.createElement('div');
+      d.className = 'shop-item';
+      const pn = S.potion === 'heal' ? '奈米修復液（回復 30 生命）' : S.potion === 'energy' ? '過載電池（+3 能量）' : '燃燒彈藥（全體 15 傷害）';
+      d.innerHTML = `<div class="si-icon">🧪</div><div><div class="si-name">藥水</div><div class="si-desc">${pn}</div></div>
+        <div class="si-price">${Run.shopPrice(45)}⛃</div>`;
+      onTap(d, () => Run.buyPotion());
+      grid.appendChild(d);
+    }
+    const d = document.createElement('div');
+    d.className = 'shop-item';
+    d.innerHTML = `<div class="si-icon">🗑️</div><div><div class="si-name">刪除卡牌</div><div class="si-desc">從牌組移除一張牌</div></div>
+      <div class="si-price">${Run.shopPrice(S.removePrice)}⛃</div>`;
+    onTap(d, () => Run.buyRemove());
+    grid.appendChild(d);
+  },
+
+  /* ---------- 選牌遮罩（獎勵/強化/刪除） ---------- */
+  pickDeck(mode, rarity, cb){
+    showScreen('pick');
+    $('pick-title').textContent = mode === 'upgrade' ? '✦ 選擇要強化的卡牌' : mode === 'remove' ? '🗑️ 選擇要刪除的卡牌' : '選擇一張卡牌';
+    $('pick-hint').textContent = mode === 'upgrade' ? '✦ 卡片顯示為強化後的數值' : mode === 'remove' ? (Run.deck.length <= 5 ? '牌組至少保留 5 張，無法刪除' : '點擊卡牌移除') : '';
+    const box = $('pick-cards');
+    box.innerHTML = '';
+    let pool;
+    if (mode === 'upgrade') pool = Run.deck.filter(c => !c.up);
+    else if (mode === 'remove') pool = Run.deck.slice();
+    else pool = this.genCardChoices(3 + (Save.metaLv('cardChoicePlus') ? 1 : 0));
+    if (!pool.length){ this.toast('沒有可選的卡牌'); cb && cb(); return; }
+    pool.forEach((c, i) => {
+      // 強化模式：直接預覽強化後的數值，讓使用者看到變化
+      const el = this.cardEl(mode === 'upgrade' ? Object.assign({}, c, { up: true }) : c, {});
+      if (mode === 'remove' && Run.deck.length <= 5){ el.classList.add('dim'); }
+      if (mode === 'upgrade' && c.up){ el.classList.add('dim'); }
+      onTap(el, () => {
+        AudioSys.play('upgrade');
+        if (mode === 'upgrade'){
+          Run.upgradeOneCard(c);
+          const b = cardVals(CARDS[c.id], false), u = cardVals(CARDS[c.id], true);
+          const chg = [['dmg', '傷害'], ['block', '護甲'], ['gainEnergy', '能量'], ['draw', '抽牌'], ['heal', '治療']]
+            .filter(([k]) => (u[k] || 0) !== (b[k] || 0))
+            .map(([k, label]) => label + ' ' + b[k] + '→' + u[k]).join('、');
+          this.toast('✦ 已強化：' + CARDS[c.id].name + (chg ? '（' + chg + '）' : ''));
+        }
+        else if (mode === 'remove'){ const idx = Run.deck.indexOf(c); if (idx >= 0) Run.deck.splice(idx, 1); this.toast('已移除：' + CARDS[c.id].name); }
+        else { Run.addCard(c); this.toast('獲得：' + CARDS[c.id].name); }
+        cb && cb();
+      });
+      box.appendChild(el);
+    });
+  },
+  pickCardReward(rarity, count, cb){
+    showScreen('pick');
+    $('pick-title').textContent = '選擇一張卡牌';
+    $('pick-hint').textContent = '';
+    const box = $('pick-cards');
+    box.innerHTML = '';
+    const choices = this.genCardChoices(count + 2);
+    choices.forEach((id, i) => {
+      const el = this.cardEl({ id, up: false });
+      onTap(el, () => {
+        AudioSys.play('card');
+        Run.addCard(id);
+        this.toast('獲得：' + CARDS[id].name);
+        cb && cb();
+      });
+      box.appendChild(el);
+    });
+  },
+
+  /* ---------- 牌組檢視 ---------- */
+  showDeckView(){
+    showScreen('deck');
+    $('deck-count').textContent = `（${Run.deck.length} 張）`;
+    const box = $('deck-grid');
+    box.innerHTML = '';
+    Run.deck.forEach(c => box.appendChild(this.cardEl(c, {})));
+  },
+
+  /* ---------- 結果 ---------- */
+  showResult(win){
+    showScreen('result');
+    this.hideTop();
+    Combat.C = null;
+    $('result-title').textContent = win ? '✦ 遠征勝利 ✦' : '☠ 遠征失敗';
+    $('result-title').style.color = win ? '#ffd94e' : '#ff5a6e';
+    const st = [
+      `難度：${Run.diff}${Run.diff > 0 ? ' 🔥' : ''}`,
+      `到達：${ACTS[Run.act].sub}`,
+      `擊殺：${Run.kills}`,
+      `打出卡牌：${Run.cardsPlayed}`,
+      `收集星塵：${Run.gemsCollected}`,
+      `遺物：${Run.relics.length} 個`
+    ];
+    $('result-stats').innerHTML = st.map(x => `<div class="stat-row"><span>${x}</span></div>`).join('');
+    $('btn-result-title').onclick = () => {
+      AudioSys.play('click');
+      this.showTitle();
+    };
+    // 下一難度（勝利限定）：勝利自動解鎖下一階，點擊直接以同角色 +1 難度開新局
+    const nextBtn = $('btn-result-next');
+    const nd = Run.diff + 1;
+    if (win && nd <= 5){
+      if (Save.metaLv('diff') < nd){ Save.meta.diff = nd; Save.save(); }
+      nextBtn.style.display = '';
+      nextBtn.textContent = `🔥 難度 ${nd} 繼續闖關`;
+      nextBtn.disabled = false;
+      nextBtn.onclick = () => {
+        AudioSys.play('click');
+        Run.newRun(Run.char, nd);
+        this.showMap();
+      };
+    } else {
+      nextBtn.style.display = 'none';
+    }
+  },
+  showResultWin(win, gems){
+    this.showResult(win);
+    $('result-gems').textContent = '💎 星塵 +' + gems;
+  },
+
+  /* ---------- 暫停 ---------- */
+  showPause(){
+    showScreen('pause');
+  },
+  resume(){
+    if (Combat.C){ showScreen('combat'); $('topbar').classList.remove('hidden'); $('hand').classList.remove('hidden'); $('potions').classList.remove('hidden'); }
+    else this.showMap();
+  },
+  /* ---------- 全域返回 ---------- */
+  goBack(){
+    const s = G.screen;
+    const act = {
+      combat: () => this.showPause(),
+      map: () => this.showPause(),
+      pause: () => this.resume(),
+      deck: () => this.resume(),
+      result: () => this.showTitle(),
+      meta: () => this.showTitle(),
+      ach: () => this.showTitle(),
+      help: () => this.showTitle(),
+      shop: () => this.showMap(),
+      camp: () => this.showMap(),
+      event: () => this.showMap(),
+      pick: () => { const f = this.pickBack; this.pickBack = null; (f || this.showMap).call(this); }
+    };
+    const fn = act[s];
+    if (!fn){ this.showTitle(); return; }
+    AudioSys.play('click');
+    fn();
+  },
+
+  /* ---------- 星塵商店 ---------- */
+  renderMeta(){
+    showScreen('meta');
+    $('meta-gems').textContent = Save.gems;
+    const grid = $('meta-grid');
+    grid.innerHTML = '';
+    META_UPGRADES.forEach(m => {
+      const lv = Save.metaLv(m.id);
+      const maxed = lv >= m.max;
+      const cost = maxed ? 0 : m.costs[lv];
+      const d = document.createElement('div');
+      d.className = 'shop-item';
+      d.innerHTML = `<div class="si-icon">${m.icon}</div>
+        <div><div class="si-name">${m.name} <span class="tiny">Lv ${lv}/${m.max}</span></div>
+        <div class="si-desc">${maxed ? m.desc + '（已滿級）' : m.lvDesc(lv + 1)}</div></div>
+        <div class="si-price">${maxed ? 'MAX' : cost + '💎'}</div>`;
+      if (!maxed) onTap(d, () => {
+        if (Save.buyMeta(m.id)){ AudioSys.play('upgrade'); this.renderMeta(); }
+        else { AudioSys.play('error'); this.toast('星塵不足！'); }
+      });
+      grid.appendChild(d);
+    });
+  },
+
+  /* ---------- 成就 ---------- */
+  renderAch(){
+    showScreen('ach');
+    const box = $('ach-list');
+    box.innerHTML = '';
+    ACHIEVEMENTS.forEach(a => {
+      const got = !!Save.ach[a.id];
+      const d = document.createElement('div');
+      d.className = 'ach-item' + (got ? '' : ' locked');
+      d.innerHTML = `<div class="ai-icon">${got ? a.icon : '🔒'}</div><div>${a.name}<div class="tiny">${a.desc}</div></div>`;
+      box.appendChild(d);
+    });
+  },
+
+  /* ---------- 說明 ---------- */
+  showHelp(){
+    showScreen('help');
+    $('help-text').innerHTML = [
+      '🎴 目標：沿著地圖路徑前進，擊敗每幕的 Boss，最終在第 3 幕擊敗「歸零者」。',
+      '⚡ 每回合獲得 3 點能量，打出卡牌消耗能量；結束回合後敵人行動。',
+      '🎯 攻擊牌自動鎖定最前方敵人，AOE 牌攻擊全體。',
+      '🔥 燃燒/侵蝕會疊加層數，在目標行動結束時造成等量傷害並遞減；「歸零爆發」「收割者」可一次性引爆。',
+      '🃏 能力牌整場戰鬥生效；卡牌可在休息點或事件中強化（✦）。',
+      '💎 擊敗敵人獲得金幣與星塵；星塵用於解鎖角色、永久升級與成就。',
+      '📱 支援手機：直屏滿屏、點擊打牌、右上暫停。'
+    ].join('<br><br>');
+  },
+
+  /* ---------- 綁定 ---------- */
+  bind(){
+    UI.autoEnd = false;
+    try{ UI.autoEnd = localStorage.getItem('starcards_autoend') === '1'; }catch(e){}
+    const aeBtn = $('btn-autoend');
+    if (aeBtn) aeBtn.classList.toggle('on', UI.autoEnd);
+    onTap($('btn-autoend'), function(){
+      UI.autoEnd = !UI.autoEnd;
+      this.classList.toggle('on', UI.autoEnd);
+      try{ localStorage.setItem('starcards_autoend', UI.autoEnd ? '1' : '0'); }catch(e){}
+      AudioSys.play('click');
+      UI.toast(UI.autoEnd ? '⚡ 已開啟自動結束回合' : '已關閉自動結束回合');
+    });
+    onTap($('btn-run'), () => {
+      const c = CHARACTERS[this.selChar];
+      if (c.unlock > 0 && Save.gems < c.unlock){ this.toast('星塵不足，無法解鎖此角色'); return; }
+      AudioSys.play('click');
+      Run.newRun(this.selChar, this.selDiff);
+      this.showMap();
+    });
+    onTap($('btn-meta'), () => this.renderMeta());
+    onTap($('btn-ach'), () => this.renderAch());
+    onTap($('btn-help'), () => this.showHelp());
+    onTap($('btn-meta-back'), () => this.showTitle());
+    onTap($('btn-ach-back'), () => this.showTitle());
+    onTap($('btn-help-back'), () => this.showTitle());
+    onTap($('btn-end'), () => { AudioSys.play('click'); Combat.endTurn(); });
+    onTap($('btn-pause'), () => { AudioSys.play('click'); this.showPause(); });
+    onTap($('btn-resume'), () => this.resume());
+    onTap($('btn-deck-open'), () => this.showDeckView());
+    onTap($('btn-map-open'), () => { if (Run.started && !Combat.C) this.showMap(); });
+    onTap($('btn-quit-run'), () => { Run.endRun(false); });
+    onTap($('btn-deck-close'), () => this.resume());
+    onTap($('btn-shop-skip'), () => { AudioSys.play('click'); this.showMap(); });
+    onTap($('btn-back'), () => this.goBack());
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => UI.init());
+</script>
+</body>
+</html>
