@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>遊戲中心 GAME HUB</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0e1a">
+<meta name="description" content="遊戲中心 - 手機可安裝的遊戲入口 PWA">
+<link rel="icon" href="icon-192.png" type="image/png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="遊戲中心">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{min-height:100vh;background:radial-gradient(ellipse at 50% 30%,#111a3a,#05070f);
@@ -49,5 +58,14 @@ footer{margin-top:40px;color:#4a5a7a;font-size:12px;letter-spacing:1px}
 
   </div>
   <footer>GAME HUB · 新增遊戲請告知 Minis</footer>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').catch(function (e) {
+        console.warn('SW registration failed', e);
+      });
+    });
+  }
+</script>
 </body>
 </html>
