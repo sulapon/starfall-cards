@@ -42,6 +42,11 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 .scr{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
   padding:18px;z-index:10;background:radial-gradient(ellipse at 50% 60%,rgba(16,26,64,.88),rgba(5,8,22,.96));
   overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+/* 選牌/刪除/強化遮罩：卡片數多時需可捲到最上方。置中(justify-content:center)會在內容超高時把頂部推出捲動範圍，故改為
+   安全置中：flex-start + 子面板 margin:auto（內容矮→置中；內容高→靠上且頂部可捲）。 */
+#screen-pick{justify-content:flex-start}
+#screen-pick .panel{margin:16px auto}
+#screen-pick #pick-cards{max-height:calc(100vh - 250px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:thin}
 .scr.show{display:flex}
 .panel{background:var(--panel);border:1px solid rgba(78,247,255,.28);border-radius:18px;
   padding:22px;max-width:430px;width:100%;box-shadow:0 0 30px rgba(0,0,0,.5),inset 0 0 40px rgba(78,247,255,.04);
