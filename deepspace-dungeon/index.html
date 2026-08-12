@@ -1282,7 +1282,7 @@ function makeBoss(floor, room){
   };
   const b = new Enemy('tank', 0,0, room);
   b.isBoss = true; b.type='boss'; b.maxHp = d.hp; b.hp = d.hp;
-  b.col = '#b46bff'; b.r = 66; b.score = 500; b.x=cx; b.y=cy;
+  b.col = '#b46bff'; b.r = Math.min(66, Math.max(14, Math.floor(Math.min(room.w,room.h)/2) - 12)); b.score = 500; b.x=cx; b.y=cy;
   b.baseSpd = 24; b.dmg = 16; b.bossFloor=floor;
   b.pattern = { t:0, phase:0, elT:0 };
   b.bossUpdate = function(dt,P,G){
