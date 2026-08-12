@@ -663,7 +663,9 @@ function spawnWave(r, floor){
       } else {
         t = roll<0.45?'grunt':roll<0.75?'runner':roll<0.88?'spitter':roll<0.96?'snipe':'tank';
       }
-      const x = r.x + rnd(50, r.w-50), y = r.y + rnd(50, r.h-50);
+      const s = Math.min(r.w,r.h);
+      const lo = 30, hi = Math.max(lo+8, s-lo-30);
+      const x = r.x + rnd(lo, hi), y = r.y + rnd(lo, hi);
       list.push({ type:t, x, y });
     }
   }
@@ -836,7 +838,7 @@ class Game {
       if(dist < 20){
         if(d.type==='gem'){ this.combo++; this.comboT=1.2; this.comboMax=Math.max(this.comboMax,this.combo); this.score+=5*this.combo; addText(d.x,d.y,'+'+5*this.combo,'#ffd75e',12); S.gem(); }
         if(d.type==='heart'){ P.hp=Math.min(P.hp+15,P.maxHp); addText(d.x,d.y,'+15 HP','#f88',13); S.heart(); }
-        if(d.type==='weapon'){ this.spawnWeaponChoice(d); }
+        if(d.type==='weapon'){ spawnWeaponChoice(d); }
         drops.splice(i,1);
       }
     }
@@ -846,7 +848,7 @@ class Game {
       if(!c.opened && Math.hypot(P.x-c.x,P.y-c.y) < 26){
         c.opened = true;
         S.chest();
-        if(c.type==='weapon') this.spawnWeaponChoice(c);
+        if(c.type==='weapon') spawnWeaponChoice(c);
         else if(c.type==='gem'){ for(let j=0;j<4;j++) drops.push({x:c.x+rnd(-24,24),y:c.y+rnd(-24,24),type:'gem',r:8,t:0}); }
         else { drops.push({x:c.x,y:c.y,type:'heart',r:8,t:0}); }
         addParts(c.x,c.y,40,{col:'#ffd75e',spdMax:160,rMax:3.5,life:0.6});
@@ -1241,10 +1243,18 @@ class Enemy {
         else { vx=ax*this.getSpeed()*0.9; vy=ay*this.getSpeed()*0.9; }
         break;
     }
-    // 移動（含碰撞、房間邊界）
-    const tot = this.kk>0? this.kk/Math.max(this.kk,0.001) : 1;
-    let spdMul = this.kk>0 ? 0 : 1;
-    const [nx,ny] = collideCircle(this.x, this.y, this.r, vx*dt, vy*dt);
+    // 移動（含碰撞、房間邊界）　＋　卡牆簡易繞行
+    const spdx=vx*dt, spdy=vy*dt;
+    let nx,ny;
+    const coll = collideCircle(this.x, this.y, this.r, spdx, spdy);
+    nx=coll[0]; ny=coll[1];
+    // 若卡死（原地幾乎沒動），沿牆向側向小幅繞行
+    if(Math.abs(nx-this.x)<0.15 && Math.abs(ny-this.y)<0.15 && (Math.abs(spdx)+Math.abs(spdy))>0.4){
+      const ang = angTo(this.x,this.y,P.x,P.y) + (rnd(-1,1)>0?0.7:-0.7);
+      const step = Math.max(6, this.getSpeed()*dt*6);
+      const c2 = collideCircle(this.x, this.y, this.r, Math.cos(ang)*step, Math.sin(ang)*step);
+      nx=c2[0]; ny=c2[1];
+    }
     this.x=nx; this.y=ny;
     // 碰撞玩家
     if(P.invul<=0 && Math.hypot(P.x-this.x,P.y-this.y)<P.r+this.r && P.alive){
