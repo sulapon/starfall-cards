@@ -43,9 +43,9 @@ h1.title{font-size:clamp(30px,7vw,64px);font-weight:900;letter-spacing:4px;text-
 #banner{position:fixed;top:22%;left:0;right:0;text-align:center;z-index:15;pointer-events:none;font-size:clamp(28px,6vw,52px);font-weight:900;color:#eafcff;letter-spacing:10px;text-shadow:0 0 24px var(--cyan),0 0 80px var(--cyan);opacity:0;transition:opacity .5s}
 #banner.show{opacity:1}
 #banner small{display:block;font-size:clamp(13px,2.6vw,20px);letter-spacing:4px;color:#9fe;font-weight:600;margin-top:4px;text-shadow:0 0 14px var(--cyan)}
-#joyB{position:fixed;left:34px;bottom:34px;width:120px;height:120px;border-radius:50%;border:2px solid rgba(90,200,255,.35);background:rgba(10,20,42,.25);pointer-events:none;z-index:13}
-#joyK{position:fixed;left:34px;bottom:34px;width:56px;height:56px;border-radius:50%;background:rgba(90,220,255,.4);border:2px solid rgba(90,220,255,.8);pointer-events:none;z-index:13;margin:32px;box-shadow:0 0 12px rgba(90,220,255,.5)}
-#dashB{position:fixed;right:30px;bottom:44px;width:76px;height:76px;border-radius:50%;border:2px solid rgba(255,215,94,.55);background:rgba(255,215,94,.14);color:var(--gold);font-weight:800;display:none;align-items:center;justify-content:center;pointer-events:auto;font-size:12px;letter-spacing:1px;z-index:13}
+#joyB{position:fixed;left:34px;bottom:34px;width:160px;height:160px;border-radius:50%;border:2px solid rgba(90,200,255,.35);background:radial-gradient(circle, rgba(90,200,255,.08), rgba(10,20,42,.25));pointer-events:none;z-index:13}
+#joyK{position:fixed;left:34px;bottom:34px;width:88px;height:88px;border-radius:50%;background:radial-gradient(circle, rgba(90,220,255,.55), rgba(90,220,255,.25));border:2px solid rgba(90,220,255,.9);pointer-events:none;z-index:14;box-shadow:0 0 16px rgba(90,220,255,.55), inset 0 0 10px rgba(255,255,255,.2)}
+#dashB{position:fixed;right:30px;bottom:44px;width:100px;height:100px;border-radius:50%;border:2px solid rgba(255,215,94,.6);background:radial-gradient(circle, rgba(255,215,94,.22), rgba(255,215,94,.08));color:var(--gold);font-weight:800;display:none;align-items:center;justify-content:center;pointer-events:auto;font-size:15px;letter-spacing:1px;z-index:13;box-shadow:0 0 14px rgba(255,215,94,.4)}
 .hint{font-size:12px;color:#689;margin-top:10px;letter-spacing:1px}
 </style>
 </head>
@@ -213,25 +213,34 @@ let joyActive = false, joyID = -1, joyCX=0, joyCY=0;
 const touchMode = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
 if(touchMode){ joyB.style.display='block'; dashB.style.display='flex'; }
 let touchAim = 0;
+let touchAimSeen = false;
+let aimActive = false, aimID = -1, aimCX = 0, aimCY = 0;
 CV.addEventListener('pointerdown', e=>{
   if(e.pointerType==='touch'){
     if(e.clientX < VW*0.55 && !joyActive){
       joyActive=true; joyID=e.pointerId; joyCX=e.clientX; joyCY=e.clientY;
-      joyB.style.left=(joyCX-60)+'px'; joyB.style.top=(joyCY-60)+'px';
-      joyK.style.left=(joyCX-28)+'px'; joyK.style.top=(joyCY-28)+'px';
+      joyB.style.left=(joyCX-80)+'px'; joyB.style.top=(joyCY-80)+'px';
+      joyK.style.left=(joyCX-44)+'px'; joyK.style.top=(joyCY-44)+'px';
+    } else if(!joyActive && !aimActive && e.clientX>=VW*0.55){
+      aimActive=true; aimID=e.pointerId; aimCX=e.clientX; aimCY=e.clientY; touchAimSeen=false;
     }
   }
 });
 window.addEventListener('pointermove', e=>{
   if(joyActive && e.pointerId===joyID){
     const dx=e.clientX-joyCX, dy=e.clientY-joyCY;
-    const d=Math.hypot(dx,dy), m=Math.min(d,52);
-    if(d>0){ joyK.style.left=(joyCX-28+dx/d*m)+'px'; joyK.style.top=(joyCY-28+dy/d*m)+'px'; touchAim=Math.atan2(dy,dx); }
+    const d=Math.hypot(dx,dy), m=Math.min(d,72);
+    if(d>0){ joyK.style.left=(joyCX-44+dx/d*m)+'px'; joyK.style.top=(joyCY-44+dy/d*m)+'px'; touchAim=Math.atan2(dy,dx); }
+  }
+  if(aimActive && e.pointerId===aimID){
+    const dx=e.clientX-aimCX, dy=e.clientY-aimCY;
+    if(Math.hypot(dx,dy)>24){ touchAim=Math.atan2(dy,dx); touchAimSeen=true; }
   }
 });
+function endAim(e){ if(aimActive && e.pointerId===aimID){ aimActive=false; aimID=-1; touchAimSeen=false; } }
 function endJoy(e){ if(joyActive && e.pointerId===joyID){ joyActive=false; joyID=-1; joyK.style.left=(joyCX-28)+'px'; joyK.style.top=(joyCY-28)+'px'; } }
-window.addEventListener('pointerup', endJoy);
-window.addEventListener('pointercancel', endJoy);
+window.addEventListener('pointerup', e=>{ endJoy(e); endAim(e); });
+window.addEventListener('pointercancel', e=>{ endJoy(e); endAim(e); });
 dashB.addEventListener('pointerdown', e=>{ e.preventDefault(); keys.dash=true; });
 dashB.addEventListener('pointerup', ()=>{ keys.dash=false; });
 
@@ -764,8 +773,8 @@ class Game {
     } else {
       P.x += mvx*spd*dt; P.y += mvy*spd*dt;
     }
-    // 瞄準
-    if(touchMode){ P.aim = touchAim; }
+    // 瞄準（手動觸發時用 touchAim，否則交給 autoAim）
+    if(touchMode && touchAimSeen){ P.aim = touchAim; }
     // 射擊（自動）
     this.updateShooting(dt);
     // 光束
@@ -883,7 +892,7 @@ class Game {
   updateShooting(dt){
     const P = this.player;
     // 自動瞄準：aimMode mouse 且無滑鼠指向時，鎖定最近敵人
-    if(this.autoAim){
+    if(this.autoAim && !touchAimSeen){
       let best=null, bd=1e9;
       for(const e of enemies){
         if(e.hp<=0) continue;
