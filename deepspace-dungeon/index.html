@@ -45,7 +45,7 @@ h1.title{font-size:clamp(30px,7vw,64px);font-weight:900;letter-spacing:4px;text-
 #banner small{display:block;font-size:clamp(13px,2.6vw,20px);letter-spacing:4px;color:#9fe;font-weight:600;margin-top:4px;text-shadow:0 0 14px var(--cyan)}
 #joyB{position:fixed;left:34px;bottom:34px;width:160px;height:160px;border-radius:50%;border:2px solid rgba(90,200,255,.35);background:radial-gradient(circle, rgba(90,200,255,.08), rgba(10,20,42,.25));pointer-events:none;z-index:13}
 #joyK{position:fixed;left:34px;bottom:34px;width:88px;height:88px;border-radius:50%;background:radial-gradient(circle, rgba(90,220,255,.55), rgba(90,220,255,.25));border:2px solid rgba(90,220,255,.9);pointer-events:none;z-index:14;box-shadow:0 0 16px rgba(90,220,255,.55), inset 0 0 10px rgba(255,255,255,.2)}
-#dashB{position:fixed;right:30px;bottom:44px;width:100px;height:100px;border-radius:50%;border:2px solid rgba(255,215,94,.6);background:radial-gradient(circle, rgba(255,215,94,.22), rgba(255,215,94,.08));color:var(--gold);font-weight:800;display:none;align-items:center;justify-content:center;pointer-events:auto;font-size:15px;letter-spacing:1px;z-index:13;box-shadow:0 0 14px rgba(255,215,94,.4)}
+#dashB{position:fixed;right:26px;bottom:88px;width:92px;height:92px;border-radius:50%;border:2px solid rgba(255,215,94,.6);background:radial-gradient(circle, rgba(255,215,94,.22), rgba(255,215,94,.08));color:var(--gold);font-weight:800;display:none;align-items:center;justify-content:center;pointer-events:auto;font-size:15px;letter-spacing:1px;z-index:13;box-shadow:0 0 14px rgba(255,215,94,.4)}
 .hint{font-size:12px;color:#689;margin-top:10px;letter-spacing:1px}
 </style>
 </head>
@@ -1618,15 +1618,15 @@ function drawHUD(ctx){
   ctx.font='700 13px sans'; ctx.fillStyle='#fff';
   ctx.textAlign='left'; ctx.fillText(ClassIcon(P.cls)+' '+CLASSES[P.cls].name, 28, 20);
   ctx.fillStyle='#ffd9de'; ctx.fillText(Math.ceil(P.hp)+' / '+P.maxHp, 30, 60);
-  // 層數 & 擊殺（避開右上小地圖）
-  ctx.fillStyle='#7af'; ctx.font='700 13px sans'; ctx.fillText('樓層 '+game.floor+'  /  '+MAX_FLOOR, VW-150-12, 28);
-  ctx.fillStyle='#9cc'; ctx.font='12px sans';
-  ctx.textAlign='right'; ctx.fillText('擊殺 '+game.kills+' · 分數 '+game.score, VW-150, 46);
-  ctx.textAlign='left';
-  // 等級進度條 (擊殺為經驗)
+  // 左上：HP（原本邏輯）
+  // 層數 / 擊殺 / 等級（放左上 HP 下方，避開右上小地圖）
+  ctx.fillStyle='#7af'; ctx.font='700 14px sans';
+  ctx.fillText('樓層 '+game.floor+' / 8', 16, 76);
+  ctx.font='12px sans'; ctx.fillStyle='#9cc';
+  ctx.fillText('擊殺 '+game.kills+' · 分數 '+game.score, 16, 94);
   const xp = game.kills % 8;
-  ctx.fillStyle='rgba(8,12,24,.6)'; ctx.fillRect(VW-150-120, 58, 120, 6);
-  ctx.fillStyle='#6ef'; ctx.fillRect(VW-150-120, 58, 120*(xp/8), 6);
+  ctx.fillStyle='rgba(8,12,24,.6)'; ctx.fillRect(16, 104, 120, 6);
+  ctx.fillStyle='#6ef'; ctx.fillRect(16, 104, 120*(xp/8), 6);
   // 武器列
   let wx = 16;
   ctx.font='13px sans';
