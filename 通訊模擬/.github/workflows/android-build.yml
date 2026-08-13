@@ -1,0 +1,78 @@
+name: Build Native Offline APK (Cordova)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Cordova
+        run: npm install -g cordova
+
+      - name: Create Cordova Project
+        run: |
+          cordova create myapp com.rf.tool.offline "RF計算工具"
+          cd myapp
+          cordova platform add android
+          rm -rf www/*
+          cp ../index.html www/index.html
+          mkdir -p www/res/icon
+          cp ../icon-512x512.png www/res/icon/icon.png || echo "Icon not found, using default"
+
+      - name: Fix Viewport Scale
+        run: |
+          cd myapp/www
+          # 在 <head> 開頭插入 viewport 標籤
+          sed -i 's|<head>|<head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">|' index.html
+
+      - name: Configure Cordova (config.xml)
+        run: |
+          cd myapp
+          # 關鍵修正：告訴 Cordova 的 WebView 要「尊重」viewport 標籤
+          # 沒有這些設定，Cordova 會忽略 HTML 裡的 viewport meta tag
+          sed -i 's|</widget>|\n    <preference name="EnableViewportScale" value="true" />\n    <preference name="android-minSdkVersion" value="22" />\n    <preference name="android-targetSdkVersion" value="33" />\n</widget>|' config.xml
+          echo "config.xml 已更新"
+          cat config.xml
+
+      - name: Build Android APK
+        run: |
+          cd myapp
+          cordova build android --verbose
+
+      - name: Find and Copy APK
+        run: |
+          echo "=== 尋找所有產出的 APK 檔案 ==="
+          find myapp/platforms/android -name "*.apk" -type f
+          APK_PATH=$(find myapp/platforms/android -name "*.apk" -type f | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "Error: 找不到任何 APK 檔案！"
+            exit 1
+          fi
+          echo "找到 APK: $APK_PATH"
+          cp "$APK_PATH" RF計算工具_原生離線版.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-offline-apk
+          path: RF計算工具_原生離線版.apk

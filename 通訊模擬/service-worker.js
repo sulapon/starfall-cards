@@ -1,0 +1,23 @@
+const CACHE_NAME = 'gps-pwa-v1';
+const ASSETS = [
+  './',
+  './index.html',
+  './app.html',
+  './manifest.json',
+  './icon-192x192.png',
+  './icon-512x512.png',
+  './icon-1024x1024.png'
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request))
+  );
+});
+
+
+

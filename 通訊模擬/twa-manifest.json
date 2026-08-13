@@ -1,0 +1,28 @@
+{
+  "packageId": "com.rf.tool.twa",
+  "name": "RF計算工具",
+  "launcherName": "RF工具",
+  "host": "sulapon.github.io",
+  "startUrl": "/GPS/index.html",
+  "iconUrl": "https://sulapon.github.io/GPS/icon-512x512.png",
+  "maskableIconUrl": "https://sulapon.github.io/GPS/icon-512x512.png",
+  "display": "standalone",
+  "backgroundColor": "#050a16",
+  "themeColor": "#071026",
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://sulapon.github.io/GPS/manifest.json",
+  "fallbackType": "custom-tabs",
+  "features": {
+    "location": true
+  },
+  "alphaNamingNavBar": false,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "appVersionCode": 1,
+  "appVersion": "1.0.0"
+}
