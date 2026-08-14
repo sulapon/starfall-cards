@@ -24,17 +24,29 @@ pkg install -y nodejs-lts git termux-tools termux-api 2>/dev/null || \
   pkg install -y nodejs-lts git termux-tools
 
 # --- 2. 安裝 opencode ---
-# Termux 的 npm 會誤判 os=android，導致 EBADPLATFORM 拒絕安裝。
-# `npm config set os linux` 對 process.platform 偵測無效，正解是用 --force
-# 跳過 platform 檢查。opencode 的 linux-arm64 binary 在 Termux 可正常執行。
+# 官方 install script 用 `uname -s`(Linux) + `uname -m`(arm64) 正確偵測，
+# 下載到官方編譯的 opencode-linux-arm64 binary，Termux 完全支援。
+# (npm 的 postinstall 用 os.platform()=android 會抓錯包而失敗，故不用 npm)
 echo ""
-echo "[2/5] 安裝 opencode-ai (npm 全域, --force 繞過 platform 檢查) ..."
-if npm install -g --force opencode-ai; then
+echo "[2/5] 用官方 install script 安裝 opencode ..."
+mkdir -p "$HOME/.opencode/bin"
+if curl -fsSL https://opencode.ai/install | bash; then
   echo "    opencode 安裝成功"
 else
   echo "    ERROR: opencode 安裝失敗"
   exit 1
 fi
+# 確保 PATH 含 opencode (未修改 shell rc 時補上)
+export PATH="$HOME/.opencode/bin:$PATH"
+case ":$PATH:" in
+  *":$HOME/.opencode/bin:"*) ;;
+  *)
+    # 寫入 .bashrc 與 .profile
+    for rc in "$HOME/.bashrc" "$HOME/.profile"; do
+      [ -f "$rc" ] && grep -q '.opencode/bin' "$rc" || echo 'export PATH="$HOME/.opencode/bin:$PATH"' >> "$rc"
+    done
+    ;;
+esac
 
 # --- 3. 寫 opencode 設定檔 ---
 echo ""
@@ -76,6 +88,7 @@ chmod +x ~/.shortcuts/opencode.sh ~/.shortcuts/opencode.sh
 # --- 5. 驗證 ---
 echo ""
 echo "[5/5] 驗證安裝 ..."
+export PATH="$HOME/.opencode/bin:$PATH"
 V=$(opencode --version 2>/dev/null || echo "尚未就緒")
 echo "  opencode 版本: $V"
 
