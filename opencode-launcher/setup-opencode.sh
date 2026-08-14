@@ -24,9 +24,29 @@ pkg install -y nodejs-lts git termux-tools termux-api 2>/dev/null || \
   pkg install -y nodejs-lts git termux-tools
 
 # --- 2. 安裝 opencode ---
+# Termux 的 npm 會誤判 os=android，導致 EBADPLATFORM 拒絕安裝。
+# 解法：讓 npm 以為 os=linux（opencode 的 linux-arm64 binary 在 Termux 可正常執行）
 echo ""
-echo "[2/5] 安裝 opencode-ai (npm 全域) ..."
-npm install -g opencode-ai
+echo "[2/5] 安裝 opencode-ai (npm 全域, 覆寫 os 偵測) ..."
+npm config get os >/dev/null 2>&1
+# 設定 os=linux 讓 platform 檢查通過
+PREV_OS=$(npm config get os 2>/dev/null || echo "")
+if [ "$(npm config get os 2>/dev/null)" != "linux" ]; then
+  npm config set os linux
+  echo "    已將 npm os 相容性覆寫為 linux"
+else
+  echo "    npm os 已為 linux"
+fi
+if npm install -g opencode-ai; then
+  echo "    opencode 安裝成功"
+else
+  echo "    標準安裝失敗，改用 --force 嘗試..."
+  npm install -g --force opencode-ai
+fi
+# 恢復原本 os 設定（避免影響其他套件）-- 僅在原本非 linux 時還原
+if [ -n "$PREV_OS" ] && [ "$PREV_OS" != "linux" ]; then
+  npm config set os "$PREV_OS" 2>/dev/null || true
+fi
 
 # --- 3. 寫 opencode 設定檔 ---
 echo ""
