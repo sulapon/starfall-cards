@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1117">
+<title>啟動 opencode</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: linear-gradient(135deg,#0d1117 0%,#161b22 100%);
+    min-height:100vh; min-height:100dvh;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
+    color:#e6edf3; text-align:center; padding:24px;
+  }
+  .icon {
+    width:88px; height:88px; border-radius:22px;
+    background:linear-gradient(135deg,#58a6ff,#3fb950);
+    display:flex; align-items:center; justify-content:center;
+    font-size:44px; font-weight:800; color:#fff;
+    box-shadow:0 8px 30px rgba(88,166,255,.35);
+    margin-bottom:20px;
+  }
+  h1 { font-size:22px; margin-bottom:8px; font-weight:700; }
+  p { font-size:15px; color:#8b949e; margin-bottom:28px; line-height:1.5; }
+  a#launch {
+    display:flex; align-items:center; justify-content:center;
+    width:100%; max-width:340px; padding:16px;
+    background:linear-gradient(135deg,#238636,#1f6feb);
+    color:#fff; font-size:18px; font-weight:700;
+    border-radius:16px; text-decoration:none;
+    box-shadow:0 6px 20px rgba(31,111,235,.35);
+    transition:transform .08s;
+  }
+  a#launch:active { transform:scale(.97); }
+  .hint { margin-top:22px; font-size:13px; color:#6e7681; max-width:340px; line-height:1.6; }
+  .tag { display:inline-block; margin-top:6px; font-size:12px; color:#3fb950; }
+</style>
+</head>
+<body>
+  <div class="icon">⌨</div>
+  <h1>啟動 opencode</h1>
+  <p>DeepSeek V4 Flash Free</p>
+  <a id="launch" href="minis://open_terminal?init_command=cd%20%2Ftmp%20%26%26%20export%20OPENCODE_CONFIG%3D%2Froot%2F.config%2Fopencode%2Fopencode.json%20%26%26%20opencode">▶ 啟動 opencode</a>
+  <div class="hint">
+    點擊上方按鈕，會開啟 Minis 互動式終端並自動進入 opencode。<br>
+    若手機詢問，請選擇「在 Minis 中開啟」。
+    <br><span class="tag">● deepseek-v4-flash-free</span>
+  </div>
+</body>
+</html>
