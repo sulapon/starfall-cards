@@ -562,6 +562,7 @@ function newGame(){
   };
   buildBar();
   updateHUD();
+  try{ Render.resize(); }catch(e){}
 }
 function nullGrid(){ const g=[]; for(let r=0;r<CFG.rows;r++){ g.push(new Array(CFG.cols).fill(null)); } return g; }
 
