@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>星際合成防線 Star Merge Defense</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#05060f;font-family:"Segoe UI","PingFang TC","Noto Sans TC",system-ui,sans-serif;color:#dfe7ff;touch-action:none}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+#hud{display:flex;align-items:center;gap:8px;padding:6px 8px;background:linear-gradient(180deg,#0b1026,#070b1c);border-bottom:1px solid #1c2a52;flex:0 0 auto;min-height:44px}
+.hud-item{display:flex;align-items:center;gap:4px;font-weight:700;font-size:14px;white-space:nowrap}
+.hud-item .ico{font-size:15px}
+#hpBarWrap{flex:1;min-width:40px;height:12px;background:#2a1030;border:1px solid #5a1c3a;border-radius:6px;overflow:hidden}
+#hpBar{height:100%;width:100%;background:linear-gradient(90deg,#ff4d6d,#ff8f5e);transition:width .25s}
+.hbtn{background:#141a38;border:1px solid #2c3c78;color:#dfe7ff;border-radius:8px;padding:6px 9px;font-size:14px;font-weight:700;cursor:pointer;min-width:34px}
+.hbtn:active{background:#26326b}
+#stage{position:relative;flex:1 1 auto;overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+#buildbar{flex:0 0 auto;display:flex;gap:8px;padding:8px;background:#0a1025;border-top:1px solid #1c2a52;overflow-x:auto;overflow-y:hidden}
+.btower{flex:0 0 auto;width:64px;height:70px;border-radius:10px;background:linear-gradient(180deg,#161d40,#0d1330);border:1.5px solid #2c3c78;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;position:relative}
+.btower .bico{font-size:26px;line-height:1}
+.btower .bname{font-size:9.5px;color:#9fb2e8;font-weight:700}
+.btower .bcost{font-size:10px;color:#ffd166;font-weight:800}
+.btower.armed{border-color:#ffd166;box-shadow:0 0 12px rgba(255,209,102,.45)}
+.btower.locked{opacity:.4}
+.btower.unafford{opacity:.55;border-color:#3a3f5c}
+.btower .lockico{position:absolute;top:2px;right:3px;font-size:11px}
+#hint{position:absolute;left:50%;top:8px;transform:translateX(-50%);background:rgba(8,12,34,.8);border:1px solid #2c3c78;border-radius:14px;padding:4px 12px;font-size:11.5px;color:#bcd0ff;pointer-events:none;z-index:5;white-space:nowrap}
+#twinfo{position:absolute;left:8px;right:8px;bottom:8px;background:rgba(10,15,40,.94);border:1px solid #3350a8;border-radius:12px;padding:8px 10px;z-index:6;display:none;font-size:12.5px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+#twinfo .row{display:flex;justify-content:space-between;gap:10px;padding:1.5px 0}
+#twinfo .b{color:#9fb2e8;font-weight:600}
+#twinfo .v{font-weight:800}
+#twinfo .act{display:flex;gap:8px;margin-top:6px}
+#twinfo button{flex:1;padding:7px 0;border-radius:8px;border:none;font-weight:800;font-size:13px;color:#fff;cursor:pointer}
+#btnSell{background:#b33a5a}
+#btnLevelUp{background:#2a6bb3}
+#btnInfo{background:#333c66}
+.overlay{position:fixed;inset:0;background:rgba(3,5,16,.88);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:20;padding:16px}
+.overlay.show{display:flex}
+.panel{background:linear-gradient(180deg,#121a40,#0a1030);border:1px solid #3350a8;border-radius:16px;padding:22px 20px;max-width:340px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto}
+.title{font-size:26px;font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,#7ad0ff,#b388ff);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
+.subtitle{font-size:12px;color:#8aa0d8;margin-bottom:14px}
+.bigbtn{display:block;width:100%;padding:13px 0;margin:8px 0;border-radius:12px;border:1.5px solid #3a58b8;background:linear-gradient(180deg,#22307a,#16205a);color:#eaf1ff;font-size:16px;font-weight:800;cursor:pointer}
+.bigbtn:active{filter:brightness(1.25)}
+.bigbtn.primary{background:linear-gradient(180deg,#e0821f,#b35f0e);border-color:#ffb95e}
+.bigbtn.danger{background:linear-gradient(180deg,#a02a4a,#721c35);border-color:#e05a80}
+.howto{font-size:12px;color:#9fb2e8;text-align:left;line-height:1.55;margin:6px 0;background:rgba(30,40,90,.35);border-radius:10px;padding:10px 12px}
+.upcards{display:flex;flex-direction:column;gap:10px;margin:10px 0}
+.upcard{background:linear-gradient(180deg,#1a2350,#101739);border:1.5px solid #3a58b8;border-radius:12px;padding:12px;cursor:pointer;text-align:left}
+.upcard:active{border-color:#ffd166;background:#232f66}
+.upcard .uname{font-size:15px;font-weight:900;color:#ffd166}
+.upcard .udesc{font-size:12px;color:#c3d2ff;margin-top:3px;line-height:1.4}
+.importrow{display:flex;gap:6px;margin-top:6px}
+#impCode{flex:1;padding:6px 8px;border-radius:8px;border:1px solid #3350a8;background:#0a1030;color:#dfe7ff;font-size:11px;min-width:0}
+#ghost{position:fixed;z-index:15;pointer-events:none;display:none;font-size:34px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.7))}
+#ghost .glv{position:absolute;bottom:-2px;right:0;font-size:12px;font-weight:900;color:#ffd166;background:rgba(0,0,0,.6);border-radius:6px;padding:0 4px}
+#wavebanner{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);font-size:30px;font-weight:900;letter-spacing:3px;color:#ffd166;text-shadow:0 0 18px rgba(255,209,102,.7),0 2px 6px #000;pointer-events:none;z-index:7;opacity:0}
+.badge{font-size:11px;background:#1d2752;border:1px solid #33407e;border-radius:6px;padding:1px 6px;font-weight:700}
+#sel-emoji{font-size:30px;line-height:1.2;text-align:center}
+#sel-name{text-align:center;font-size:15px;font-weight:900;margin:2px 0;color:#ffd166}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <div class="hud-item"><span class="ico">🌊</span><span id="hWave">W1</span></div>
+    <div class="hud-item" style="flex:1"><span class="ico">🛡️</span><div id="hpBarWrap"><div id="hpBar"></div></div><span id="hHP">20</span></div>
+    <div class="hud-item"><span class="ico">🪙</span><span id="hGold">150</span></div>
+    <button class="hbtn" id="hSpeed" title="遊戲速度">1x</button>
+    <button class="hbtn" id="hMute" title="音效">🔊</button>
+    <button class="hbtn" id="hPause" title="選單">☰</button>
+  </div>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="hint">拖曳下方砲塔到場上放置｜兩座同級同型疊合升級 <button class="hbtn" id="btnNextWave" title="立即開始下一波" style="margin-left:6px">⏭ 下一波</button></div>
+    <div id="wavebanner"></div>
+    <div id="twinfo">
+      <div id="sel-emoji"></div><div id="sel-name"></div>
+      <div id="sel-stats"></div>
+      <div class="act"><button id="btnLevelUp">⬆ 升級</button><button id="btnSell">💰 出售</button><button id="btnInfo" style="display:none"></button></div>
+    </div>
+  </div>
+  <div id="buildbar"></div>
+</div>
+<div id="ghost"></div>
+
+<!-- 主選單 -->
+<div class="overlay show" id="ovMenu">
+  <div class="panel">
+    <div class="title">星際合成防線</div>
+    <div class="subtitle">⭐ 合成塔防 × Roguelike 強化 ⭐</div>
+    <div id="menuSaves"></div>
+    <button class="bigbtn primary" id="btnNew">🚀 新遊戲</button>
+    <div class="importrow">
+      <input id="impCode" placeholder="貼上匯出存檔碼即可匯入" autocapitalize="off" spellcheck="false">
+      <button class="hbtn" id="btnImport">匯入</button>
+    </div>
+    <div class="howto">
+      🕹️ <b>操作</b>：從下方砲塔列<b>拖曳</b>到場上放置；<br>
+      🔗 兩座<b>同類型且同級</b>的塔疊在一起 → 合成升一級（2→1）；<br>
+      📦 <b>點擊</b>場上塔可移動／升級／出售；<br>
+      🎲 每 3 波獲得一次<b>強化三選一</b>；每 5 波出現 <b>Boss</b>；<br>
+      💾 進度<b>自動存檔</b>，隨時可繼續。
+    </div>
+  </div>
+</div>
+
+<!-- 暫停 -->
+<div class="overlay" id="ovPause">
+  <div class="panel">
+    <div class="title">暫停中</div>
+    <div class="subtitle" id="pauseStatus"></div>
+    <button class="bigbtn primary" id="btnResume">▶ 繼續</button>
+    <button class="bigbtn" id="btnSave">💾 手動存檔</button>
+    <button class="bigbtn" id="btnExport">📤 匯出存檔碼</button>
+    <button class="bigbtn danger" id="btnRestart">🔄 重新開始</button>
+    <button class="bigbtn" id="btnExit">🏠 回主選單</button>
+  </div>
+</div>
+
+<!-- 強化三選一 -->
+<div class="overlay" id="ovChoice">
+  <div class="panel">
+    <div class="title" style="font-size:20px">🎲 波次強化</div>
+    <div class="subtitle">選擇一項永久強化</div>
+    <div class="upcards" id="choiceCards"></div>
+  </div>
+</div>
+
+<!-- 結束 -->
+<div class="overlay" id="ovEnd">
+  <div class="panel">
+    <div class="title" id="endTitle">挑戰失敗</div>
+    <div class="subtitle" id="endMsg"></div>
+    <button class="bigbtn primary" id="btnAgain">🔄 再戰一局</button>
+    <button class="bigbtn" id="btnHome">🏠 回主選單</button>
+  </div>
+</div>
+<!-- ===== data.js ===== -->
+<script>
+'use strict';
+// ===== 全域配置 =====
+const CFG = {
+  cols:7, rows:11,           // 格盤
+  startGold:150, startHP:20,
+  waveTime:40,               // 每波間距秒
+  mergeBonusGold:8,          // 合成額外金幣
+  maxLevel:6,                // 塔最高等級
+  dragSens:1.0,
+};
+const TILES = {
+  '.': 0, '#': 1, 'S': 2, 'F': 3, '$': 4,
+};
+// ===== 場地地圖 (7x11) =====
+// #=障礙(不可放塔), .=可放塔, S=敵方出生點, F=基地
+const MAP_STR = [
+  "S######",   // 出生點在最上緣
+  "#.$.$.#",
+  "#.....#",
+  "#..$..#",
+  "#.....#",
+  "#$..$.#",
+  "#.....#",
+  "#..$..#",
+  "#.....#",
+  "#.$.$.#",
+  "######F",   // 基地在最下緣
+];
+const MAP = MAP_STR.map(r=>r.split('').map(c=>TILES[c]||0));
+const CW=CFG.cols, RH=CFG.rows;
+
+// ===== 塔定義 =====
+// cost=建造Lv1成本; upCost[i]=Lv(i+1)→Lv(i+2) 升級金幣; stats[i]=Lv(i+1)的[dmg,range,rate]
+const TOWERS = {
+  gun:{name:'機關槍',emo:'🔫',desc:'高速低傷，對單體連射',color:'#7ad0ff', cost:12,
+       stats:[[8,100,0.18],[14,112,0.16],[24,126,0.14],[40,142,0.12],[66,160,0.10],[110,185,0.085]],
+       upCost:[15,28,48,80,130]},
+  sniper:{name:'狙擊砲',emo:'🎯',desc:'極遠射程、高爆發，慢速',color:'#ff7a59', cost:20,
+       stats:[[26,190,1.25],[44,215,1.18],[75,242,1.10],[125,272,1.02],[210,305,0.95],[340,345,0.88]],
+       upCost:[20,36,60,100,160]},
+  laser:{name:'雷射塔',emo:'💠',desc:'鏈式穿透，同時攻擊多個敵人',color:'#7dffb0', cost:14,
+       stats:[[7,95,0.32],[12,108,0.30],[20,122,0.28],[33,138,0.25],[54,156,0.22],[90,178,0.19]],
+       upCost:[14,26,44,74,120]},
+  frost:{name:'冰霜塔',emo:'❄️',desc:'緩速敵方，堆疊減速',color:'#9fd8ff', cost:14,
+       stats:[[6,85,0.5],[11,98,0.5],[19,112,0.5],[32,128,0.5],[54,146,0.5],[92,168,0.5]],
+       upCost:[14,26,44,74,120],
+       slow:0.25, slowDur:1.6},
+  tesla:{name:'特斯拉',emo:'⚡',desc:'範圍電擊，濺射傷害',color:'#ffe75e', cost:24,
+       stats:[[12,105,1.0],[20,118,0.95],[34,132,0.9],[56,150,0.85],[92,170,0.80],[150,192,0.72]],
+       upCost:[24,44,74,122,200],
+       splash:0.55, splashR:55},
+  cannon:{name:'加農砲',emo:'💣',desc:'高傷爆炸，範圍攻擊',color:'#ffb45e', cost:26,
+       stats:[[30,130,1.9],[52,146,1.8],[88,164,1.7],[148,184,1.6],[248,208,1.5],[420,236,1.38]],
+       upCost:[26,48,82,138,226],
+       splash:0.55, splashR:60},
+};
+// 塔解鎖所需波次
+const UNLOCK_WAVE = {gun:0, sniper:0, frost:2, laser:3, tesla:5, cannon:7};
+
+// ===== 敵人定義(以波次縮放) =====
+const ENEMIES = {
+  grunt:{name:'雜兵',emo:'🟠',hp:22,spd:42,gold:8,color:'#ff9f43'},
+  fast:{name:'快艇',emo:'🔺',hp:16,spd:74,gold:10,color:'#ffd93d'},
+  tank:{name:'重裝',emo:'🔷',hp:70,spd:28,gold:20,color:'#b66bff'},
+  split:{name:'分裂體',emo:'🔻',hp:34,spd:50,gold:8,color:'#ff5e7a',split:2},
+  healer:{name:'治療器',emo:'💚',hp:55,spd:36,gold:26,color:'#6bff9e'},
+  boss:{name:'Boss',emo:'👾',hp:500,spd:26,gold:120,color:'#ff4d4d'},
+};
+// 各波生成表: [ [type,count]... ] 主力型態
+function waveComp(w){
+  let list=[]; let n = Math.min(6 + (w-1)*1, 26);
+  let pool=1; if(w>=2) pool=2; if(w>=4) pool=3; if(w>=6) pool=4; if(w>=9) pool=5;
+  // 主力雜兵增多
+  list.push(['grunt', Math.round(n*0.6)]);
+  // 依池加特別型
+  if(pool>=2) list.push(['fast', Math.round(n*0.35)]);
+  if(pool>=3) list.push(['tank', Math.max(1,Math.round(n*0.3))]);
+  if(pool>=4){ if(w%3===0) list.push(['split', Math.max(1,Math.round(n*0.25))]); else list.push(['healer', Math.max(1,Math.round(n*0.2))]); }
+  if(pool>=5) list.push(['tank', Math.max(1,Math.round(n*0.15))]);
+  return list;
+}
+
+// ===== 強化池 =====
+const UPGRADES = {
+  goldMul:{name:'🪙 淘金熱',desc:'所有擊殺與合成分數 +50%',fn:s=>{s.bonus.goldMul*=1.5;} },
+  dmg:{name:'🔥 全體砲火',desc:'所有攻擊力 +35%',fn:s=>{s.bonus.dmgMul*=1.35;} },
+  rate:{name:'⚡ 超頻',desc:'所有塔攻速 +22%',fn:s=>{s.bonus.rateMul*=1.22;} },
+  range:{name:'🎯 廣域雷達',desc:'所有塔射程 +13%',fn:s=>{s.bonus.rangeMul*=1.13;} },
+  hp:{name:'🛡️ 護盾重整',desc:'基地上限 +6，且回復 6 血',fn:s=>{s.maxHP+=6; s.hp=Math.min(s.maxHP,s.hp+6);} },
+  crit:{name:'💥 會心一擊',desc:'暴擊率 +6% (暴擊2.5倍)',fn:s=>{s.bonus.crit+=0.06;} },
+  goldStart:{name:'💵 初始資金',desc:'立即獲得 40 金幣',fn:s=>{s.gold+=40;} },
+  freeze:{name:'🕸 冰霜領域',desc:'全部敵方額外降低 8% 速度',fn:s=>{s.bonus.slowMul*=1.35;} },
+  splash:{name:'💢 擴散炸彈',desc:'範圍型塔爆炸半徑 +25%',fn:s=>{s.bonus.splashMul*=1.25;} },
+  life:{name:'❤️‍🩹 晶核',desc:'每波結束自動回復 1 血',fn:s=>{s.bonus.regen+=1;} },
+  sell:{name:'♻️ 資源回收',desc:'出售退回比例從 70% 提升至 85%',fn:s=>{s.bonus.sellMul=0.85;} },
+  multishot:{name:'🔱 分裂彈',desc:'機關槍額外 +1 分裂彈(25%傷害)',fn:s=>{s.bonus.multiShot+=1;} },
+};
+
+</script>
+<!-- ===== audio.js ===== -->
+<script>
+'use strict';
+// ===== 音效(WebAudio 合成) =====
+const Snd = {
+  ctx:null, enabled:true,
+  init(){ if(this.ctx) return; try{ this.ctx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} },
+  play(type, freq=440, dur=0.1, vol=0.15, type2='square'){
+    if(!this.enabled||!this.ctx) return;
+    try{
+      const t=this.ctx.currentTime;
+      const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+      o.type=type2; o.frequency.value=freq;
+      g.gain.setValueAtTime(vol,t);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      o.connect(g); g.connect(this.ctx.destination);
+      o.start(t); o.stop(t+dur+0.02);
+    }catch(e){}
+  },
+  shoot(){ this.play('square', 520+Math.random()*80, 0.06, 0.05); },
+  laser(){ this.play('sawtooth', 880, 0.09, 0.04); },
+  boom(){ this.play('triangle', 120+Math.random()*50, 0.22, 0.16); },
+  coin(){ this.play('square', 660, 0.08, 0.09); this.play('square', 990, 0.1, 0.09); },
+  merge(){ this.play('sine', 440, 0.15, 0.13); setTimeout(()=>this.play('sine',660,0.16,0.13),90); setTimeout(()=>this.play('sine',880,0.2,0.13),180); },
+  build(){ this.play('triangle', 300, 0.09, 0.1); },
+  sell(){ this.play('triangle', 500, 0.12, 0.09); },
+  hurt(){ this.play('sawtooth', 150, 0.25, 0.12); },
+  wave(){ this.play('square', 400, 0.22, 0.14); setTimeout(()=>this.play('square',600,0.24,0.14),130); },
+  upgrade(){ this.play('sine', 520, 0.12, 0.12); setTimeout(()=>this.play('sine',780,0.16,0.12),100); },
+  choice(){ this.play('sine', 550, 0.2, 0.12); setTimeout(()=>this.play('sine',820,0.24,0.12),120); },
+  over(){ this.play('sawtooth', 220, 0.5, 0.15); setTimeout(()=>this.play('sawtooth',140,0.7,0.15),250); },
+  click(){ this.play('square', 420, 0.05, 0.06); },
+};
+</script>
+<!-- ===== save.js ===== -->
+<script>
+'use strict';
+// ===== 存檔系統 (localStorage) =====
+const Save = {
+  key:'starMergeSave_v1',
+  load(){
+    try{ const s = localStorage.getItem(this.key); if(s) return JSON.parse(s); }catch(e){}
+    return null;
+  },
+  write(st){
+    try{ localStorage.setItem(this.key, JSON.stringify(st)); return true; }catch(e){ return false; }
+  },
+  _b64encode(str){
+    // UTF-8 安全 base64
+    try{
+      const bytes = new TextEncoder().encode(str);
+      let bin='';
+      for(let i=0;i<bytes.length;i++){ bin += String.fromCharCode(bytes[i]); }
+      return btoa(bin);
+    }catch(e){ return ''; }
+  },
+  _b64decode(b64){
+    try{
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++){ bytes[i]=bin.charCodeAt(i); }
+      return new TextDecoder().decode(bytes);
+    }catch(e){ return null; }
+  },
+  exportCode(st){
+    try{ return 'SM1.'+this._b64encode(JSON.stringify(st)); }catch(e){ return ''; }
+  },
+  importCode(code){
+    try{
+      if(!code || code.indexOf('SM1.')!==0) return null;
+      const json = this._b64decode(code.slice(4));
+      const st = JSON.parse(json);
+      if(!st || typeof st.wave!=='number') return null;
+      return st;
+    }catch(e){ return null; }
+  },
+  clear(){ try{ localStorage.removeItem(this.key); }catch(e){} },
+};
+</script>
+<!-- ===== render.js ===== -->
+<script>
+'use strict';
+// ===== 渲染 =====
+const Render = {
+  cv:null, ctx:null, W:0, H:0, tw:0, th:0, ox:0, oy:0, dpr:1,
+  init(){
+    this.cv = document.getElementById('cv');
+    this.ctx = this.cv.getContext('2d');
+    this.resize();
+    window.addEventListener('resize', ()=>this.resize());
+  },
+  resize(){
+    const stage = document.getElementById('stage');
+    this.W = stage.clientWidth; this.H = stage.clientHeight;
+    this.dpr = window.devicePixelRatio||1;
+    this.cv.width = this.W*this.dpr; this.cv.height = this.H*this.dpr;
+    this.cv.style.width=this.W+'px'; this.cv.style.height=this.H+'px';
+    this.ctx.setTransform(this.dpr,0,0,this.dpr,0,0);
+    // 計算格大小 (留出邊距)
+    const mx = this.W/CFG.cols, my = (this.H-16)/CFG.rows;
+    this.tw = Math.min(mx, my);
+    this.ox = (this.W - this.tw*CFG.cols)/2;
+    this.oy = 8;
+  },
+  cellRect(c,r){ return {x:this.ox+c*this.tw, y:this.oy+r*this.tw, w:this.tw}; },
+  gridToScreen(c,r){ return {x:this.ox+(c+0.5)*this.tw, y:this.oy+(r+0.5)*this.tw}; },
+  screenToGrid(x,y){
+    // 輸入為螢幕座標(clientX/clientY), 轉換為扣除 canvas 偏移後的格座標
+    const r=this.cv.getBoundingClientRect();
+    const lx=x-r.left, ly=y-r.top;
+    const c=Math.floor((lx-this.ox)/this.tw), rw=Math.floor((ly-this.oy)/this.tw);
+    return {c,r:rw};
+  },
+  draw(){
+    const ctx=this.ctx;
+    ctx.clearRect(0,0,this.W,this.H);
+    this.drawBoard(ctx);
+    this.drawTrails(ctx);
+    this.drawEnemies(ctx);
+    this.drawProjectiles(ctx);
+    this.drawTowers(ctx);
+    this.drawFX(ctx);
+  },
+  drawBoard(ctx){
+    // 背景漸層
+    const g = ctx.createLinearGradient(0,0,0,this.H);
+    g.addColorStop(0,'#0a0f2b'); g.addColorStop(1,'#0c0a24');
+    ctx.fillStyle=g; ctx.fillRect(0,0,this.W,this.H);
+    // 星星
+    ctx.fillStyle='#ffffff';
+    for(let i=0;i<70;i++){
+      const sx=(i*137.5)%this.W, sy=(i*89.3)%this.H;
+      ctx.globalAlpha = 0.15+0.35*Math.abs(Math.sin(G.time*0.6+i));
+      ctx.fillRect(sx,sy,1.5,1.5);
+    }
+    ctx.globalAlpha=1;
+    for(let r=0;r<CFG.rows;r++) for(let c=0;c<CFG.cols;c++){
+      const t=MAP[r][c], rc=this.cellRect(c,r);
+      if(t===0){
+        // 可放塔格
+        ctx.fillStyle = (G.grid[r][c])? 'rgba(60,80,160,0.28)' : 'rgba(40,55,120,0.16)';
+        ctx.fillRect(rc.x+1, rc.y+1, rc.w-2, rc.w-2);
+        ctx.strokeStyle='rgba(80,110,220,0.16)'; ctx.lineWidth=1;
+        ctx.strokeRect(rc.x+1, rc.y+1, rc.w-2, rc.w-2);
+      } else if(t===1){
+        ctx.fillStyle='#161c3e'; ctx.fillRect(rc.x, rc.y, rc.w, rc.w);
+        ctx.strokeStyle='#2a3868'; ctx.strokeRect(rc.x, rc.y, rc.w, rc.w);
+      } else if(t===2){
+        // 傳送點
+        ctx.fillStyle='#1a233f';
+        ctx.fillRect(rc.x, rc.y, rc.w, rc.w);
+        ctx.fillStyle='#3ddc84'; ctx.globalAlpha=0.8+0.2*Math.sin(G.time*3);
+        ctx.beginPath(); ctx.arc(rc.x+rc.w/2, rc.y+rc.w/2, rc.w*0.28, 0, 7);
+        ctx.fill(); ctx.globalAlpha=1;
+      } else if(t===3){
+        // 基地
+        ctx.fillStyle='#2d1230';
+        ctx.fillRect(rc.x, rc.y, rc.w, rc.w);
+        ctx.strokeStyle='#c24a6a'; ctx.lineWidth=2;
+        ctx.strokeRect(rc.x+1, rc.y+1, rc.w-2, rc.w-2);
+        ctx.fillStyle='#ff6b9d';
+        ctx.font='bold '+(rc.w*0.4)+'px sans-serif';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('❤️', rc.x+rc.w/2, rc.y+rc.w/2+2);
+      } else if(t===4){
+        // 金礦(裝飾)
+        ctx.fillStyle='#221a08';
+        ctx.fillRect(rc.x, rc.y, rc.w, rc.w);
+        ctx.fillStyle='#ffd166'; ctx.globalAlpha=0.55+0.2*Math.sin(G.time*2+c);
+        ctx.fillText('✦', rc.x+rc.w/2, rc.y+rc.w/2);
+        ctx.globalAlpha=1;
+      }
+    }
+  },
+  drawTrails(ctx){
+    // 敵人路徑指引(從S到F)
+    const S=findCell(2), F=findCell(3);
+    if(!S||!F) return;
+    ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=8;
+    ctx.setLineDash([6,12]);
+    const p0=this.gridToScreen(S.c,S.r), p1=this.gridToScreen(F.c,F.r);
+    ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y); ctx.stroke();
+    ctx.setLineDash([]);
+  },
+  drawEnemies(ctx){
+    for(const e of G.enemies){
+      if(e.dead) continue;
+      const x=e.x,y=e.y;
+      const def=ENEMIES[e.type];
+      let rad = e.type==='boss'?16:10;
+      // 陰影
+      ctx.fillStyle='rgba(0,0,0,0.35)';
+      ctx.beginPath(); ctx.arc(x+1, y+2, rad, 0, 7); ctx.fill();
+      // 本體
+      ctx.fillStyle=def.color;
+      this.circle(x,y,rad);
+      // 血條
+      const w=rad*2, hh=3.5, y0=y-rad-7;
+      ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(x-w/2,y0,w,hh);
+      ctx.fillStyle = e.hp>e.maxHP*0.6?'#5eff7a':(e.hp>e.maxHP*0.3?'#ffe75e':'#ff5e5e');
+      ctx.fillRect(x-w/2,y0,w*Math.max(0,e.hp/e.maxHP),hh);
+      // 緩速特效
+      if(e.slowT>0){
+        ctx.strokeStyle='rgba(140,220,255,0.8)'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.arc(x,y,rad+3,0,7); ctx.stroke();
+      }
+    }
+  },
+  circle(x,y,r){
+    const ctx=this.ctx;
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  },
+  drawProjectiles(ctx){
+    for(const p of G.projectiles){
+      ctx.fillStyle=p.color||'#ffe75e';
+      if(p.kind==='beam'){
+        ctx.strokeStyle=p.color; ctx.lineWidth=3;
+        ctx.beginPath(); ctx.moveTo(p.x0||p.x,p.y0||p.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+      } else {
+        this.circle(p.x,p.y,p.r||3.5);
+      }
+    }
+  },
+  drawTowers(ctx){
+    for(const t of G.towers){
+      const p=this.gridToScreen(t.c,t.r);
+      const s=this.tw;
+      const def=TOWERS[t.key];
+      // 光環
+      if(t===G.sel){
+        ctx.strokeStyle='rgba(255,209,102,0.35)'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.arc(p.x,p.y, this.tw*0.62,0,7); ctx.stroke();
+        // 射程圈
+        const rng = towerRange(t);
+        ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.setLineDash([4,6]);
+        ctx.beginPath(); ctx.arc(p.x,p.y,rng,0,7); ctx.stroke(); ctx.setLineDash([]);
+      }
+      // 底座
+      ctx.fillStyle='#0e142e';
+      this.circle(p.x,p.y,s*0.42);
+      ctx.strokeStyle='#2c3c78'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(p.x,p.y,s*0.42,0,7); ctx.stroke();
+      // 塔身
+      ctx.fillStyle=def.color;
+      this.circle(p.x,p.y,s*0.30);
+      ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(p.x,p.y,s*0.30,0,7); ctx.stroke();
+      // emoji
+      ctx.font = (s*0.36)+'px sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(def.emo,p.x,p.y+1);
+      // 等級徽
+      if(t.lv>1){
+        ctx.fillStyle='#ffd166';
+        ctx.font='bold '+(s*0.22)+'px sans-serif';
+        ctx.fillText('Lv'+t.lv, p.x+s*0.3, p.y-s*0.34);
+      }
+      // 冷卻外環
+      if(t.cd>0){
+        const frac=t.cd/t.maxCd;
+        ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(p.x,p.y,s*0.42,-Math.PI/2, -Math.PI/2+frac*Math.PI*2); ctx.stroke();
+      }
+    }
+    // 建造中預覽
+    if(Input.drag && Input.moved){
+      const p = Render.screenToGrid(Input.lastX||0, Input.lastY||0);
+      if(p && insideGrid(p)) drawPlacePreview(ctx,p,Input.drag.key);
+    }
+  },
+  drawFX(ctx){
+    for(const f of G.fx){
+      const a=1-f.t/f.max;
+      ctx.globalAlpha=a;
+      ctx.strokeStyle=f.color; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(f.x,f.y,f.r*(1-a),0,7); ctx.stroke();
+      ctx.globalAlpha=1;
+    }
+    // 漂浮金幣文字
+    for(const ft of G.floatTexts){
+      const a=1-ft.t/ft.max;
+      ctx.globalAlpha=a;
+      ctx.fillStyle=ft.color||'#ffd166';
+      ctx.font='bold 12px sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText(ft.txt,ft.x,ft.y-ft.t*18);
+      ctx.globalAlpha=1;
+    }
+  },
+};
+function findCell(t) {
+  for(let r=0;r<CFG.rows;r++) for(let c=0;c<CFG.cols;c++) if(MAP[r][c]===t) return {c,r};
+  return null;
+}
+function insideGrid(p){ return p.c>=0&&p.c<CFG.cols&&p.r>=0&&p.r<CFG.rows; }
+function drawPlacePreview(ctx,p,key){
+  const rc=Render.cellRect(p.c,p.r);
+  ctx.fillStyle='rgba(120,200,255,0.22)';
+  ctx.fillRect(rc.x+1,rc.y+1,rc.w-2,rc.w-2);
+  ctx.strokeStyle='#7ad0ff'; ctx.lineWidth=2;
+  ctx.strokeRect(rc.x+1,rc.y+1,rc.w-2,rc.w-2);
+}
+</script>
+<!-- ===== game.js ===== -->
+<script>
+'use strict';
+// ===== 核心遊戲邏輯 =====
+let G=null;
+
+function newGame(){
+  G = {
+    wave:0, gold:CFG.startGold, hp:CFG.startHP, maxHP:CFG.startHP,
+    waveTimer:2.5, inWave:false, over:false, paused:false, speed:1,
+    time:0, nextId:1,
+    grid:nullGrid(),
+    towers:[], enemies:[], projectiles:[], fx:[], floatTexts:[],
+    spawnQ:[], spawnT:0,
+    bonus:{ goldMul:1, dmgMul:1, rateMul:1, rangeMul:1, crit:0, slowMul:1, splashMul:1, regen:0, sellMul:0.7, multiShot:0 },
+    totalKills:0, totalMerges:0, bestWave:0,
+    sel:null, upgradesTaken:[], pendingChoice:false,
+  };
+  buildBar();
+  updateHUD();
+}
+function nullGrid(){ const g=[]; for(let r=0;r<CFG.rows;r++){ g.push(new Array(CFG.cols).fill(null)); } return g; }
+
+// ---- 塔 ----
+function towerStats(t){
+  const i=L(t.lv);
+  const st=TOWERS[t.key].stats[i];
+  return { dmg: st[0]*G.bonus.dmgMul, range: st[1]*G.bonus.rangeMul, rate: st[2]/G.bonus.rateMul };
+}
+function L(lv){ return Math.max(0,Math.min(CFG.maxLevel-1,lv-1)); }
+function towerRange(t){ return towerStats(t).range; }
+function buildCost(key){ return TOWERS[key].cost; }
+function lvCost(key,lv){ return buildCost(key)*Math.max(1,lv); }
+function levelCoinCost(t){
+  const up=TOWERS[t.key].upCost; const i=t.lv-1;
+  if(up[i]) return up[i];
+  return Math.round(buildCost(t.key)*0.8);
+}
+function towerInvested(t){
+  const up=TOWERS[t.key].upCost;
+  let inv=buildCost(t.key);
+  for(let i=0;i<t.lv-1 && i<up.length;i++){ inv+=up[i]; }
+  return inv;
+}
+function sellValue(t){ return Math.round(towerInvested(t)*G.bonus.sellMul); }
+function canPlace(c,r){ return insideGrid({c,r}) && MAP[r][c]===0 && !G.grid[r][c]; }
+
+function placeTower(c,r,key,lv,cost){
+  if(!canPlace(c,r)) return false;
+  if(G.gold<cost) return false;
+  G.gold-=cost;
+  const t={id:G.nextId++, key, c, r, lv, cd:0, maxCd:0.18};
+  G.towers.push(t); G.grid[r][c]=t;
+  addFloat(Render.gridToScreen(c,r),'+'+cost+'💸','#7ad0ff');
+  Snd.build(); updateHUD(); buildBar();
+  return true;
+}
+function upgradeTower(t){
+  if(t.lv>=CFG.maxLevel || !t) return;
+  const c=levelCoinCost(t);
+  if(G.gold<c) return;
+  G.gold-=c; upLevel(t);
+  Snd.upgrade(); addFloat(Render.gridToScreen(t.c,t.r),'Lv'+t.lv+' ⬆','#ffd166');
+  updateHUD(); buildBar(); if(G.sel&&G.sel.id===t.id) showTwinfo(t);
+}
+function upLevel(t){ t.lv++; }
+function sellTower(t){
+  if(!t) return;
+  const v=sellValue(t);
+  G.gold+=v;
+  addFloat(Render.gridToScreen(t.c,t.r),'+'+v+'💰','#ffd166');
+  removeTower(t); Snd.sell(); updateHUD(); buildBar(); hideTwinfo();
+}
+function removeTower(t){
+  const i=G.towers.indexOf(t);
+  if(i>=0) G.towers.splice(i,1);
+  G.grid[t.r][t.c]=null;
+  if(G.sel&&G.sel.id===t.id){ G.sel=null; }
+}
+function combineTowers(a,b){
+  if(a.key!==b.key || a.lv!==b.lv || a.lv>=CFG.maxLevel) return false;
+  upLevel(a);
+  removeTower(b);
+  a.cd=Math.min(a.cd,0.3);
+  const bonus=Math.round(CFG.mergeBonusGold*G.bonus.goldMul);
+  G.gold+=bonus; G.totalMerges++;
+  addFloat(Render.gridToScreen(a.c,a.r),'✨ Lv'+a.lv+' +'+bonus,'#ffd166');
+  Snd.merge(); updateHUD(); buildBar();
+  return true;
+}
+// 免費合成(場上兩塔合併, 無建造費)
+function freeMerge(a,b){
+  combineTowers(a,b);
+}
+// 拖曳塔到另一座 => 嘗試合成或移動
+function tryMerge(t1,t2){
+  if(!t2) return false;
+  // 同 key 同 lv => 合成
+  if(t1.key===t2.key && t1.lv===t2.lv && t1.id!==t2.id) return combineTowers(t1,t2);
+  // 否則交換位置(移動 t1 到 t2 格, t2 讓位)
+  moveTowerTo(t1,t2.c,t2.r);
+  return true;
+}
+function moveTowerTo(t,c,r){
+  if(!insideGrid({c,r}) || MAP[r][c]!==0) return false;
+  if(G.grid[r][c] && G.grid[r][c]!==t) return false;
+  G.grid[t.r][t.c]=null;
+  t.c=c; t.r=r; G.grid[r][c]=t;
+  Snd.click(); updateHUD();
+  return true;
+}
+
+// ---- 放置處理(輸入成果) ----
+function placeAtScreen(x,y,key,lv){
+  if(!G||G.over) return;
+  const p=Render.screenToGrid(x,y);
+  if(!insideGrid(p)) return;
+  const existing=G.grid[p.r][p.c];
+  if(existing){
+    // 拖到既有塔: 同型同級 => 合成(不需要真塔, 直接升級+耗金)
+    if(existing.key===key && existing.lv===lv && existing.lv<CFG.maxLevel){
+      const cost=lvCost(key,lv);
+      if(G.gold>=cost){
+        G.gold-=cost;
+        upLevel(existing);
+        existing.cd=Math.min(existing.cd,0.3);
+        const bonus=Math.round(CFG.mergeBonusGold*G.bonus.goldMul);
+        G.gold+=bonus; G.totalMerges++;
+        addFloat(Render.gridToScreen(existing.c,existing.r),'✨ Lv'+existing.lv+' +'+bonus,'#ffd166');
+        Snd.merge(); updateHUD(); buildBar();
+        if(G.sel&&G.sel.id===existing.id) showTwinfo(existing);
+      } else Snd.click();
+    } else {
+      Snd.click(); // 不同型/級不可疊
+    }
+    updateHUD(); buildBar();
+    return;
+  }
+  const cost=lvCost(key,lv);
+  if(placeTower(p.c,p.r,key,lv,cost)){} else { Snd.click(); }
+  updateHUD(); buildBar();
+}
+
+// ---- 塔資訊 ----
+function startWave(){
+  G.wave++;
+  G.inWave=true;
+  const comp=waveComp(G.wave);
+  G.spawnQ=[];
+  let delay=0;
+  for(const [type,count] of comp){
+    for(let i=0;i<count;i++){
+      G.spawnQ.push({type, delay: delay});
+      delay += 0.55+Math.random()*0.85;
+    }
+  }
+  if(G.wave%5===0){ G.spawnQ.push({type:'boss', delay}); }
+  G.spawnQ.sort((a,b)=>a.delay-b.delay);
+  G.spawnT=0;
+  waveBanner('WAVE '+G.wave);
+  Snd.wave();
+  if(G.bonus.regen>0 && G.hp<G.maxHP){ G.hp=Math.min(G.maxHP,G.hp+G.bonus.regen); }
+  buildBar();
+  updateHUD();
+}
+function spawnEnemy(type){
+  const S=findCell(2), F=findCell(3);
+  const ps=Render.gridToScreen(S.c,S.r);
+  const pe=Render.gridToScreen(F.c,F.r);
+  const base=ENEMIES[type];
+  const hpMul = type==='boss' ? Math.pow(1.18,G.wave-1) : Math.pow(1.14,G.wave-1);
+  const e={
+    type, x:ps.x, y:ps.y,
+    maxHP: Math.round(base.hp*hpMul), hp: base.hp*hpMul,
+    spd: base.spd*Math.pow(1.008,G.wave-1), gold: base.gold,
+    slowT:0, boss: type==='boss', split: base.split||0,
+    child:false, dead:false, hitFlash:0, t:G.time, px:ps.x, py:ps.y,
+  };
+  G.enemies.push(e);
+}
+function spawnChildEnemy(parent){
+  if(parent.split<=0 || parent.child) return; // 分裂體不再分裂
+  const c={name:'split', hp:Math.round(parent.maxHP*0.35), spd: parent.spd*1.3, gold:Math.floor(parent.gold*0.3)};
+  for(let i=0;i<parent.split;i++){
+    G.enemies.push({type:'split', x:parent.x+(Math.random()*24-12), y:parent.y+(Math.random()*24-12),
+      maxHP:c.hp, hp:c.hp, spd:c.spd, gold:c.gold, slowT:0, boss:false, split:0, child:true, dead:false, hitFlash:0, t:G.time});
+  }
+}
+function enemySpeed(e){
+  let spd=e.spd;
+  if(e.slowT>0){ spd*= (1-0.25*G.bonus.slowMul*0.85); }
+  return spd;
+}
+
+// ---- 更新 ----
+function update(dt){
+  if(!G || G.over || G.paused) return;
+  G.time+=dt;
+  // 波次排程
+  if(!G.inWave){
+    G.waveTimer-=dt;
+    if(G.waveTimer<=0) startWave();
+  } else {
+    // 生成
+    G.spawnT+=dt;
+    while(G.spawnQ.length && G.spawnT>=G.spawnQ[0].delay){
+      spawnEnemy(G.spawnQ.shift().type);
+    }
+    // 若全部生成完且無敵人 => 波次結束
+    if(!G.spawnQ.length && !G.enemies.some(e=>!e.dead) && G.wave>0){
+      G.inWave=false;
+      G.waveTimer=CFG.waveTime;
+      waveClear();
+    }
+  }
+  // 敵方移動
+  moveEnemies(dt);
+  // 清理死敵
+  cleanEnemies();
+  // 塔開火
+  towersFire(dt);
+  // 投射物
+  updateProjectiles(dt);
+  // 特效
+  for(const f of G.fx){ f.t+=dt; }
+  G.fx=G.fx.filter(f=>f.t<f.max);
+  for(const f of G.floatTexts){ f.t+=dt; }
+  G.floatTexts=G.floatTexts.filter(f=>f.t<f.max);
+  // 波間自動選強化 (每3波)
+  if(!G.inWave && G.wave>0 && G.wave%3===0 && !G.pendingChoice){
+    G.pendingChoice=true;
+    G.paused=true;
+    showChoice();
+  }
+}
+function moveEnemies(dt){
+  const pe=Render.gridToScreen(findCell(3).c, findCell(3).r);
+  for(const e of G.enemies){
+    if(e.dead || e.child) continue;
+    if(e.slowT>0) e.slowT-=dt;
+    const dx=pe.x-e.x, dy=pe.y-e.y, d=Math.hypot(dx,dy);
+    const spd=enemySpeed(e);
+    if(d<spd*dt){ onLeak(e); }
+    else { e.px=e.x; e.py=e.y; e.x+=dx/d*spd*dt; e.y+=dy/d*spd*dt; }
+  }
+  // 分裂體走自己的
+  for(const e of G.enemies){
+    if(e.dead || !e.child) continue;
+    if(e.slowT>0) e.slowT-=dt;
+    const dx=pe.x-e.x, dy=pe.y-e.y, d=Math.hypot(dx,dy);
+    const spd=enemySpeed(e);
+    if(d<spd*dt) onLeak(e); else { e.x+=dx/d*spd*dt; e.y+=dy/d*spd*dt; }
+  }
+}
+function cleanEnemies(){
+  G.enemies=G.enemies.filter(e=>!e.dead);
+}
+function onLeak(e){
+  e.dead=true;
+  const loss=e.boss?3:1;
+  G.hp-=loss;
+  addFX(e.x,e.y,'#ff5e5e',20);
+  addFloat({x:e.x,y:e.y},'-'+loss,'#ff6b9d');
+  Snd.hurt(); updateHUD();
+  if(G.hp<=0){ G.hp=0; gameOver(); }
+}
+function waveClear(){
+  G.totalClearedWaves||0; // noop
+  if(G.wave%3===0){ /* choice handled in update */ }
+  Snd.coin();
+  addFloat(Render.gridToScreen(findCell(3).c,findCell(3).r),'波次結束!','#7ad0ff');
+  // 進度存檔
+  autosave();
+}
+
+// ---- 塔開火 ----
+function towersFire(dt){
+  const F=Render.gridToScreen(findCell(3).c,findCell(3).r);
+  for(const t of G.towers){
+    const def=TOWERS[t.key];
+    const st=towerStats(t); t.maxCd=st.rate;
+    if(t.cd>0){ t.cd-=dt; continue; }
+    const p=Render.gridToScreen(t.c,t.r);
+    // 找目標: 射程內最靠近基地
+    let target=null, best=1e9;
+    for(const e of G.enemies){
+      if(e.dead) continue;
+      const d=Math.hypot(e.x-F.x,e.y-F.y);
+      if(d<best && Math.hypot(e.x-p.x,e.y-p.y)<=st.range){ best=d; target=e; }
+    }
+    if(!target){ continue; }
+    t.cd=st.rate; t.angle=Math.atan2(target.y-p.y,target.x-p.x);
+    fire(t,target,st,def,p);
+  }
+}
+function fire(t,target,st,def,p){
+  const crit=Math.random()<G.bonus.crit;
+  const dmg=st.dmg*(crit?2.5:1);
+  if(def.splash){
+    // 拋物線彈丸, 撞擊範圍 (home 到目標附近爆開)
+    const speed=def.key==='cannon'?380:520;
+    G.projectiles.push({kind:'ball', x:p.x,y:p.y, target, speed,
+      splashR:def.splashR*G.bonus.splashMul, dmg, crit, color:'#ffb45e', r:def.key==='cannon'?6:5, done:false});
+  } else if(def.slow){
+    G.projectiles.push({kind:'frost', x:p.x,y:p.y, target, speed:480,
+      slowDur:def.slowDur, slowAoe:120, dmg, crit, color:'#9fd8ff', r:4, done:false});
+  } else {
+    // 追蹤子彈
+    G.projectiles.push({kind:'bullet', x:p.x,y:p.y, target, speed:560, dmg, crit, key:t.key, color:def.color, done:false});
+  }
+}
+function leadX(e,t,speed){ const F=Render.gridToScreen(findCell(3).c,findCell(3).r); const d=Math.hypot(e.x-F.x,e.y-F.y); return e.x; }
+function leadY(e,t,speed){ return e.y; }
+function updateProjectiles(dt){
+  for(const p of G.projectiles){
+    if(p.kind==='bullet'){
+      if(!p.target || p.target.dead){ p.dead=true; continue; }
+      const ex=p.target.x, ey=p.target.y;
+      trackTo(p,ex,ey,dt);
+      if(p.done){ onBulletHit(p); }
+    } else if(p.kind==='ball' || p.kind==='frost'){
+      if(!p.target || p.target.dead){ p.dead=true; continue; }
+      trackTo(p,p.target.x,p.target.y,dt);
+      if(p.done){ onBallImpact(p); }
+    }
+  }
+  G.projectiles=G.projectiles.filter(p=>!p.dead);
+}
+function trackTo(p,ex,ey,dt){
+  const dx=ex-p.x, dy=ey-p.y, d=Math.hypot(dx,dy);
+  const mv=p.speed*dt;
+  if(d<=mv || d<4){ p.x=ex; p.y=ey; p.done=true; }
+  else { p.x+=dx/d*mv; p.y+=dy/d*mv; }
+}
+function onBulletHit(p){
+  if(p.dead) return;
+  damageEnemy(p.target, p.dmg, p.crit);
+  addFX(p.x,p.y,p.color,8);
+  p.dead=true;
+}
+function onBallImpact(p){
+  if(p.dead) return;
+  addFX(p.x,p.y,p.color, p.splashR?p.splashR:14);
+  if(p.crit) addFloat({x:p.x,y:p.y},'暴擊!','#ffd166');
+  if(p.kind==='frost'){
+    for(const e of G.enemies){
+      if(e.dead) continue;
+      if(Math.hypot(e.x-p.x,e.y-p.y)<=p.slowAoe){
+        e.slowT=Math.max(e.slowT,p.slowDur);
+        damageEnemy(e, p.dmg, p.crit);
+      }
+    }
+    Snd.laser();
+  } else {
+    for(const e of G.enemies){
+      if(e.dead) continue;
+      const d=Math.hypot(e.x-p.x,e.y-p.y);
+      if(d<=p.splashR){ damageEnemy(e, p.dmg*(0.85+0.3*Math.random()), p.crit); }
+    }
+    Snd.boom();
+  }
+  p.dead=true;
+}
+function damageEnemy(e,dmg,crit){
+  if(!e || e.dead) return;
+  e.hp-=dmg; e.hitFlash=0.1;
+  if(e.hp<=0){ killEnemy(e); }
+}
+function killEnemy(e){
+  e.dead=true;
+  const g=Math.max(1, Math.round(e.gold*G.bonus.goldMul));
+  G.gold+=g; G.totalKills++;
+  addFloat({x:e.x,y:e.y},'+'+g,'#ffe75e');
+  addFX(e.x,e.y, e.boss?'#ff4d4d':'#fff', e.boss?26:12);
+  Snd.coin(); updateHUD();
+  if(e.boss){ addFloat({x:e.x,y:e.y-16},'BOSS 擊敗!','#ffd166'); Snd.merge(); }
+  if(e.split && !e.child){ spawnChildEnemy(e); }
+}
+
+// ---- 特效 ----
+function addFX(x,y,color,r){ G.fx.push({x,y,color,r:r||12,t:0,max:0.35}); }
+function addFloat(pos,txt,color){ G.floatTexts.push({x:pos.x,y:pos.y,txt,color:color||'#fff',t:0,max:1.0}); }
+
+// ---- 組態 bar ----
+function buildBar(){
+  const bar=document.getElementById('buildbar');
+  bar.innerHTML='';
+  for(const key in TOWERS){
+    const wl=UNLOCK_WAVE[key]||0;
+    if(G.wave < wl) continue; // 隱藏未解鎖(或顯示鎖定)
+  }
+  const unlockKeys = Object.keys(TOWERS).filter(k=> (UNLOCK_WAVE[k]||0)<=Math.max(G.wave,1));
+  // 依建造成本排序
+  const keys = Object.keys(TOWERS).sort((a,b)=>buildCost(a)-buildCost(b));
+  for(const key of keys){
+    const def=TOWERS[key];
+    const locked = (UNLOCK_WAVE[key]||0) > G.wave;
+    const cost=buildCost(key);
+    const affordable = G.gold>=cost;
+    const b=document.createElement('div');
+    b.className='btower';
+    if(locked){ b.classList.add('locked'); b.innerHTML='<span class="lockico">🔒</span><span class="bico">'+def.emo+'</span><span class="bname">'+def.name+'</span><span class="bcost">W'+UNLOCK_WAVE[key]+'解鎖</span>'; }
+    else { b.className+=(affordable?'':' unafford'); b.dataset.key=key; b.dataset.lv='1';
+      b.innerHTML='<span class="bico">'+def.emo+'</span><span class="bname">'+def.name+'</span><span class="bcost">'+cost+'🪙</span>'; }
+    bar.appendChild(b);
+  }
+  // 顯示波次提示
+}
+
+</script>
+<!-- ===== main.js ===== -->
+<script>
+'use strict';
+// ===== UI 主控制 =====
+const $=id=>document.getElementById(id);
+
+function stageEl(){ return $('stage'); }
+
+// ---- HUD ----
+function updateHUD(){
+  if(!G) return;
+  $('hWave').textContent='W'+G.wave;
+  $('hGold').textContent=G.gold;
+  $('hHP').textContent=G.hp;
+  const pct=Math.max(0,Math.min(100, G.hp/G.maxHP*100));
+  $('hpBar').style.width=pct+'%';
+  if(G.hp<6){ $('hpBarWrap').style.borderColor='#ff5e5e'; } else { $('hpBarWrap').style.borderColor='#5a1c3a'; }
+}
+
+// ---- 波次橫幅 ----
+let bannerTO=null;
+function waveBanner(txt){
+  const b=$('wavebanner');
+  b.textContent=txt; b.style.opacity=1; b.style.transform='translate(-50%,-50%) scale(1.1)';
+  clearTimeout(bannerTO);
+  bannerTO=setTimeout(()=>{ b.style.opacity=0; }, 1400);
+}
+
+// ---- 塔資訊面板 ----
+function showTwinfo(t,x,y){
+  if(!G || t.dead) return;
+  G.sel=t; hideTwinfo(false); // 先清
+  const def=TOWERS[t.key], st=towerStats(t);
+  const rng=Math.round(st.range), dmg=Math.round(st.dmg), rate=(1/st.rate).toFixed(1);
+  const up=levelCoinCost(t);
+  $('sel-emoji').textContent=def.emo;
+  $('sel-name').textContent=def.name+' Lv'+t.lv;
+  $('sel-stats').innerHTML=
+    '<div class="row"><span class="b">攻擊</span><span class="v">'+dmg+'</span></div>'+
+    '<div class="row"><span class="b">射程</span><span class="v">'+rng+'</span></div>'+
+    '<div class="row"><span class="b">射速</span><span class="v">'+rate+'/秒</span></div>'+
+    '<div class="row"><span class="b">出售</span><span class="v">💰'+sellValue(t)+'</span></div>';
+  const btnU=$('btnLevelUp'), btnS=$('btnSell');
+  btnU.disabled = t.lv>=CFG.maxLevel || G.gold<up;
+  btnU.textContent = t.lv>=CFG.maxLevel ? '已滿級' : '⬆ 升級 '+up+'🪙';
+  $('twinfo').style.display='block';
+}
+function hideTwinfo(clearSel){
+  $('twinfo').style.display='none';
+  if(clearSel!==false && G) G.sel=null;
+}
+
+// ---- 建造列點擊處理(若純點擊視為開啟資訊?) ----
+// (Input 已處理 pointerdown)
+
+// ---- 選單 ----
+function openMenu(){
+  hideTwinfo();
+  const saves=Save.load();
+  const rec=loadBest();
+  const me=$('menuSaves');
+  me.innerHTML='';
+  if(rec.best>0){
+    me.innerHTML='<div class="badge" style="display:inline-block;margin-bottom:8px">🏅 最佳紀錄: 第 '+rec.best+' 波｜擊殺 '+rec.kills+'</div><br>';
+  }
+  if(saves && saves.wave>0){
+    me.innerHTML+='<div class="badge" style="display:inline-block">📂 上次進度: 第 '+saves.wave+' 波｜存檔時間 '+new Date(saves.savedAt||Date.now()).toLocaleString()+'</div>';
+  }
+}
+$('btnNew').onclick=()=>{
+  Snd.init(); Snd.click();
+  newGame();
+  $('ovMenu').classList.remove('show');
+  hideTwinfo(); updateHUD(); autosave();
+};
+$('btnImport').onclick=()=>{
+  const code=$('impCode').value.trim();
+  const st=Save.importCode(code);
+  if(st){ loadState(st); $('ovMenu').classList.remove('show'); autosave(); }
+  else { $('impCode').style.borderColor='#ff5e5e'; setTimeout(()=>$('impCode').style.borderColor='#3350a8',800); }
+};
+$('btnResume').onclick=()=>{ closePause(); };
+$('btnNextWave').onclick=()=>{
+  if(!G||G.over||G.inWave||G.pendingChoice) return;
+  Snd.click(); G.waveTimer=0.01;
+};
+$('btnSave').onclick=()=>{ autosave(); flashMsg('✅ 已存檔'); };
+$('btnExport').onclick=()=>{
+  const code=Save.exportCode(saveState());
+  navigator.clipboard&&navigator.clipboard.writeText(code).catch(()=>{});
+  $('pauseStatus').textContent='📤 存檔碼已複製(或長按以下欄位複製):';
+  prompt('複製存檔碼',code);
+};
+$('btnRestart').onclick=()=>{
+  if(confirm('確定重新開始? 目前進度將被覆蓋。')){ Save.clear(); newGame(); closePause(); autosave(); }
+};
+$('btnExit').onclick=()=>{ G.paused=true; showOv('ovPause',false); showOv('ovMenu',true); openMenu(); };
+$('btnAgain').onclick=()=>{ hideOv('ovEnd'); newGame(); autosave(); };
+$('btnHome').onclick=()=>{ hideOv('ovEnd'); showOv('ovMenu',true); openMenu(); };
+function showOv(id,show){ $(id).classList.toggle('show',show); }
+function hideOv(id){ $(id).classList.remove('show'); }
+
+function openPause(){ if(!G||G.over) return; G.paused=true; showOv('ovPause',true); }
+function closePause(){ G.paused=false; hideOv('ovPause'); }
+function flashMsg(txt){ const b=$('pauseStatus'); b.textContent=txt; }
+
+// ---- 強化三選一 ----
+function showChoice(){
+  const pool=Object.keys(UPGRADES);
+  // 隨機三項不重複
+  const picks=[];
+  while(picks.length<3 && pool.length){
+    const i=Math.floor(Math.random()*pool.length);
+    picks.push(pool.splice(i,1)[0]);
+  }
+  const cards=$('choiceCards'); cards.innerHTML='';
+  for(const key of picks){
+    const u=UPGRADES[key];
+    const c=document.createElement('div');
+    c.className='upcard';
+    c.innerHTML='<div class="uname">'+u.name+'</div><div class="udesc">'+u.desc+'</div>';
+    c.onclick=()=>{ u.fn(G); G.upgradesTaken.push(key); G.pendingChoice=false; G.paused=false; hideOv('ovChoice'); Snd.upgrade(); autosave(); };
+    cards.appendChild(c);
+  }
+  showOv('ovChoice',true);
+}
+// 波次3的選擇在 update 觸發
+
+// ---- 結束 ----
+function gameOver(){
+  G.over=true; Snd.over();
+  // 更新最佳紀錄(獨立於 run 存檔)
+  const rec=loadBest();
+  if(G.wave>rec.best){
+    const newRec={best:G.wave,kills:G.totalKills,date:Date.now()};
+    try{ localStorage.setItem('smBest',JSON.stringify(newRec)); }catch(e){}
+  }
+  $('endTitle').textContent = G.wave>5 ? '🏆 英勇戰績' : '挑戰失敗';
+  $('endMsg').innerHTML='你抵達了第 <b>'+G.wave+'</b> 波<br>擊殺 <b>'+G.totalKills+'</b> 敵人 ｜ 合成 <b>'+G.totalMerges+'</b> 次';
+  showOv('ovEnd',true);
+  Save.clear();
+  autosave(); // 保留最佳記錄?
+}
+function loadBest(){
+  try{ const b=JSON.parse(localStorage.getItem('smBest')); if(b&&typeof b.best==='number') return b; }catch(e){}
+  return {best:0,kills:0,date:0};
+}
+
+// ---- 存檔狀態 ----
+function saveState(){
+  if(!G) return null;
+  return {
+    v:1, wave:G.wave, gold:G.gold, hp:G.hp, maxHP:G.maxHP,
+    towers:G.towers.map(t=>({k:t.key,c:t.c,r:t.r,l:t.lv})),
+    bonus:G.bonus, upgrades:G.upgradesTaken,
+    totalKills:G.totalKills, totalMerges:G.totalMerges,
+    inWave:G.inWave, waveTimer:G.waveTimer, savedAt:Date.now(),
+    bestWave:Math.max(G.bestWave||0,G.wave),
+  };
+}
+function loadState(st){
+  newGame();
+  G.wave=st.wave||0; G.gold=st.gold||CFG.startGold; G.hp=st.hp||CFG.startHP; G.maxHP=st.maxHP||CFG.startHP;
+  G.bestWave=st.bestWave||0;
+  if(st.bonus) G.bonus=Object.assign(G.bonus,st.bonus);
+  G.upgradesTaken=st.upgrades||[];
+  G.inWave=st.inWave||false;
+  G.waveTimer=st.waveTimer||CFG.waveTime;
+  // 重建塔
+  for(const t of (st.towers||[])){
+    const def=TOWERS[t.k]; if(!def) continue;
+    if(canPlace(t.c,t.r)){ placeTower(t.c,t.r,t.k,t.l,0); }
+  }
+  // 若上次在中場, 恢復 inWave 且重設計時: 簡單處理 => 若 inWave 直接開始下一波等待清空
+  if(G.inWave){ /* 保留波次、敵方清空由存檔無敵方 => update 會判結束 */ G.spawnQ=[]; }
+  updateHUD(); buildBar();
+}
+function autosave(){
+  if(!G || G.over) return;
+  const st=saveState();
+  if(st) { Save.write(st); }
+}
+
+// ---- 主迴圈 ----
+let last=0, lastRafCheck=0;
+function tick(dt){
+  if(G && !G.over && !G.paused){
+    const iter = G.speed;
+    for(let i=0;i<iter;i++){ update(dt); }
+    Render.draw();
+  } else if(G && G.over){
+    Render.draw();
+  }
+}
+function loop(ts){
+  const dt=Math.min(0.05,(ts-last)/1000||0);
+  last=ts;
+  tick(dt);
+  lastRafCheck=performance.now();
+  requestAnimationFrame(loop);
+}
+// 保底: 若 rAF 停擺(背景tab/異常), 用 interval 推進
+setInterval(function(){
+  if(!G||G.paused) return;
+  const now=performance.now();
+  if(now-lastRafCheck>300){
+    tick(0.016*G.speed);
+  }
+},200);
+
+// ---- 初始化 ----
+let GLOBAL_READY=false;
+function boot(){
+  Snd.init();
+  Render.init();
+  Input.init();
+  // 檢查既有存檔
+  const saves=Save.load();
+  if(saves && saves.wave>0 && !saves.over){
+    openMenu(); // 顯示 resume 資訊
+  }
+  G=null;
+  openMenu();
+  requestAnimationFrame(loop);
+}
+window.addEventListener('load', boot);
+window.addEventListener('beforeunload', ()=>autosave());
+window.addEventListener('pagehide', ()=>autosave());
+</script>
+<!-- ===== input.js ===== -->
+<script>
+'use strict';
+// ===== 輸入控制: 拖曳建造 / 點選塔 =====
+const Input = {
+  drag:null,       // {key, emo, lv}
+  isOn:false,
+  ghostEl:null,
+  pointerStart:[0,0], pointerActive:false, moved:false,
+  init(){
+    this.ghostEl = document.getElementById('ghost');
+    const buildbar = document.getElementById('buildbar');
+    // 拖曳塔列按鈕
+    buildbar.addEventListener('pointerdown', e=>{
+      const b = e.target.closest('.btower');
+      if(!b || b.classList.contains('locked')) return;
+      const key = b.dataset.key, lv = +b.dataset.lv;
+      if(G.gold < lvCost(key,lv)) return;
+      Snd.init(); Snd.click();
+      this.isOn = true; this.moved = false;
+      // ghost 顯示
+      this.drag={key,lv};
+      this.pointerStart=[e.clientX,e.clientY];
+      // 防止捲動
+      e.preventDefault();
+      this.showGhost(e.clientX,e.clientY);
+      window.setPointerCapture?.(e.pointerId);
+    });
+    window.addEventListener('pointermove', e=>{
+      if(!this.isOn) return;
+      this.lastX=e.clientX; this.lastY=e.clientY;
+      const dx=e.clientX-this.pointerStart[0], dy=e.clientY-this.pointerStart[1];
+      if(!this.moved && Math.hypot(dx,dy)>8){ this.moved=true; }
+      this.showGhost(e.clientX,e.clientY);
+      if(this.moved) e.preventDefault();
+    });
+    window.addEventListener('pointerup', e=>{
+      if(!this.isOn) return;
+      this.isOn=false; this.hideGhost();
+      if(!this.moved){
+        // 純點擊: 場上塔→選取資訊; 塔列→無動作
+        if(this.drag && this.drag.type==='tower'){
+          showTwinfo(this.drag.t);
+        }
+        this.drag=null;
+        return;
+      }
+      if(this.drag.type==='tower'){
+        const t=this.drag.t;
+        const p=Render.screenToGrid(e.clientX,e.clientY);
+        if(insideGrid(p)){
+          const target=G.grid[p.r][p.c];
+          if(target && target!==t){
+            // 拖到另一座: 同型同級免費合成, 否則交換位置
+            if(t.key===target.key && t.lv===target.lv){
+              const had=t.lv<CFG.maxLevel;
+              if(had) freeMerge(t,target);
+            } else {
+              moveTowerTo(t, target.c, target.r);
+            }
+          } else if(!target){
+            // 拖到空格: 移動
+            moveTowerTo(t, p.c, p.r);
+          }
+        }
+        updateHUD(); buildBar();
+        this.drag=null;
+        return;
+      }
+      // 塔列拖曳建造
+      placeAtScreen(e.clientX,e.clientY,this.drag.key,this.drag.lv);
+      this.drag=null;
+    });
+    // 點擊/拖曳場上塔
+    stageEl().addEventListener('pointerdown', e=>{
+      if(this.isOn) return;
+      const p = Render.screenToGrid(e.clientX,e.clientY);
+      const t = insideGrid(p)&&G&&G.grid[p.r][p.c];
+      if(t){
+        // 開始拖曳場上塔
+        Snd.click();
+        this.isOn=true; this.moved=false;
+        this.drag={type:'tower', t:t, key:t.key, lv:t.lv};
+        this.pointerStart=[e.clientX,e.clientY];
+        this.lastX=e.clientX; this.lastY=e.clientY;
+        this.showGhost(e.clientX,e.clientY);
+        e.preventDefault();
+      } else {
+        this.isOn=false;
+        hideTwinfo();
+      }
+    });
+    // 按鈕
+    $('#btnSell').onclick=()=>{ const t=selTower(); if(t){ sellTower(t); } };
+    $('#btnLevelUp').onclick=()=>{ const t=selTower(); if(t){ upgradeTower(t); } };
+    // 速度
+    $('#hSpeed').onclick=()=>{
+      Snd.click();
+      G.speed = (G.speed%3)+1;
+      $('#hSpeed').textContent = ['1x','2x','3x'][G.speed-1];
+    };
+    $('#hMute').onclick=()=>{
+      Snd.init(); Snd.enabled=!Snd.enabled;
+      $('#hMute').textContent = Snd.enabled?'🔊':'🔇';
+    };
+    $('#hPause').onclick=()=>{ if(!G.over) openPause(); };
+  },
+  showGhost(x,y){
+    this.ghostEl.style.display='block';
+    this.ghostEl.style.left=(x-17)+'px'; this.ghostEl.style.top=(y-17)+'px';
+    this.ghostEl.textContent = TOWERS[this.drag.key].emo;
+    // 等級角標
+    let lvSp=this.ghostEl.querySelector('.glv');
+    if(!lvSp){ lvSp=document.createElement('span'); lvSp.className='glv'; this.ghostEl.appendChild(lvSp); }
+    lvSp.textContent='Lv'+this.drag.lv;
+  },
+  hideGhost(){ this.ghostEl.style.display='none'; },
+};
+</script>
+</body></html>
