@@ -15,10 +15,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060f;font-family:
 #hpBar{height:100%;width:100%;background:linear-gradient(90deg,#ff4d6d,#ff8f5e);transition:width .25s}
 .hbtn{background:#141a38;border:1px solid #2c3c78;color:#dfe7ff;border-radius:8px;padding:6px 9px;font-size:14px;font-weight:700;cursor:pointer;min-width:34px}
 .hbtn:active{background:#26326b}
-#stage{position:relative;flex:1 1 auto;overflow:hidden}
+#stage{position:relative;flex:1 1 auto;overflow:hidden;touch-action:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block}
-#buildbar{flex:0 0 auto;display:flex;gap:8px;padding:8px;background:#0a1025;border-top:1px solid #1c2a52;overflow-x:auto;overflow-y:hidden}
-.btower{flex:0 0 auto;width:64px;height:70px;border-radius:10px;background:linear-gradient(180deg,#161d40,#0d1330);border:1.5px solid #2c3c78;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;position:relative}
+#buildbar{flex:0 0 auto;display:flex;gap:8px;padding:8px;background:#0a1025;border-top:1px solid #1c2a52;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;touch-action:none}
+#buildbar::-webkit-scrollbar{display:none}
+.btower{flex:0 0 auto;width:64px;height:70px;border-radius:10px;background:linear-gradient(180deg,#161d40,#0d1330);border:1.5px solid #2c3c78;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;position:relative;touch-action:none}
 .btower .bico{font-size:26px;line-height:1}
 .btower .bname{font-size:9.5px;color:#9fb2e8;font-weight:700}
 .btower .bcost{font-size:10px;color:#ffd166;font-weight:800}
@@ -1192,6 +1193,9 @@ const Input = {
   init(){
     this.ghostEl = document.getElementById('ghost');
     const buildbar = document.getElementById('buildbar');
+    // 額外防捲動 (舊瀏覽器/遊覽器對 touch-action 支援不佳時)
+    buildbar.addEventListener('touchstart', ts=>{ ts.preventDefault(); }, {passive:false});
+    document.getElementById('stage').addEventListener('touchstart', ts=>{ ts.preventDefault(); }, {passive:false});
     // 拖曳塔列按鈕
     buildbar.addEventListener('pointerdown', e=>{
       const b = e.target.closest('.btower');
@@ -1206,7 +1210,7 @@ const Input = {
       // 防止捲動
       e.preventDefault();
       this.showGhost(e.clientX,e.clientY);
-      window.setPointerCapture?.(e.pointerId);
+      try{ e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId); }catch(errSave){}
     });
     window.addEventListener('pointermove', e=>{
       if(!this.isOn) return;
@@ -1252,6 +1256,10 @@ const Input = {
       // 塔列拖曳建造
       placeAtScreen(e.clientX,e.clientY,this.drag.key,this.drag.lv);
       this.drag=null;
+    });
+    // 手機捲動手勢會發 pointercancel → 需重置, 避免卡死
+    window.addEventListener('pointercancel', ()=>{
+      this.isOn=false; this.hideGhost(); this.drag=null;
     });
     // 點擊/拖曳場上塔
     stageEl().addEventListener('pointerdown', e=>{
