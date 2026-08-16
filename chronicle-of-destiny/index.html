@@ -674,6 +674,7 @@
   }
 
   .inv-slot {
+    position: relative;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -682,11 +683,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 4px;
     cursor: pointer;
     transition: all 0.2s;
     font-size: 20px;
-    position: relative;
     padding: 4px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   .inv-slot:hover { border-color: var(--gold); }
@@ -1558,6 +1562,9 @@ let activeTab = 'quest';
 let canvasCtx = null;
 let animFrame = null;
 
+// 觸控裝置偵測（手機/平板沒有滑鼠 hover，tooltip 會卡住關不掉）
+const IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
 const CHAPTER_NAMES = ['', '第一章：黎明的英雄', '第二章：黑暗的蔓延', '第三章：遺古的秘密', '第四章：魔王的城堡', '第五章：命運的終結'];
 
 function initGame(isNew) {
@@ -2061,9 +2068,11 @@ function renderInventoryPanel() {
     items.forEach(([id, count]) => {
       const item = ITEMS[id];
       if (!item) return;
-      html += `<div class="inv-slot" onclick="useItem('${id}')"
-        onmouseenter="showTooltip(event,'${item.name}','${item.desc}','${item.stats||''}')"
-        onmouseleave="hideTooltip()">
+      // 桌面：滑鼠 hover 預覽；觸控：長按 450ms 看說明（放開即隱藏，不會卡住）
+      const tt = IS_TOUCH
+        ? ` ontouchstart="ttStart(event,'${item.name}','${item.desc}','${item.stats||''}')" ontouchend="ttEnd()" ontouchmove="ttEnd()"`
+        : ` onmouseenter="showTooltip(event,'${item.name}','${item.desc}','${item.stats||''}')" onmouseleave="hideTooltip()"`;
+      html += `<div class="inv-slot" onclick="useItem('${id}')"${tt}>
         <span>${item.icon}</span>
         <span class="inv-name">${item.name}</span>
         <span class="inv-count">${count}</span>
@@ -2072,7 +2081,9 @@ function renderInventoryPanel() {
     html += '</div>';
   }
 
-  html += '<div style="font-size:10px;color:var(--gray);margin-top:8px">點擊消耗品使用 / 點擊裝備品裝備</div>';
+  html += IS_TOUCH
+    ? '<div style="font-size:10px;color:var(--gray);margin-top:8px">點擊使用 / 長按看說明</div>'
+    : '<div style="font-size:10px;color:var(--gray);margin-top:8px">點擊消耗品使用 / 點擊裝備品裝備（滑鼠懸停看說明）</div>';
   return html;
 }
 
@@ -3397,6 +3408,7 @@ function startNewGame() {
 // =============================================
 
 function showTooltip(event, name, desc, stats) {
+  if (IS_TOUCH) return; // 觸控裝置不顯示 hover tooltip
   const tt = document.getElementById('tooltip');
   document.getElementById('tt-name').textContent = name;
   document.getElementById('tt-desc').textContent = desc;
@@ -3408,6 +3420,26 @@ function showTooltip(event, name, desc, stats) {
 
 function hideTooltip() {
   document.getElementById('tooltip').classList.remove('show');
+}
+
+// 觸控長按檢視道具說明（450ms 長按顯示，放開/滑動即隱藏）
+let ttTimer = null;
+function ttStart(e, name, desc, stats) {
+  clearTimeout(ttTimer);
+  const t = e.touches[0];
+  ttTimer = setTimeout(() => {
+    const tt = document.getElementById('tooltip');
+    document.getElementById('tt-name').textContent = name;
+    document.getElementById('tt-desc').textContent = desc;
+    document.getElementById('tt-stats').textContent = stats;
+    tt.style.left = Math.min(t.clientX + 12, window.innerWidth - 212) + 'px';
+    tt.style.top = Math.max(10, t.clientY - 80) + 'px';
+    tt.classList.add('show');
+  }, 450);
+}
+function ttEnd() {
+  clearTimeout(ttTimer);
+  hideTooltip();
 }
 
 // =============================================
