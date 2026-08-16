@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>OpenCode Zen 健康檢查啟動器</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --accent:#38bdf8; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body { background:var(--bg); color:#e2e8f0; font-family:-apple-system,'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;
+         min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .card { background:var(--card); border-radius:24px; padding:32px 28px; max-width:480px; width:100%;
+          box-shadow:0 20px 60px rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.06); }
+  .logo { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .logo .dot { width:14px; height:14px; border-radius:50%; background:var(--accent); box-shadow:0 0 12px var(--accent); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  h1 { font-size:1.5rem; font-weight:700; }
+  .sub { color:#94a3b8; font-size:.9rem; margin:6px 0 24px; }
+  .status { background:#0b1220; border-radius:14px; padding:16px; margin-bottom:20px; font-size:.85rem; line-height:1.7; }
+  .status .row { display:flex; justify-content:space-between; gap:10px; }
+  .status .label { color:#64748b; }
+  .status .val { color:#e2e8f0; font-family:ui-monospace,monospace; }
+  .btn { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:16px; border:none; border-radius:14px;
+         font-size:1.05rem; font-weight:700; cursor:pointer; text-decoration:none; transition:all .15s; }
+  .btn:active { transform:scale(.97); }
+  .btn-run { background:linear-gradient(135deg,var(--accent),#2563eb); color:#fff; box-shadow:0 8px 24px rgba(56,189,248,.35); margin-bottom:12px; }
+  .btn-copy { background:#334155; color:#cbd5e1; border:1px solid #475569; }
+  .btn-fill { background:#1e293b; color:#94a3b8; border:1px dashed #475569; }
+  .hint { margin-top:18px; font-size:.78rem; color:#64748b; line-height:1.7; }
+  .hint code { background:#0b1220; padding:2px 6px; border-radius:6px; color:#7dd3fc; }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:#334155; color:#fff;
+           padding:12px 20px; border-radius:12px; font-size:.85rem; opacity:0; transition:all .3s; z-index:99; box-shadow:0 8px 24px rgba(0,0,0,.4); }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo"><div class="dot"></div><h1>OpenCode Zen 健康檢查</h1></div>
+  <p class="sub">一鍵啟動 Minis 終端機，執行 IP + 5 把免費 key 狀態檢查</p>
+
+  <div class="status">
+    <div class="row"><span class="label">腳本位置</span><span class="val">/var/minis/workspace/opencode_health.sh</span></div>
+    <div class="row"><span class="label">檢查內容</span><span class="val">出口 IP + key 連線</span></div>
+    <div class="row"><span class="label">上次已知 IP</span><span class="val">49.216.128.227</span></div>
+    <div class="row"><span class="label">執行方式</span><span class="val">終端機 / 對話指令</span></div>
+  </div>
+
+  <!-- 方法 1：點擊呼叫 deep link → 開啟 Minis 終端機並預填指令 -->
+  <a class="btn btn-run" href="minis://open_terminal?init_command=sh%20%2Fvar%2Fminis%2Fworkspace%2Fopencode_health.sh">
+    ▶ 一鍵執行健康檢查
+  </a>
+
+  <!-- 方法 2：複製指令，貼到任何對話 -->
+  <button class="btn btn-copy" onclick="copyCmd()">
+    📋 複製指令，自己貼到 Minis 對話
+  </button>
+
+  <!-- 方法 3：直接在對話叫我 -->
+  <button class="btn btn-fill" onclick="copyTalk()">
+    💬 複製「檢查 IP」（貼到對話即可）
+  </button>
+
+  <div class="hint">
+    💡 點主按鈕後，Minis 會跳出終端機並自動輸入指令，<b>按 Enter</b> 即執行。<br>
+    沒跳出？直接複製上方指令，貼到任何對話也行。<br>
+    <span id="ip-note"></span>
+  </div>
+</div>
+<div class="toast" id="toast">已複製！</div>
+<script>
+function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg||'已複製！'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600); }
+function copyCmd(){
+  var cmd='sh /var/minis/workspace/opencode_health.sh';
+  (navigator.clipboard? navigator.clipboard.writeText(cmd): fallbackCopy(cmd)).then(()=>toast('已複製指令！貼到 Minis 對話即可')).catch(()=>toast());
+}
+function copyTalk(){
+  var cmd='檢查 IP';
+  (navigator.clipboard? navigator.clipboard.writeText(cmd): fallbackCopy(cmd)).then(()=>toast('已複製「檢查 IP」！貼到對話即可')).catch(()=>toast());
+}
+function fallbackCopy(text){ var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); return Promise.resolve(); }
+</script>
+</body>
+</html>
