@@ -12,9 +12,15 @@ echo "  opencode 安裝程式"
 echo "======================================"
 
 # --- 金鑰 ----
-# 從本檔同一個地方設定。建議改用環境變數，避免金鑰躺在設定檔理。
-# 若已用環境變數 OPENCODE_API_KEY，就不需改下面這行。
-API_KEY="${OPENCODE_API_KEY:-sk-WbGoNhQvnVWvXjVn2voVeGpHlkTvzEjAYa8oub4I8sBjV3HJ8ExBrmCDhYhZU0gu}"
+# 用環境變數 OPENCODE_API_KEY 提供，不硬編碼在腳本裡。
+# 若尚未設定，會在安裝時提示你輸入。
+if [ -z "$OPENCODE_API_KEY" ]; then
+  echo "⚠️  尚未設定 OPENCODE_API_KEY 環境變數"
+  echo "    請先執行:  export OPENCODE_API_KEY=你的key  再重新執行本腳本"
+  echo "    或直接編輯 ~/.config/opencode/opencode.json 填入 apiKey"
+  exit 1
+fi
+API_KEY="$OPENCODE_API_KEY"
 
 # --- 1. 更新 & 安裝必要套件 ---
 echo ""
