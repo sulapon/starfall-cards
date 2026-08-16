@@ -39,14 +39,14 @@
   <p class="sub">一鍵啟動 Minis 終端機，執行 IP + 5 把免費 key 狀態檢查</p>
 
   <div class="status">
-    <div class="row"><span class="label">腳本位置</span><span class="val">/var/minis/workspace/opencode_health.sh</span></div>
-    <div class="row"><span class="label">檢查內容</span><span class="val">出口 IP + key 連線</span></div>
-    <div class="row"><span class="label">上次已知 IP</span><span class="val">49.216.128.227</span></div>
-    <div class="row"><span class="label">執行方式</span><span class="val">終端機 / 對話指令</span></div>
+    <div class="row"><span class="label">腳本位置</span><span class="val">/root/opencode_health.sh</span></div>
+    <div class="row"><span class="label">檢查內容</span><span class="val">出口 IP + 5 把 key</span></div>
+    <div class="row"><span class="label">key 來源</span><span class="val">TOKEN / KEY1~5</span></div>
+    <div class="row"><span class="label">執行方式</span><span class="val">按 Enter 執行</span></div>
   </div>
 
   <!-- 方法 1：點擊呼叫 deep link → 開啟 Minis 終端機並自動執行 -->
-  <a class="btn btn-run" href="minis://open_terminal?init_command=sh%20%2Fvar%2Fminis%2Fworkspace%2Fopencode_health.sh">
+  <a class="btn btn-run" href="minis://open_terminal?init_command=sh%20%2Froot%2Fopencode_health.sh">
     ▶ 一鍵執行健康檢查
   </a>
 
@@ -70,7 +70,7 @@
 <script>
 function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg||'已複製！'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600); }
 function copyCmd(){
-  var cmd='sh /var/minis/workspace/opencode_health.sh';
+  var cmd='sh /root/opencode_health.sh';
   (navigator.clipboard? navigator.clipboard.writeText(cmd): fallbackCopy(cmd)).then(()=>toast('已複製指令！貼到 Minis 對話即可')).catch(()=>toast());
 }
 function copyTalk(){
