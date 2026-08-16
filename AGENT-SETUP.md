@@ -9,7 +9,7 @@
 
 | 用途 | 環境變數名稱 | 狀態 | 如何取得 / 設定 |
 |---|---|---|---|
-| GitHub 上傳權杖 | `GITHUB_TOKEN` | ✅ 已設定 | repo `starfall-cards` 擁有者 sulapon 的個人存取權杖(PAT) |
+| GitHub 上傳權杖 | `GITHUB_TOKEN` | ✅ 已設定 | repo `starfall-cards` 擁有者 sulapon 的個人存取權杖(PAT)，scope 需含 `repo` |
 | OpenCode Zen API | `OPENCODE_TOKEN` | ✅ 已設定 | opencode.ai 免費 API key |
 | Gemini 視覺模組 | `GEMINI_API_KEY_SULAKEN02` | ✅ 已設定 | Google AI Studio 免費 key |
 | Gemini 輪換 key 2 | `GEMINI_KEY1` | ⛔ 未設定 | 可選，用於 Gemini 限流時多 key 輪換 |
@@ -57,6 +57,19 @@ starfall-cards/
     └── index.html
 ```
 > 新增遊戲後，**必須**在根目錄 `index.html` 的 `<div class="grid">` 區塊內新增一張 `<a class="card" href="新遊戲資料夾名/">` 卡片。
+
+### 📍 線上網址總表（各專案對應的 Pages 網址）
+
+| 子目錄 | 線上網址 |
+|---|---|
+| 根目錄（遊戲中心） | https://sulapon.github.io/starfall-cards/ |
+| `merge-defense/` | https://sulapon.github.io/starfall-cards/merge-defense/ |
+| `astra-survivor/` | https://sulapon.github.io/starfall-cards/astra-survivor/ |
+| `card-game/` | https://sulapon.github.io/starfall-cards/card-game/ |
+| `chronicle-of-destiny/` | https://sulapon.github.io/starfall-cards/chronicle-of-destiny/ |
+| `zen-health/` | https://sulapon.github.io/starfall-cards/zen-health/ |
+| `opencode-launcher/` | https://sulapon.github.io/starfall-cards/opencode-launcher/ |
+| `通訊模擬/`（中文需 URL 編碼） | https://sulapon.github.io/starfall-cards/%E9%80%9A%E8%A8%8A%E6%A8%A1%E6%93%AC/ |
 
 ---
 
@@ -132,4 +145,19 @@ git push "https://sulapon:${GITHUB_TOKEN}@github.com/sulapon/starfall-cards.git"
 - [ ] Commit message 清楚。
 - [ ] Push 用 `sulapon:${GITHUB_TOKEN}@...`，**不寫死明文 token**。
 - [ ] Push 後已驗證 Pages 正常。
+
+---
+
+## 🌐 六、部署後「開啟網頁」
+
+驗證 Pages 回 HTTP 200 後，替使用者開啟對應線上網址：
+
+| 情境 | 開啟方式 |
+|---|---|
+| 電腦 agent（macOS） | `open https://sulapon.github.io/starfall-cards/xxx/` |
+| 電腦 agent（Linux） | `xdg-open https://sulapon.github.io/starfall-cards/xxx/` |
+| 電腦 agent（Windows） | `start https://sulapon.github.io/starfall-cards/xxx/` |
+| 手機 Minis agent | `minis-open https://sulapon.github.io/starfall-cards/xxx/`（app 內預覽）或直接給使用者 Markdown 連結 |
+
+**注意**：GitHub Pages 有 CDN 快取，剛 push 完的前 1–2 分鐘可能讀到舊版。驗證網址可加參數繞過：`https://sulapon.github.io/starfall-cards/xxx/?v=1.0.1`。
 ```
