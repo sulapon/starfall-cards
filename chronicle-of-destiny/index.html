@@ -884,6 +884,119 @@
     margin: 20px 0;
   }
 
+  /* Victory overlay */
+  .victory-box {
+    background: linear-gradient(135deg, #1a0a2e, #2d1b4e);
+    border: 3px solid var(--gold);
+    border-radius: 16px;
+    padding: 36px 40px;
+    text-align: center;
+    min-width: 380px;
+    max-width: 92vw;
+    box-shadow: 0 0 80px rgba(212,168,67,0.6);
+    animation: levelupAnim 0.6s ease;
+  }
+  .victory-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--gold-light);
+    text-shadow: 0 0 25px rgba(212,168,67,0.9);
+    margin-bottom: 8px;
+  }
+  .victory-sub { font-size: 13px; color: var(--gray); margin-bottom: 16px; }
+  .victory-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 0 0 12px;
+  }
+  .victory-row {
+    background: rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--gray);
+  }
+  .victory-row b { color: var(--gold-light); font-size: 16px; }
+
+  /* 戰鬥狀態圖示 */
+  .status-chips {
+    min-height: 20px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    margin-top: 6px;
+    text-align: center;
+    color: var(--gold-light);
+    text-shadow: 0 0 6px rgba(0,0,0,0.9);
+  }
+
+  /* MP 低量警告 */
+  .battle-bar-fill.mp.mp-low { background: #ef5350; animation: mpFlash 0.8s infinite alternate; }
+  @keyframes mpFlash { from { opacity: 1; } to { opacity: 0.5; } }
+
+  /* 競技場按鈕 */
+  .action-btn.arena { background: linear-gradient(135deg, #6a1b9a, #ab47bc); color: #fff; }
+
+  /* 成就面板 */
+  .ach-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    opacity: 0.45;
+    filter: grayscale(0.9);
+  }
+  .ach-item.unlocked {
+    opacity: 1;
+    filter: none;
+    border-color: rgba(212,168,67,0.45);
+    background: linear-gradient(135deg, rgba(212,168,67,0.12), rgba(255,255,255,0.04));
+  }
+  .ach-icon { font-size: 22px; width: 30px; text-align: center; }
+  .ach-info { flex: 1; }
+  .ach-name { font-size: 13px; font-weight: 700; color: var(--gold-light); }
+  .ach-desc { font-size: 11px; color: var(--gray); }
+  .ach-check { color: var(--gold); font-size: 16px; font-weight: 900; }
+
+  .stat-card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .stat-val { font-size: 18px; font-weight: 800; color: var(--blue-crystal); }
+  .stat-label { font-size: 10px; color: var(--gray); margin-top: 2px; }
+
+  /* 圖鑑 */
+  .bestiary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .bestiary-item {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 20px;
+  }
+  .bestiary-item.locked { opacity: 0.4; }
+  .bestiary-name { font-size: 10px; color: var(--gray); margin-top: 2px; white-space: nowrap; }
+  .bestiary-kill { font-size: 9px; color: var(--blue-crystal); }
+
+  /* 競技場/精英戰鬥標題 */
+  .battle-header.elite { color: var(--gold-light); text-shadow: 0 0 12px rgba(212,168,67,0.8); }
+  .battle-header.boss { color: #ef5350; text-shadow: 0 0 12px rgba(239,83,80,0.8); }
+
   .levelup-stat {
     background: rgba(212,168,67,0.1);
     border: 1px solid var(--gold);
@@ -1046,6 +1159,7 @@
         <button class="panel-tab" onclick="switchTab('inventory')">背包</button>
         <button class="panel-tab" onclick="switchTab('status')">狀態</button>
         <button class="panel-tab" onclick="switchTab('skills')">技能</button>
+        <button class="panel-tab" onclick="switchTab('achievements')">成就</button>
       </div>
       <div class="panel-content" id="panel-content"></div>
     </div>
@@ -1056,6 +1170,7 @@
     <button class="action-btn primary" onclick="interactScene()">💬 互動</button>
     <button class="action-btn gold" onclick="openShop()" id="shop-btn" style="display:none">🛒 商店</button>
     <button class="action-btn" onclick="restAtInn()" id="inn-btn" style="display:none">🏨 旅館</button>
+    <button class="action-btn arena" onclick="startArena()" id="arena-btn" style="display:none">🏟 競技場</button>
     <button class="action-btn danger" onclick="triggerEncounter()">⚔ 戰鬥</button>
     <button class="action-btn" onclick="saveGame()">💾 存檔</button>
     <span style="margin-left:auto;font-size:11px;color:var(--gray)">點擊地圖移動 | 右側面板查看狀態</span>
@@ -1081,6 +1196,7 @@
         </div>
         <div class="battle-bar-track"><div class="battle-bar-fill mp" id="battle-player-mp-bar" style="width:100%"></div></div>
       </div>
+      <div class="status-chips" id="player-status-chips"></div>
     </div>
 
     <!-- Enemy side -->
@@ -1093,6 +1209,7 @@
         </div>
         <div class="battle-bar-track"><div class="battle-bar-fill hp" id="battle-enemy-hp-bar" style="width:100%"></div></div>
       </div>
+      <div class="status-chips" id="enemy-status-chips"></div>
     </div>
   </div>
 
@@ -1116,6 +1233,7 @@
       </button>
     </div>
     <div class="sub-commands" id="skill-menu"></div>
+    <div class="sub-commands" id="item-menu"></div>
   </div>
 </div>
 
@@ -1150,6 +1268,25 @@
   </div>
 </div>
 
+<!-- Victory Overlay -->
+<div class="levelup-overlay" id="victory-overlay">
+  <div class="victory-box">
+    <div class="victory-title">🌅 世界恢復和平！</div>
+    <div class="victory-sub">你擊敗了邪神・卡爾魯斯，成為傳說中的勇者！</div>
+    <div class="victory-stats">
+      <div class="victory-row"><span>最終等級</span><b id="victory-level">1</b></div>
+      <div class="victory-row"><span>總討伐數</span><b id="victory-kills">0</b></div>
+      <div class="victory-row"><span>持有金幣</span><b id="victory-gold">0</b></div>
+      <div class="victory-row"><span>完成任務</span><b id="victory-quests">0</b></div>
+      <div class="victory-row"><span>遊玩時間</span><b id="victory-time">0 分</b></div>
+      <div class="victory-row"><span>通關難度</span><b id="victory-diff">0</b></div>
+    </div>
+    <div style="font-size:11px;color:var(--gray);margin:10px 0">二周目：繼承成就與競技場紀錄，魔物能力提升 40%，獎勵提升 25%！</div>
+    <button class="action-btn danger" style="width:100%;justify-content:center;margin-bottom:8px" onclick="startNGPlus()">🔥 二周目（難度提升）</button>
+    <button class="action-btn" style="width:100%;justify-content:center" onclick="closeVictory()">繼續冒險</button>
+  </div>
+</div>
+
 <!-- Shop Overlay -->
 <div class="shop-overlay" id="shop-overlay">
   <div class="shop-box">
@@ -1166,72 +1303,133 @@
 // =============================================
 
 const ITEMS = {
+  // 消耗品
   potion:     { id:'potion',     name:'生命藥水',   icon:'🧪', type:'消耗品', desc:'恢復 50 HP', effect:{hp:50},       price:50,  stats:'+50 HP' },
   ether:      { id:'ether',      name:'魔力藥水',   icon:'💧', type:'消耗品', desc:'恢復 30 MP', effect:{mp:30},       price:60,  stats:'+30 MP' },
   elixir:     { id:'elixir',     name:'仙靈藥水',   icon:'✨', type:'消耗品', desc:'恢復 HP+MP', effect:{hp:100,mp:50},price:150, stats:'+100 HP +50 MP' },
   antidote:   { id:'antidote',   name:'解毒藥',     icon:'🍵', type:'消耗品', desc:'解除中毒',   effect:{cure:'poison'},price:30,  stats:'解除中毒' },
+  hiPotion:   { id:'hiPotion',   name:'高級藥水',   icon:'🧪', type:'消耗品', desc:'恢復 150 HP', effect:{hp:150},      price:150, stats:'+150 HP' },
+  hiEther:    { id:'hiEther',    name:'高級魔力藥水',icon:'💎', type:'消耗品', desc:'恢復 80 MP', effect:{mp:80},       price:160, stats:'+80 MP' },
+  bomb:       { id:'bomb',       name:'爆裂彈',     icon:'💣', type:'消耗品', desc:'戰鬥中造成 90 火焰傷害', effect:{dmg:90,elem:'fire'}, price:100, stats:'傷害90（火）' },
+  smokeBomb:  { id:'smokeBomb',  name:'煙霧彈',     icon:'💨', type:'消耗品', desc:'戰鬥中必定逃跑成功', effect:{flee:true},  price:80,  stats:'必定逃跑' },
+  powerDrink: { id:'powerDrink', name:'力量藥劑',   icon:'🥤', type:'消耗品', desc:'戰鬥中攻擊力+50% 持續3回合', effect:{atkUp:3, buffAtk:true}, price:120, stats:'ATK+50% 3回合' },
 
+  // 武器
   sword1:     { id:'sword1',     name:'鐵劍',       icon:'🗡', type:'武器',   desc:'標準鐵製長劍', equip:'weapon', atk:15, price:200, stats:'+15 ATK' },
   sword2:     { id:'sword2',     name:'鋼劍',       icon:'⚔', type:'武器',   desc:'精煉鋼製長劍', equip:'weapon', atk:25, price:500, stats:'+25 ATK' },
   sword3:     { id:'sword3',     name:'聖劍傳說',   icon:'🌟', type:'武器',   desc:'傳說中的聖劍', equip:'weapon', atk:45, price:2000,stats:'+45 ATK' },
+  sword4:     { id:'sword4',     name:'王者之劍',   icon:'👑', type:'武器',   desc:'王者遺留的傳說寶劍', equip:'weapon', atk:60, price:4500,stats:'+60 ATK' },
   staff1:     { id:'staff1',     name:'木法杖',     icon:'🪄', type:'武器',   desc:'增強魔法攻擊', equip:'weapon', atk:8, matk:20, price:180, stats:'+8 ATK +20 MATK' },
   staff2:     { id:'staff2',     name:'魔晶法杖',   icon:'💎', type:'武器',   desc:'注入魔晶的法杖',equip:'weapon', atk:12,matk:35, price:800, stats:'+12 ATK +35 MATK' },
 
+  // 防具
   armor1:     { id:'armor1',     name:'皮甲',       icon:'🥋', type:'防具',   desc:'基礎皮製護甲', equip:'armor',  def:10, price:150, stats:'+10 DEF' },
   armor2:     { id:'armor2',     name:'鎖甲',       icon:'🛡', type:'防具',   desc:'精鍛鎖甲',     equip:'armor',  def:20, price:450, stats:'+20 DEF' },
   armor3:     { id:'armor3',     name:'聖鎧',       icon:'✨', type:'防具',   desc:'聖光護甲',     equip:'armor',  def:35, price:1800,stats:'+35 DEF' },
+  armor4:     { id:'armor4',     name:'龍鱗鎧',     icon:'🐲', type:'防具',   desc:'龍鱗打造的傳說鎧甲', equip:'armor', def:48, mdef:10, price:4000, stats:'+48 DEF +10 MDEF' },
   robe1:      { id:'robe1',      name:'法師袍',     icon:'👘', type:'防具',   desc:'增強魔防',     equip:'armor',  def:5,  mdef:15, price:200, stats:'+5 DEF +15 MDEF' },
 
+  // 飾品
   ring1:      { id:'ring1',      name:'力量戒指',   icon:'💍', type:'飾品',   desc:'增強攻擊力',   equip:'accessory', atk:5, price:200, stats:'+5 ATK' },
   ring2:      { id:'ring2',      name:'魔力戒指',   icon:'🔮', type:'飾品',   desc:'增強魔力',     equip:'accessory', maxMp:20, price:220, stats:'+20 Max MP' },
+  ring3:      { id:'ring3',      name:'疾風戒指',   icon:'💨', type:'飾品',   desc:'注入風之力的戒指', equip:'accessory', spd:6, price:1200, stats:'+6 SPD' },
   amulet1:    { id:'amulet1',    name:'生命護符',   icon:'🪬', type:'飾品',   desc:'增強最大HP',   equip:'accessory', maxHp:30, price:300, stats:'+30 Max HP' },
+  stone:      { id:'stone',      name:'賢者之石',   icon:'💎', type:'飾品',   desc:'賢者遺留的奇蹟之石', equip:'accessory', matk:18, mdef:12, price:3500, stats:'+18 MATK +12 MDEF' },
+
+  // 素材（任務用）
+  matSlime:   { id:'matSlime',   name:'史萊姆黏液', icon:'🫧', type:'素材', desc:'史萊姆的體液，煉金術用素材', price:15 },
+  matScale:   { id:'matScale',   name:'龍之鱗片',   icon:'🐉', type:'素材', desc:'龍族身上的堅硬鱗片',       price:120 },
+  matCrystal: { id:'matCrystal', name:'冰晶石',     icon:'🧊', type:'素材', desc:'雪原深處凝結的純淨冰晶',   price:90 },
+  matCore:    { id:'matCore',    name:'火炎核心',   icon:'🔥', type:'素材', desc:'火元素生物的能量核心',     price:150 },
+  matEssence: { id:'matEssence', name:'幽魂精華',   icon:'👻', type:'素材', desc:'不死生物殘留的靈力精華',   price:100 },
 };
 
 const SKILLS = {
-  slash:     { id:'slash',    name:'迴旋斬',   icon:'⚔',  mpCost:8,  power:1.5, type:'physical', desc:'強力物理攻擊，傷害x1.5', learnLv:1 },
-  fireball:  { id:'fireball', name:'火球術',   icon:'🔥',  mpCost:12, power:1.8, type:'magic',    desc:'魔法火焰攻擊', learnLv:2 },
-  heal:      { id:'heal',     name:'治癒術',   icon:'💚',  mpCost:10, heal:40,   type:'heal',     desc:'恢復40 HP', learnLv:2 },
-  thunder:   { id:'thunder',  name:'雷電術',   icon:'⚡',  mpCost:15, power:2.0, type:'magic',    desc:'強力雷電攻擊，傷害x2', learnLv:4 },
-  blizzard:  { id:'blizzard', name:'冰暴術',   icon:'❄',  mpCost:18, power:2.2, type:'magic',    desc:'冰霜連擊，傷害x2.2', learnLv:6 },
-  regen:     { id:'regen',    name:'再生術',   icon:'🌿',  mpCost:20, heal:80,   type:'heal',     desc:'恢復80 HP並施加持續回血', learnLv:5 },
-  quake:     { id:'quake',    name:'地震術',   icon:'🌋',  mpCost:25, power:2.8, type:'magic',    desc:'大地動盪，巨大傷害', learnLv:8 },
-  divine:    { id:'divine',   name:'聖光審判', icon:'✨',  mpCost:30, power:3.5, type:'holy',     desc:'終極聖光攻擊，傷害x3.5', learnLv:12 },
+  slash:     { id:'slash',    name:'迴旋斬',   icon:'⚔',  mpCost:8,  power:1.5, type:'physical', elem:'physical', desc:'強力物理攻擊，傷害x1.5', learnLv:1 },
+  fireball:  { id:'fireball', name:'火球術',   icon:'🔥',  mpCost:12, power:1.8, type:'magic',  elem:'fire',    desc:'火焰魔法，對冰系敵人加倍', learnLv:2 },
+  heal:      { id:'heal',     name:'治癒術',   icon:'💚',  mpCost:10, heal:40,   type:'heal',               desc:'恢復40 HP', learnLv:2 },
+  powerUp:   { id:'powerUp',  name:'力量強化', icon:'💪',  mpCost:10, atkUp:3,   type:'buff',               desc:'攻擊力+50% 持續3回合', learnLv:3 },
+  thunder:   { id:'thunder',  name:'雷電術',   icon:'⚡',  mpCost:15, power:2.0, type:'magic',  elem:'thunder', desc:'雷電魔法，克制岩石系', learnLv:4 },
+  guardUp:   { id:'guardUp',  name:'鐵壁',     icon:'🧱',  mpCost:10, defUp:3,   type:'buff',               desc:'防禦力+50% 持續3回合', learnLv:5 },
+  regen:     { id:'regen',    name:'再生術',   icon:'🌿',  mpCost:20, heal:80,   type:'heal',               desc:'恢復80 HP並施加持續回血', learnLv:5 },
+  blizzard:  { id:'blizzard', name:'冰暴術',   icon:'❄',  mpCost:18, power:2.2, type:'magic',  elem:'ice',     desc:'冰霜魔法，克制火系', learnLv:6 },
+  poisonStrike:{id:'poisonStrike', name:'劇毒之刃', icon:'☠', mpCost:14, power:1.3, type:'physical', elem:'physical', poison:3, desc:'物理攻擊並使敵人中毒3回合', learnLv:7 },
+  quake:     { id:'quake',    name:'地震術',   icon:'🌋',  mpCost:25, power:2.8, type:'magic',  elem:'earth',   desc:'大地動盪，巨大魔法傷害', learnLv:8 },
+  haste:     { id:'haste',    name:'急速術',   icon:'🪽',  mpCost:12, spdUp:3,   type:'buff',               desc:'速度+50% 持續3回合', learnLv:9 },
+  frostNova: { id:'frostNova',name:'冰霜新星', icon:'❄️',  mpCost:22, power:2.4, type:'magic',  elem:'ice',     desc:'冰霜爆發，傷害x2.4', learnLv:10 },
+  inferno:   { id:'inferno',  name:'烈焰風暴', icon:'🌋',  mpCost:28, power:2.6, type:'magic',  elem:'fire', burn:3, desc:'火焰風暴並使敵人燃燒3回合', learnLv:11 },
+  divine:    { id:'divine',   name:'聖光審判', icon:'✨',  mpCost:30, power:3.5, type:'holy',   elem:'holy',    desc:'終極聖光攻擊，對黑暗系加倍', learnLv:12 },
+  holyShield:{ id:'holyShield',name:'神聖護盾', icon:'🛡️', mpCost:24, shield:60, type:'buff',               desc:'展開護盾，吸收 60+魔防 傷害', learnLv:13 },
+  xSlash:    { id:'xSlash',   name:'十字斬',   icon:'✖',   mpCost:18, power:1.2, hits:2, type:'physical', elem:'physical', desc:'二段連擊，物理x2', learnLv:14 },
 };
 
 const ENEMIES = {
-  slime:      { id:'slime',     name:'史萊姆',    icon:'💚', hp:30,  maxHp:30,  atk:8,  def:2,  xp:15,  gold:10, level:1 },
-  goblin:     { id:'goblin',    name:'哥布林',    icon:'👺', hp:55,  maxHp:55,  atk:14, def:5,  xp:28,  gold:20, level:2 },
-  orc:        { id:'orc',       name:'獸人戰士',  icon:'👹', hp:100, maxHp:100, atk:22, def:10, xp:55,  gold:40, level:4 },
-  darkElf:    { id:'darkElf',   name:'黑暗精靈',  icon:'🧝', hp:80,  maxHp:80,  atk:30, def:8,  xp:70,  gold:60, level:5, magic:true },
-  dragon:     { id:'dragon',    name:'火龍',      icon:'🐉', hp:200, maxHp:200, atk:45, def:20, xp:150, gold:150,level:8 },
-  darkKnight: { id:'darkKnight',name:'黑騎士',    icon:'🗡', hp:160, maxHp:160, atk:50, def:25, xp:180, gold:180,level:9 },
-  lich:       { id:'lich',      name:'死靈法師',  icon:'💀', hp:250, maxHp:250, atk:60, def:15, xp:300, gold:300,level:12, magic:true },
-  demon:      { id:'demon',     name:'魔王幽魂',  icon:'👿', hp:180, maxHp:180, atk:70, def:30, xp:400, gold:500,level:15 },
-  bossOrc:    { id:'bossOrc',   name:'巨人首領',  icon:'🦍', hp:400, maxHp:400, atk:35, def:18, xp:500, gold:400,level:6,  isBoss:true },
-  bossLich:   { id:'bossLich',  name:'魔王・阿卡隆',icon:'💀',hp:800,maxHp:800, atk:80, def:30, xp:1500,gold:2000,level:14, magic:true, isBoss:true },
-  finalBoss:  { id:'finalBoss', name:'邪神・卡爾魯斯',icon:'👁',hp:1200,maxHp:1200,atk:100,def:40,xp:5000,gold:9999,level:20,magic:true,isBoss:true },
+  // ===== 第一章～第二章（初級） =====
+  slime:      { id:'slime',     name:'史萊姆',    icon:'💚', hp:30,  maxHp:30,  atk:8,  def:2,  xp:15,  gold:10, level:1, weak:['fire'], drops:[{i:'matSlime',c:60,n:[1,2]}], desc:'軟綿綿的黏液怪物。', moves:[{n:'撞擊',e:'physical',p:1.0,w:70},{n:'黏液噴射',e:'physical',p:1.2,w:30}] },
+  goblin:     { id:'goblin',    name:'哥布林',    icon:'👺', hp:55,  maxHp:55,  atk:14, def:5,  xp:28,  gold:20, level:2, drops:[{i:'matSlime',c:35,n:[1,1]}], desc:'狡詐的綠皮小怪物。', moves:[{n:'爪擊',e:'physical',p:1.0,w:65},{n:'連擊',e:'physical',p:1.3,w:35}] },
+  orc:        { id:'orc',       name:'獸人戰士',  icon:'👹', hp:100, maxHp:100, atk:22, def:10, xp:55,  gold:40, level:4, desc:'強悍的獸人戰士。', moves:[{n:'砍擊',e:'physical',p:1.0,w:60},{n:'戰吼',e:'physical',p:1.4,w:40}] },
+  darkElf:    { id:'darkElf',   name:'黑暗精靈',  icon:'🧝', hp:80,  maxHp:80,  atk:30, def:8,  xp:70,  gold:60, level:5, magic:true, weak:['holy'], desc:'墮落的黑暗精靈弓箭手。', moves:[{n:'暗箭',e:'physical',p:1.2,w:60},{n:'暗影咒',e:'magic',p:1.4,w:40}] },
+
+  // ===== 第三章（中級） =====
+  dragon:     { id:'dragon',    name:'火龍',      icon:'🐉', hp:200, maxHp:200, atk:45, def:20, xp:150, gold:150,level:8, weak:['ice'], resist:['fire'], drops:[{i:'matScale',c:40,n:[1,1]}], desc:'盤踞遺跡的火焰巨龍。', moves:[{n:'龍爪',e:'physical',p:1.2,w:50},{n:'火焰吐息',e:'fire',p:1.5,w:50}] },
+  icewolf:    { id:'icewolf',   name:'冰原狼',    icon:'🐺', hp:140, maxHp:140, atk:34, def:12, xp:90,  gold:70, level:10, weak:['fire'], resist:['ice'], desc:'雪原上的兇猛狼群。', moves:[{n:'冰爪',e:'ice',p:1.0,w:60},{n:'狼嚎突擊',e:'physical',p:1.3,w:40}] },
+  iceElement: { id:'iceElement',name:'冰元素',    icon:'🧊', hp:180, maxHp:180, atk:36, def:14, xp:120, gold:100,level:11, weak:['fire'], resist:['ice'], drops:[{i:'matCrystal',c:45,n:[1,1]}], desc:'冰霜凝結的元素體。', moves:[{n:'冰針',e:'ice',p:1.1,w:60},{n:'凍結波動',e:'ice',p:1.5,w:40}] },
+  yukionna:   { id:'yukionna',  name:'雪女',      icon:'👻', hp:220, maxHp:220, atk:40, def:18, xp:140, gold:120,level:12, magic:true, weak:['fire'], resist:['ice'], drops:[{i:'matCrystal',c:35,n:[1,2]}], desc:'雪原悲戀的怨靈。', moves:[{n:'霜息',e:'ice',p:1.3,w:60},{n:'雪崩',e:'ice',p:1.8,w:40}] },
+  golem:      { id:'golem',     name:'岩石魔像',  icon:'🗿', hp:420, maxHp:420, atk:30, def:35, xp:160, gold:140,level:13, weak:['thunder'], resist:['physical'], desc:'遠古神殿的石像守衛。', moves:[{n:'重拳',e:'physical',p:1.0,w:60},{n:'落石',e:'physical',p:1.5,w:40}] },
+  fireLizard: { id:'fireLizard',name:'火蜥蜴',    icon:'🦎', hp:150, maxHp:150, atk:38, def:14, xp:100, gold:90, level:11, weak:['ice'], resist:['fire'], desc:'火神殿中的炎熱蜥蜴。', moves:[{n:'猛咬',e:'physical',p:1.2,w:60},{n:'火球',e:'fire',p:1.1,w:40}] },
+  fireElement:{ id:'fireElement',name:'火炎精靈', icon:'🔥', hp:200, maxHp:200, atk:42, def:16, xp:130, gold:110,level:12, weak:['ice'], resist:['fire'], drops:[{i:'matCore',c:50,n:[1,1]}], desc:'烈焰凝結的元素體。', moves:[{n:'烈焰',e:'fire',p:1.2,w:60},{n:'爆裂',e:'fire',p:1.7,w:40}] },
+  warlock:    { id:'warlock',   name:'暗黑魔導士',icon:'🧙', hp:260, maxHp:260, atk:48, def:20, xp:170, gold:160,level:14, magic:true, weak:['holy'], drops:[{i:'matEssence',c:40,n:[1,1]}], desc:'墮落的魔法師。', moves:[{n:'暗黑閃電',e:'magic',p:1.3,w:60},{n:'詛咒',e:'magic',p:1.6,poison:3,w:40}] },
+  assassin:   { id:'assassin',  name:'暗殺者',    icon:'🥷', hp:230, maxHp:230, atk:55, def:15, xp:180, gold:170,level:14, weak:['thunder'], desc:'神出鬼沒的殺手。', moves:[{n:'毒刃突刺',e:'physical',p:1.3,poison:3,w:60},{n:'雙連擊',e:'physical',p:1.2,hits:2,w:40}] },
+  darkKnight: { id:'darkKnight',name:'黑騎士',    icon:'🗡', hp:160, maxHp:160, atk:50, def:25, xp:180, gold:180,level:9,  weak:['holy'], drops:[{i:'matEssence',c:30,n:[1,1]}], desc:'墮落的騎士。', moves:[{n:'斬擊',e:'physical',p:1.2,w:60},{n:'暗影斬',e:'magic',p:1.6,w:40}] },
+  demon:      { id:'demon',     name:'魔王幽魂',  icon:'👿', hp:180, maxHp:180, atk:70, def:30, xp:400, gold:500,level:15, weak:['holy'], desc:'魔王殘留的邪惡靈魂。', moves:[{n:'魔爪',e:'physical',p:1.3,w:60},{n:'惡魔烈焰',e:'fire',p:1.8,burn:2,w:40}] },
+  lich:       { id:'lich',      name:'死靈法師',  icon:'💀', hp:250, maxHp:250, atk:60, def:15, xp:300, gold:300,level:12, magic:true, weak:['holy'], drops:[{i:'matEssence',c:45,n:[1,2]}], desc:'操控亡靈的巫妖。', moves:[{n:'死亡之指',e:'magic',p:1.4,w:60},{n:'靈魂收割',e:'magic',p:1.8,w:40}] },
+
+  // ===== 頭目 =====
+  bossOrc:    { id:'bossOrc',   name:'巨人首領',  icon:'🦍', hp:400, maxHp:400, atk:35, def:18, xp:500, gold:400,level:6,  isBoss:true, desc:'統領哥布林部落的巨漢。', moves:[{n:'巨拳',e:'physical',p:1.4,w:60},{n:'地震',e:'physical',p:1.8,w:40}] },
+  frostDragon:{ id:'frostDragon', name:'冰霜巨龍', icon:'🐲', hp:900, maxHp:900, atk:70, def:30, xp:1200,gold:1500,level:16, isBoss:true, weak:['fire'], resist:['ice'], drops:[{i:'matCrystal',c:100,n:[2,3]}], desc:'雪原之霸，寒霜巨龍。', moves:[{n:'龍爪',e:'physical',p:1.3,w:40},{n:'冰霜吐息',e:'ice',p:1.5,w:40},{n:'極寒風暴',e:'ice',p:1.8,w:20}] },
+  bossLich:   { id:'bossLich',  name:'魔王・阿卡隆',icon:'💀',hp:800,maxHp:800, atk:80, def:30, xp:1500,gold:2000,level:14, magic:true, isBoss:true, weak:['holy'], drops:[{i:'matEssence',c:100,n:[2,3]}], desc:'黑暗城堡的主人，魔王阿卡隆。', moves:[{n:'死靈術',e:'magic',p:1.6,w:50},{n:'靈魂收割',e:'magic',p:2.2,w:30},{n:'亡者之歌',e:'magic',p:1.9,poison:3,w:20}] },
+  fireDemon:  { id:'fireDemon', name:'炎魔',      icon:'👹', hp:1100,maxHp:1100,atk:85, def:35, xp:2000,gold:2500,level:18, isBoss:true, weak:['ice'], resist:['fire'], drops:[{i:'matCore',c:100,n:[2,3]}], desc:'被封印在神殿深處的炎魔。', moves:[{n:'烈焰吐息',e:'fire',p:1.5,burn:3,w:50},{n:'熔岩重擊',e:'physical',p:1.6,w:30},{n:'地獄火',e:'fire',p:2.0,burn:3,w:20}] },
+  finalBoss:  { id:'finalBoss', name:'邪神・卡爾魯斯',icon:'👁',hp:1200,maxHp:1200,atk:100,def:40,xp:5000,gold:9999,level:20,magic:true,isBoss:true, weak:['holy'], drops:[{i:'matCore',c:100,n:[1,2]}], desc:'吞噬世界的邪神。', moves:[{n:'邪神之眼',e:'magic',p:1.8,w:50},{n:'虛空裂隙',e:'magic',p:2.2,w:30},{n:'滅世之光',e:'holy',p:2.5,w:20}] },
+
+  // ===== 隱藏 Boss（祕境） =====
+  timeDragon: { id:'timeDragon',name:'時空之龍',  icon:'⏳', hp:2500,maxHp:2500,atk:110,def:50,xp:10000,gold:8000,level:25, isBoss:true, weak:['holy'], resist:['physical','fire','ice','thunder'], drops:[{i:'matScale',c:100,n:[2,3]}], desc:'穿梭時空的傳說之龍。', moves:[{n:'時空裂縫',e:'magic',p:2.0,w:50},{n:'時間暫停',e:'magic',p:2.5,w:30},{n:'龍之怒',e:'physical',p:2.2,w:20}] },
+  chaosBeast: { id:'chaosBeast',name:'混沌邪獸',  icon:'🌑', hp:3000,maxHp:3000,atk:120,def:55,xp:15000,gold:12000,level:28, isBoss:true, magic:true, weak:['holy'], resist:['physical','fire','ice','thunder'], drops:[{i:'matEssence',c:100,n:[3,4]}], desc:'混沌之中誕生的終極魔獸。', moves:[{n:'混沌吐息',e:'fire',p:2.2,w:50},{n:'虛空吞噬',e:'magic',p:2.6,w:30},{n:'終焉審判',e:'magic',p:3.0,paralyze:2,w:20}] },
 };
 
 const LOCATIONS = {
-  town:       { id:'town',    name:'王城廣場',  icon:'🏰', desc:'王國的首都，熙來攘往。',  bgColor:'#0f2340', enemies:['slime','goblin'],           shopItems:['potion','ether','antidote','sword1','armor1'], hasInn:true,  unlocked:true,  reqLevel:1 },
+  town:       { id:'town',    name:'王城廣場',  icon:'🏰', desc:'王國的首都，熙來攘往。',  bgColor:'#0f2340', enemies:['slime','goblin'],           shopItems:['potion','ether','antidote','sword1','armor1'], hasInn:true,  unlocked:true,  reqLevel:1, hasArena:true },
   forest:     { id:'forest',  name:'迷霧森林',  icon:'🌲', desc:'神秘的古老森林，危機四伏。',bgColor:'#0a2010', enemies:['goblin','orc'],              shopItems:['potion','ether','sword1','armor1','ring1'],    hasInn:false, unlocked:true,  reqLevel:1 },
   cave:       { id:'cave',    name:'黑暗洞窟',  icon:'🕳', desc:'深不見底的古老礦洞。',    bgColor:'#1a1020', enemies:['orc','darkElf'],             shopItems:['potion','elixir','sword2','armor2'],           hasInn:false, unlocked:false, reqLevel:4 },
   ruins:      { id:'ruins',   name:'遺古廢墟',  icon:'🏚', desc:'失落文明的遺跡。',        bgColor:'#201808', enemies:['darkElf','dragon'],          shopItems:['elixir','staff1','robe1','amulet1'],           hasInn:true,  unlocked:false, reqLevel:7 },
   castle:     { id:'castle',  name:'黑暗城堡',  icon:'🏯', desc:'魔王的居城，充滿殺氣。',  bgColor:'#150010', enemies:['darkKnight','lich'],          shopItems:['elixir','staff2','armor3','ring2'],            hasInn:false, unlocked:false, reqLevel:10 },
+  snowfield:  { id:'snowfield',name:'冰封雪原',  icon:'❄️', desc:'終年積雪的冰霜大地。',    bgColor:'#0e1e30', enemies:['icewolf','yukionna','iceElement'], shopItems:['hiPotion','hiEther','elixir','ring3'], hasInn:true,  unlocked:false, reqLevel:13 },
   abyss:      { id:'abyss',   name:'深淵之門',  icon:'🌀', desc:'終極魔域，最後的決戰！',  bgColor:'#100020', enemies:['demon','finalBoss'],          shopItems:['elixir','sword3','armor3','ring2','amulet1'],  hasInn:false, unlocked:false, reqLevel:16 },
+  firetemple: { id:'firetemple',name:'火炎神殿', icon:'🌋', desc:'封印炎魔的古老神殿。',    bgColor:'#2a1208', enemies:['fireLizard','fireElement','golem','warlock'], shopItems:['hiPotion','hiEther','armor4','stone'], hasInn:false, unlocked:false, reqLevel:18 },
+  shrine:     { id:'shrine',  name:'隱秘祕境',  icon:'🏛️', desc:'時空夾縫中的隱藏領域。',  bgColor:'#1a1030', enemies:['warlock','assassin','timeDragon','chaosBeast'], shopItems:['elixir','sword4','armor4','stone','ring3'], hasInn:true,  unlocked:false, reqLevel:20, hidden:true },
 };
 
 const QUESTS = [
   { id:'q1', name:'初出茅廬',     desc:'消滅3隻史萊姆',           goal:{type:'kill',target:'slime',count:3},    reward:{xp:50,gold:30},    chapterReq:1 },
   { id:'q2', name:'森林探索',     desc:'前往迷霧森林',             goal:{type:'visit',target:'forest'},          reward:{xp:30,gold:20},    chapterReq:1 },
   { id:'q3', name:'哥布林威脅',   desc:'消滅5隻哥布林',           goal:{type:'kill',target:'goblin',count:5},   reward:{xp:80,gold:60},    chapterReq:1 },
+  { id:'q16',name:'煉金素材',     desc:'收集 3 份史萊姆黏液',      goal:{type:'collect',target:'matSlime',count:3}, reward:{xp:150,gold:120},  chapterReq:1 },
   { id:'q4', name:'探索洞窟',     desc:'抵達黑暗洞窟',             goal:{type:'visit',target:'cave'},            reward:{xp:100,gold:80},   chapterReq:2 },
   { id:'q5', name:'巨人首領',     desc:'擊敗巨人首領（頭目戰）',   goal:{type:'boss',target:'bossOrc'},          reward:{xp:500,gold:400,item:'sword2'},   chapterReq:2 },
   { id:'q6', name:'廢墟之謎',     desc:'前往遺古廢墟',             goal:{type:'visit',target:'ruins'},           reward:{xp:200,gold:150},  chapterReq:3 },
   { id:'q7', name:'龍的試煉',     desc:'消滅2條火龍',             goal:{type:'kill',target:'dragon',count:2},   reward:{xp:400,gold:350,item:'amulet1'}, chapterReq:3 },
+  { id:'q17',name:'神龍之鱗',     desc:'收集 3 片龍之鱗片',        goal:{type:'collect',target:'matScale',count:3}, reward:{xp:800,gold:700},  chapterReq:3 },
+  { id:'q11',name:'冰原狩獵',     desc:'消滅3隻冰原狼',           goal:{type:'kill',target:'icewolf',count:3},  reward:{xp:600,gold:500,item:'hiPotion'}, chapterReq:3 },
+  { id:'q12',name:'雪女的傳說',   desc:'擊敗雪女',                 goal:{type:'kill',target:'yukionna',count:1}, reward:{xp:450,gold:400},  chapterReq:3 },
+  { id:'q18',name:'冰晶收藏',     desc:'收集 3 顆冰晶石',          goal:{type:'collect',target:'matCrystal',count:3}, reward:{xp:700,gold:600},  chapterReq:3 },
+  { id:'q13',name:'冰龍討伐',     desc:'擊敗冰霜巨龍（頭目戰）',   goal:{type:'boss',target:'frostDragon'},       reward:{xp:1500,gold:1800,item:'armor4'},  chapterReq:3 },
   { id:'q8', name:'黑暗城堡',     desc:'抵達黑暗城堡',             goal:{type:'visit',target:'castle'},          reward:{xp:400,gold:300},  chapterReq:4 },
   { id:'q9', name:'魔王覺醒',     desc:'擊敗魔王阿卡隆（頭目戰）', goal:{type:'boss',target:'bossLich'},         reward:{xp:1500,gold:2000,item:'sword3'},  chapterReq:4 },
+  { id:'q14',name:'火炎淨化',     desc:'消滅3隻火炎精靈',          goal:{type:'kill',target:'fireElement',count:3}, reward:{xp:900,gold:800}, chapterReq:4 },
+  { id:'q15',name:'炎魔討伐',     desc:'擊敗炎魔（頭目戰）',       goal:{type:'boss',target:'fireDemon'},        reward:{xp:2500,gold:3000,item:'sword4'},  chapterReq:4 },
   { id:'q10',name:'最終決戰',     desc:'前往深淵之門，擊敗邪神',   goal:{type:'boss',target:'finalBoss'},        reward:{xp:5000,gold:9999}, chapterReq:5 },
+  { id:'q19',name:'魔王之影',     desc:'消滅2名黑騎士',           goal:{type:'kill',target:'darkKnight',count:2}, reward:{xp:1200,gold:1000}, chapterReq:5 },
+  { id:'q20',name:'祕境之門',     desc:'前往隱秘祕境',             goal:{type:'visit',target:'shrine'},          reward:{xp:3000,gold:3000,item:'stone'},   chapterReq:5 },
+  { id:'q21',name:'時空龍討伐',   desc:'擊敗時空之龍（隱藏頭目）', goal:{type:'boss',target:'timeDragon'},       reward:{xp:10000,gold:8000}, chapterReq:5 },
 ];
 
 const NPC_DIALOGUES = {
@@ -1239,24 +1437,113 @@ const NPC_DIALOGUES = {
     { speaker:'騎士隊長', lines:['歡迎來到王城！近來四周出現了許多魔物，請英雄務必小心。','聽說迷霧森林裡有哥布林部落正在集結……'] },
     { speaker:'老鐵匠',   lines:['你就是新來的冒險者？我見過太多有天賦的人，不過最終能留下的寥寥無幾。','好好鍛鍊自己，去商店看看我打的武器吧！'] },
     { speaker:'神秘旅行者',lines:['……據說，在世界的盡頭有一扇深淵之門。','那裡封印著古老的邪神……但封印正在鬆動。'] },
+    { speaker:'酒館老闆', lines:['嘿嘿，冒險者！要不要去競技場試試身手？','連勝十場的話，聽說國王會親自頒發賞金！'] },
+    { speaker:'吟遊詩人', lines:['♪ 星光照耀勇者的道路，命運的編年史翻開新頁……','♪ 據說在時間夾縫中，還隱藏著更古老的傳說。'] },
   ],
   forest: [
     { speaker:'迷路的獵人',lines:['別進去太深！這片森林裡有什麼東西……越來越多魔物了。','你要小心哥布林，他們成群結隊。'] },
     { speaker:'樹妖精靈', lines:['這片森林已受到黑暗污染。大地在哭泣……','請你消滅那些哥布林首領，拯救森林！'] },
+    { speaker:'精靈長老', lines:['年輕的勇者，你身上有命運的氣息。','當你擊敗邪神之後，回到這裡找我吧。我有一件事要拜託你。'] },
   ],
   cave: [
     { speaker:'礦工老漢', lines:['這洞窟裡有寶藏……但也有危險的黑暗精靈。','聽說洞窟深處有個古代遺蹟的入口。'] },
+    { speaker:'冒險者',   lines:['我在地下二層發現了巨人首領的蹤跡！','那傢伙一拳就能打碎岩石……你確定要下去嗎？'] },
   ],
   ruins: [
     { speaker:'古代守護者',lines:['這裡是失落的艾爾文文明遺跡。','那些火龍是遺跡的守護者，也是被黑暗侵蝕的犧牲品……'] },
+    { speaker:'石刻石碑', lines:['（刻著古老的符文……）','「當寒霜覆蓋大地，熾熱之心將在神殿甦醒。」'] },
   ],
   castle: [
     { speaker:'被俘騎士', lines:['快逃！這裡是魔王的巢穴！','……等等，你是來討伐他的？那你需要聖劍！去廢墟找吧！'] },
+    { speaker:'亡靈士兵', lines:['……生前我效忠王國。','如今我只剩下空洞的軀殼……請讓我安息吧。'] },
+  ],
+  snowfield: [
+    { speaker:'雪原獵人', lines:['這裡的冰原狼比森林裡的怪物兇猛十倍！','帶上火系的魔法再來吧。'] },
+    { speaker:'雪女祭司', lines:['雪女並不是邪惡的存在……她只是被黑暗奪走了摯愛。','若你有火焰之力，或許能淨化她的悲傷。'] },
+    { speaker:'凍僵的商人',lines:['呼…呼…終於有人來了！','聽說冰霜巨龍盤踞在北方山脈，牠的鱗片可是無價之寶！'] },
+  ],
+  firetemple: [
+    { speaker:'火焰祭司', lines:['神殿深處封印著炎魔……那是千年前火焰之神的宿敵。','用冰霜之術擊碎牠的烈焰吧！'] },
+    { speaker:'神殿鍛造師',lines:['這座神殿的爐火從未熄滅。','若你帶來冰晶石，我可以幫你打造最強的武器。'] },
+    { speaker:'古代學者', lines:['炎魔的火炎核心是煉金至寶。','但能從牠手下活著回來的人，屈指可數。'] },
+  ],
+  shrine: [
+    { speaker:'時空守護者',lines:['你竟能穿越時空夾縫来到这里……','時空之龍與混沌邪獸沉睡於此，牠們是命運的守門人。','擊敗牠們，你將看到這個世界真實的過去與未來。'] },
+    { speaker:'迴盪之聲', lines:['……你已擊敗邪神，卻仍選擇挑戰更強的敵人。','這就是命運選擇你的原因。'] },
   ],
   abyss: [
     { speaker:'命運之聲', lines:['英雄……你終於來到了這裡。','前方就是邪神卡爾魯斯的所在。準備好了嗎？','這是命運之戰。整個世界的命運就掌握在你手中！'] },
   ],
 };
+
+// =============================================
+// ACHIEVEMENTS / EVENTS / ARENA
+// =============================================
+
+const ACHIEVEMENTS = [
+  { id:'first_kill',  icon:'⚔',  name:'初次討伐',   desc:'擊敗第一隻魔物', test:G=>Object.values(G.killCount).reduce((a,b)=>a+b,0)>=1 },
+  { id:'slayer10',    icon:'🗡',  name:'新手上路',   desc:'累計討伐 10 隻魔物', test:G=>Object.values(G.killCount).reduce((a,b)=>a+b,0)>=10 },
+  { id:'slayer100',   icon:'💀',  name:'屠戮者',     desc:'累計討伐 100 隻魔物', test:G=>Object.values(G.killCount).reduce((a,b)=>a+b,0)>=100 },
+  { id:'slayer300',   icon:'🔥',  name:'弒神者',     desc:'累計討伐 300 隻魔物', test:G=>Object.values(G.killCount).reduce((a,b)=>a+b,0)>=300 },
+  { id:'elite_hunter',icon:'✨',  name:'狩獵精英',   desc:'擊敗一隻稀有精英怪', test:G=>(G.elitesKilled||0)>=1 },
+  { id:'boss1',       icon:'💥',  name:'討伐頭目',   desc:'擊敗第一個頭目', test:G=>Object.values(G.bosses).some(Boolean) },
+  { id:'boss_all',    icon:'🏆',  name:'頭目獵人',   desc:'擊敗巨人首領、魔王阿卡隆、邪神卡爾魯斯', test:G=>G.bosses.bossOrc && G.bosses.bossLich && G.bosses.finalBoss },
+  { id:'super_boss',  icon:'🌌',  name:'秘境征服者', desc:'擊敗時空之龍與混沌邪獸', test:G=>G.bosses.timeDragon && G.bosses.chaosBeast },
+  { id:'rich1',       icon:'💰',  name:'小富翁',     desc:'持有金幣達到 1000', test:G=>G.gold>=1000 },
+  { id:'rich2',       icon:'👑',  name:'大富豪',     desc:'持有金幣達到 10000', test:G=>G.gold>=10000 },
+  { id:'lv10',        icon:'⭐',  name:'十等勇者',   desc:'達到等級 10', test:G=>G.level>=10 },
+  { id:'lv20',        icon:'🌟',  name:'二十等傳奇', desc:'達到等級 20', test:G=>G.level>=20 },
+  { id:'explorer',    icon:'🗺',  name:'足跡遍布',   desc:'探索 8 個以上的地區', test:G=>G.visitedLocations.length>=8 },
+  { id:'quest_master',icon:'📜',  name:'任務大師',   desc:'完成 12 個任務', test:G=>G.completedQuests.length>=12 },
+  { id:'collector',   icon:'📖',  name:'圖鑑收藏家', desc:'遭遇並記錄 15 種以上的魔物', test:G=>Object.keys(G.killCount).length>=15 },
+  { id:'winner',      icon:'🌅',  name:'命運終結',   desc:'擊敗邪神卡爾魯斯，拯救世界', test:G=>!!G.bosses.finalBoss },
+  { id:'ng1',         icon:'♻',   name:'輪迴之力',   desc:'進入二周目', test:G=>G.difficulty>=1 },
+  { id:'arena5',      icon:'⚡',  name:'競技場新星', desc:'競技場連勝 5 場', test:G=>G.arenaWins>=5 },
+  { id:'arena10',     icon:'🏅',  name:'競技場霸主', desc:'競技場連勝 10 場', test:G=>G.arenaWins>=10 },
+];
+
+const EVENTS = [
+  { id:'merchant', icon:'🧳', name:'流浪商人', lines:['「嗨，冒險者！千里迢迢總算遇到一個活人了。」','「破盤價！高級藥水和爆裂彈，走過路過不要錯過！」'],
+    choices:[
+      { text:'🛒 買高級藥水（100金）', fn:()=>{ if(G.gold>=100){ G.gold-=100; addInv('hiPotion',1); notify('購買成功','高級藥水 ×1','🧳'); } else notify('金幣不足','需要 100 金幣','⚠'); } },
+      { text:'💣 買爆裂彈（80金）', fn:()=>{ if(G.gold>=80){ G.gold-=80; addInv('bomb',1); notify('購買成功','爆裂彈 ×1','🧳'); } else notify('金幣不足','需要 80 金幣','⚠'); } },
+      { text:'👋 不買了', fn:()=>{} },
+    ]},
+  { id:'treasure', icon:'🎁', name:'破舊寶箱', lines:['草叢裡有一個破舊的寶箱……要打開看看嗎？'],
+    choices:[
+      { text:'📦 打開它', fn:()=>{ if(Math.random()<0.7){ const g=50+Math.floor(Math.random()*200); G.gold+=g; notify('獲得寶藏',`金幣 +${g}`,'🎁'); } else { const d=Math.floor(G.maxHp*0.2); G.hp=Math.max(1,G.hp-d); notify('是陷阱！',`受到 ${d} 點傷害`,'💥'); } } },
+      { text:'🚫 不碰為妙', fn:()=>{} },
+    ]},
+  { id:'wounded', icon:'🤕', name:'受傷的旅人', lines:['「嗚……我被魔物襲擊了，能給我一點幫助嗎……？」'],
+    choices:[
+      { text:'🧪 給生命藥水', fn:()=>{ if(consumeInv('potion',1)){ G.gold+=200; notify('旅人的謝禮','金幣 +200','🤕'); } else notify('沒有藥水','背包裡沒有生命藥水','⚠'); } },
+      { text:'👋 轉身離開', fn:()=>{} },
+    ]},
+  { id:'hotspring', icon:'♨️', name:'隱藏溫泉', lines:['濃霧中竟有一處天然溫泉！','泡個澡好好放鬆一下吧。'],
+    choices:[
+      { text:'🛁 泡溫泉', fn:()=>{ G.hp=G.maxHp; G.mp=G.maxMp; G.statusEffects=[]; notify('神清氣爽','HP/MP 完全恢復！','♨️'); } },
+      { text:'🚶 繼續趕路', fn:()=>{} },
+    ]},
+  { id:'elder', icon:'🧙', name:'神秘老人', lines:['「年輕人，你的眼中閃爍著命運之火。」','「讓我為你送上祝福吧——」'],
+    choices:[
+      { text:'🙏 接受祝福', fn:()=>{ const stats=[['maxHp',15],['maxMp',10],['atk',3],['def',2],['matk',3],['spd',1]]; const [k,v]=stats[Math.floor(Math.random()*stats.length)]; G[k]+=v; if(k==='maxHp') G.hp+=v; notify('獲得祝福',`${k.toUpperCase()} 永久 +${v}`,'🧙'); } },
+      { text:'🙅 婉拒', fn:()=>{} },
+    ]},
+  { id:'thief', icon:'🥷', name:'盜賊埋伏', lines:['「此路是我開，此樹是我栽——把錢交出來！」'],
+    choices:[
+      { text:'⚔ 迎戰！', fn:()=>{ startBattle('assassin'); } },
+      { text:'💰 交出 50 金幣', fn:()=>{ if(G.gold>=50){ G.gold-=50; notify('破財消災','金幣 -50','🥷'); } else notify('金幣不足','連 50 金幣都沒有，盜賊失望地走了','😅'); } },
+    ]},
+  { id:'priest', icon:'🔮', name:'神秘祭司', lines:['「勇者，我在你身上看到了未來的可能性……」','「收下這把鑰匙吧。當你準備好時，它能帶你前往時空夾縫中的祕境。」'],
+    choices:[
+      { text:'🔑 收下祕境之鑰', fn:()=>{ G.flags.shrineKey=true; notify('獲得祕境之鑰','隱秘祕境 已解鎖！','🔮'); } },
+      { text:'👋 離開', fn:()=>{} },
+    ]},
+];
+
+const ARENA_POOL = ['slime','goblin','orc','darkElf','dragon','darkKnight','lich','demon','icewolf','fireLizard','golem','warlock','assassin'];
+
+const ARENA_MAX_WAVES = 10;
 
 // =============================================
 // GAME STATE
@@ -1291,6 +1578,7 @@ function initGame(isNew) {
       spd: 12,
       gold: 100,
       chapter: 1,
+      difficulty: 0,
       currentLocation: 'town',
       unlockedLocations: ['town', 'forest'],
       inventory: { potion: 3, ether: 1 },
@@ -1300,10 +1588,15 @@ function initGame(isNew) {
       killCount: {},
       visitedLocations: ['town'],
       completedQuests: [],
-      activeQuests: ['q1', 'q2'],
+      activeQuests: QUESTS.filter(q => q.chapterReq === 1).map(q => q.id),
       bosses: {},
       flags: {},
+      achievements: [],
+      arenaWins: 0,
+      elitesKilled: 0,
+      arena: null,
       playtime: 0,
+      startTs: Date.now(),
       lastSave: null,
     };
   }
@@ -1363,9 +1656,9 @@ function updateHUD() {
   document.getElementById('hud-mp-val').textContent = G.mp + '/' + G.maxMp;
   document.getElementById('hud-xp-val').textContent = G.xp + '/' + G.xpNext;
 
-  // Chapter name on HUD
+  // Chapter name on HUD（含難度）
   const chEl = document.getElementById('hud-chapter');
-  if (chEl) chEl.textContent = '第' + G.chapter + '章';
+  if (chEl) chEl.textContent = '第' + G.chapter + '章' + (G.difficulty > 0 ? ' · 難度' + G.difficulty : '');
 }
 
 // =============================================
@@ -1405,10 +1698,15 @@ function drawWorldMap() {
     ruins:  { x: 0.40, y: 0.60 },
     castle: { x: 0.70, y: 0.65 },
     abyss:  { x: 0.80, y: 0.30 },
+    snowfield: { x: 0.88, y: 0.62 },
+    firetemple:{ x: 0.55, y: 0.08 },
+    shrine: { x: 0.12, y: 0.12 },
   };
 
-  // Draw paths between locations
-  const paths = [['town','forest'],['forest','cave'],['cave','ruins'],['ruins','castle'],['castle','abyss'],['forest','ruins']];
+  // Draw paths between locations（祕境路徑僅在解鎖後顯示）
+  const paths = [['town','forest'],['forest','cave'],['cave','ruins'],['ruins','castle'],['castle','abyss'],['forest','ruins'],['castle','snowfield'],['snowfield','firetemple'],['firetemple','abyss']];
+  const shrineOpen = !!(G.flags.shrineKey || G.bosses.finalBoss);
+  if (shrineOpen) paths.push(['forest','shrine']);
   ctx.strokeStyle = 'rgba(100,150,200,0.3)';
   ctx.lineWidth = 2;
   ctx.setLineDash([8,6]);
@@ -1508,6 +1806,13 @@ function drawWorldMap() {
 function travelToLocation(id) {
   const loc = LOCATIONS[id];
   if (!loc) return;
+
+  // 祕境門控：需要祕境之鑰或已擊敗邪神
+  if (loc.hidden && !G.flags.shrineKey && !G.bosses.finalBoss) {
+    showNotification('無法進入', '隱秘祕境之門緊閉……需要「祕境之鑰」或擊敗邪神', '🔒');
+    return;
+  }
+
   if (!G.unlockedLocations.includes(id)) {
     if (G.level < loc.reqLevel) {
       showNotification('無法前往', `需要等級 ${loc.reqLevel} 才能解鎖 ${loc.name}`, '⚠');
@@ -1528,19 +1833,30 @@ function travelToLocation(id) {
   drawWorldMap();
   showPanel(activeTab);
 
-  // Random encounter on travel (except town)
-  if (id !== 'town' && Math.random() < 0.4) {
-    setTimeout(() => {
-      const enemies = loc.enemies || ['slime'];
-      const enemyId = enemies[Math.floor(Math.random() * enemies.length)];
-      startBattle(enemyId);
-    }, 600);
-  } else {
-    // NPC dialogue
-    const dialogues = NPC_DIALOGUES[id];
-    if (dialogues && Math.random() < 0.5) {
-      const d = dialogues[Math.floor(Math.random() * dialogues.length)];
-      setTimeout(() => showDialogue(d.speaker, d.lines), 400);
+  // 移動時異常狀態傷害（中毒/燃燒會在路上發作）
+  if (hasStatus('poison') || hasStatus('burn')) tickTravelStatuses();
+
+  // 隨機事件（城鎮不觸發）
+  if (id !== 'town') {
+    const roll = Math.random();
+    if (roll < 0.16) {
+      // 隨機事件
+      setTimeout(() => triggerTravelEvent(), 500);
+    } else if (roll < 0.55) {
+      // 遇敵（12% 精英怪）
+      setTimeout(() => {
+        const enemies = loc.enemies || ['slime'];
+        const enemyId = enemies[Math.floor(Math.random() * enemies.length)];
+        const isElite = Math.random() < 0.12;
+        startBattle(enemyId, false, { elite: isElite });
+      }, 600);
+    } else {
+      // NPC 對話
+      const dialogues = NPC_DIALOGUES[id];
+      if (dialogues) {
+        const d = dialogues[Math.floor(Math.random() * dialogues.length)];
+        setTimeout(() => showDialogue(d.speaker, d.lines), 400);
+      }
     }
   }
 
@@ -1551,8 +1867,10 @@ function updateLocationButtons() {
   const loc = LOCATIONS[G.currentLocation];
   const shopBtn = document.getElementById('shop-btn');
   const innBtn = document.getElementById('inn-btn');
+  const arenaBtn = document.getElementById('arena-btn');
   if (shopBtn) shopBtn.style.display = (loc?.shopItems?.length > 0) ? 'flex' : 'none';
   if (innBtn) innBtn.style.display = loc?.hasInn ? 'flex' : 'none';
+  if (arenaBtn) arenaBtn.style.display = loc?.hasArena ? 'flex' : 'none';
 }
 
 // =============================================
@@ -1562,7 +1880,7 @@ function updateLocationButtons() {
 function switchTab(tab) {
   activeTab = tab;
   document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.panel-tab')[['quest','map','inventory','status','skills'].indexOf(tab)]?.classList.add('active');
+  document.querySelectorAll('.panel-tab')[['quest','map','inventory','status','skills','achievements'].indexOf(tab)]?.classList.add('active');
   showPanel(tab);
 }
 
@@ -1574,6 +1892,7 @@ function showPanel(tab) {
     case 'inventory': content.innerHTML = renderInventoryPanel(); break;
     case 'status':    content.innerHTML = renderStatusPanel(); break;
     case 'skills':    content.innerHTML = renderSkillsPanel(); break;
+    case 'achievements': content.innerHTML = renderAchievementsPanel(); break;
   }
 }
 
@@ -1631,7 +1950,59 @@ function getQuestProgress(quest) {
   if (g.type === 'boss') {
     return G.bosses[g.target] ? '頭目已擊敗 ✓' : `目標: 擊敗 ${ENEMIES[g.target]?.name||''}`;
   }
+  if (g.type === 'collect') {
+    const have = G.inventory[g.target] || 0;
+    return `進度: ${Math.min(have,g.count)}/${g.count} ${ITEMS[g.target]?.icon||''}${ITEMS[g.target]?.name||g.target}`;
+  }
   return '';
+}
+
+// ============ 成就 + 圖鑑面板 ============
+function renderAchievementsPanel() {
+  const totalKills = getTotalKills();
+  let html = `<div style="font-size:11px;color:var(--gray);margin-bottom:8px">— 冒險紀錄 —</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val">${G.difficulty||0}</div><div class="stat-label">難度</div></div>
+      <div class="stat-card"><div class="stat-val">${totalKills}</div><div class="stat-label">總討伐</div></div>
+      <div class="stat-card"><div class="stat-val">${G.elitesKilled||0}</div><div class="stat-label">精英討伐</div></div>
+      <div class="stat-card"><div class="stat-val">${G.arenaWins||0}</div><div class="stat-label">競技場勝場</div></div>
+      <div class="stat-card"><div class="stat-val">${G.achievements.length}/${ACHIEVEMENTS.length}</div><div class="stat-label">成就</div></div>
+      <div class="stat-card"><div class="stat-val">${G.visitedLocations.length}/${Object.keys(LOCATIONS).length}</div><div class="stat-label">探索</div></div>
+    </div>`;
+
+  // 成就列表
+  html += '<div style="font-size:11px;color:var(--gray);margin:12px 0 8px">— 成就 —</div>';
+  ACHIEVEMENTS.forEach(a => {
+    const unlocked = G.achievements.includes(a.id);
+    html += `<div class="ach-item ${unlocked ? 'unlocked' : ''}">
+      <div class="ach-icon">${unlocked ? a.icon : '🔒'}</div>
+      <div class="ach-info">
+        <div class="ach-name">${a.name}</div>
+        <div class="ach-desc">${a.desc}</div>
+      </div>
+      ${unlocked ? '<div class="ach-check">✓</div>' : ''}
+    </div>`;
+  });
+
+  // 圖鑑
+  html += '<div style="font-size:11px;color:var(--gray);margin:12px 0 8px">— 魔物圖鑑 —</div>';
+  html += '<div class="bestiary-grid">';
+  Object.values(ENEMIES).forEach(e => {
+    const killed = G.killCount[e.id] || 0;
+    const seen = killed > 0 || e.isBoss ? (killed > 0 || !!G.bosses[e.id]) : killed > 0;
+    const show = killed > 0 || !!G.bosses[e.id];
+    if (show) {
+      html += `<div class="bestiary-item" title="${e.desc || ''}">
+        <div>${e.icon}</div>
+        <div class="bestiary-name">${e.name}</div>
+        <div class="bestiary-kill">討伐 ${killed}${e.isBoss ? ' ⚡頭目' : ''}</div>
+      </div>`;
+    } else {
+      html += `<div class="bestiary-item locked"><div>❓</div><div class="bestiary-name">？？？</div><div class="bestiary-kill">未遭遇</div></div>`;
+    }
+  });
+  html += '</div>';
+  return html;
 }
 
 function acceptQuest(id) {
@@ -1706,16 +2077,24 @@ function renderInventoryPanel() {
 }
 
 function renderStatusPanel() {
-  const equip = G.equipment;
-  const totalAtk = G.atk + (equip.weapon && ITEMS[equip.weapon]?.atk ? ITEMS[equip.weapon].atk : 0) + (equip.accessory && ITEMS[equip.accessory]?.atk ? ITEMS[equip.accessory].atk : 0);
-  const totalDef = G.def + (equip.armor && ITEMS[equip.armor]?.def ? ITEMS[equip.armor].def : 0);
-  const totalMatk = G.matk + (equip.weapon && ITEMS[equip.weapon]?.matk ? ITEMS[equip.weapon].matk : 0);
-  const totalMdef = G.mdef + (equip.armor && ITEMS[equip.armor]?.mdef ? ITEMS[equip.armor].mdef : 0);
+  const totalAtk = getPlayerAtk();
+  const totalDef = getPlayerDef();
+  const totalMatk = getPlayerMatk();
+  const totalMdef = getPlayerMdef();
+  const totalSpd = getPlayerSpd();
+
+  const statusNames = { poison: '☠ 中毒', burn: '🔥 燃燒', regen: '🌿 再生', paralyze: '💫 麻痺' };
+  const statusText = G.statusEffects.length === 0
+    ? '無異常狀態'
+    : G.statusEffects.map(s => {
+        const [id, t] = s.split(':');
+        return (statusNames[id] || id) + (t ? `（${t}回合）` : '');
+      }).join('、');
 
   return `
     <div style="font-size:11px;color:var(--gold);margin-bottom:8px">⚔ 角色狀態</div>
     <div class="stat-grid">
-      <div class="stat-item"><span class="stat-item-label">等級</span><span class="stat-item-val">${G.level}</span></div>
+      <div class="stat-item"><span class="stat-item-label">等級</span><span class="stat-item-val">${G.level}${G.difficulty > 0 ? `（難度${G.difficulty}）` : ''}</span></div>
       <div class="stat-item"><span class="stat-item-label">HP</span><span class="stat-item-val">${G.hp}/${G.maxHp}</span></div>
       <div class="stat-item"><span class="stat-item-label">MP</span><span class="stat-item-val">${G.mp}/${G.maxMp}</span></div>
       <div class="stat-item"><span class="stat-item-label">XP</span><span class="stat-item-val">${G.xp}/${G.xpNext}</span></div>
@@ -1723,15 +2102,19 @@ function renderStatusPanel() {
       <div class="stat-item"><span class="stat-item-label">防禦</span><span class="stat-item-val">${totalDef}</span></div>
       <div class="stat-item"><span class="stat-item-label">魔攻</span><span class="stat-item-val">${totalMatk}</span></div>
       <div class="stat-item"><span class="stat-item-label">魔防</span><span class="stat-item-val">${totalMdef}</span></div>
-      <div class="stat-item"><span class="stat-item-label">速度</span><span class="stat-item-val">${G.spd}</span></div>
+      <div class="stat-item"><span class="stat-item-label">速度</span><span class="stat-item-val">${totalSpd}</span></div>
       <div class="stat-item"><span class="stat-item-label">金幣</span><span class="stat-item-val">${G.gold}</span></div>
     </div>
     <div style="font-size:11px;color:var(--gold);margin:12px 0 8px">狀態效果</div>
-    <div style="font-size:12px;color:var(--gray)">${G.statusEffects.length === 0 ? '無異常狀態' : G.statusEffects.join(', ')}</div>
+    <div style="font-size:12px;color:var(--gray)">${statusText}</div>
     <div style="font-size:11px;color:var(--gold);margin:12px 0 8px">冒險紀錄</div>
     <div class="stat-grid">
       <div class="stat-item"><span class="stat-item-label">章節</span><span class="stat-item-val">${G.chapter}</span></div>
-      <div class="stat-item"><span class="stat-item-label">討伐數</span><span class="stat-item-val">${Object.values(G.killCount).reduce((a,b)=>a+b,0)}</span></div>
+      <div class="stat-item"><span class="stat-item-label">討伐數</span><span class="stat-item-val">${getTotalKills()}</span></div>
+      <div class="stat-item"><span class="stat-item-label">精英討伐</span><span class="stat-item-val">${G.elitesKilled||0}</span></div>
+      <div class="stat-item"><span class="stat-item-label">競技場勝場</span><span class="stat-item-val">${G.arenaWins||0}</span></div>
+      <div class="stat-item"><span class="stat-item-label">成就</span><span class="stat-item-val">${G.achievements.length}/${ACHIEVEMENTS.length}</span></div>
+      <div class="stat-item"><span class="stat-item-label">探索</span><span class="stat-item-val">${G.visitedLocations.length}/${Object.keys(LOCATIONS).length}</span></div>
     </div>
   `;
 }
@@ -1799,6 +2182,12 @@ function useItem(id) {
     return;
   }
 
+  // 戰鬥專用道具（野外不可使用）
+  if (item.effect && (item.effect.dmg || item.effect.flee || item.effect.atkUp)) {
+    showNotification('只能在戰鬥中使用', item.name, '⚠');
+    return;
+  }
+
   // Consumable
   if (item.effect) {
     if (item.effect.hp) {
@@ -1810,7 +2199,7 @@ function useItem(id) {
       showNotification('使用道具', `MP 恢復 ${item.effect.mp}`, item.icon);
     }
     if (item.effect.cure) {
-      G.statusEffects = G.statusEffects.filter(e => e !== item.effect.cure);
+      removeStatus(item.effect.cure);
       showNotification('解除狀態', '異常狀態已解除', item.icon);
     }
   }
@@ -1845,26 +2234,157 @@ function getPlayerDef() {
 function getPlayerMatk() {
   let matk = G.matk;
   if (G.equipment.weapon && ITEMS[G.equipment.weapon]) matk += ITEMS[G.equipment.weapon].matk || 0;
+  if (G.equipment.accessory && ITEMS[G.equipment.accessory]) matk += ITEMS[G.equipment.accessory].matk || 0;
   return matk;
+}
+
+function getPlayerMdef() {
+  let mdef = G.mdef;
+  if (G.equipment.armor && ITEMS[G.equipment.armor]) mdef += ITEMS[G.equipment.armor].mdef || 0;
+  if (G.equipment.accessory && ITEMS[G.equipment.accessory]) mdef += ITEMS[G.equipment.accessory].mdef || 0;
+  return mdef;
+}
+
+function getPlayerSpd() {
+  let spd = G.spd;
+  if (G.equipment.accessory && ITEMS[G.equipment.accessory]) spd += ITEMS[G.equipment.accessory].spd || 0;
+  if (G.equipment.weapon && ITEMS[G.equipment.weapon]) spd += ITEMS[G.equipment.weapon].spd || 0;
+  return spd;
+}
+
+function getTotalKills() {
+  return Object.values(G.killCount || {}).reduce((a, b) => a + b, 0);
+}
+
+// ============ INVENTORY HELPERS ============
+function addInv(id, n) {
+  G.inventory[id] = (G.inventory[id] || 0) + n;
+  checkQuestProgress('collect', id);
+}
+function consumeInv(id, n) {
+  if (!G.inventory[id] || G.inventory[id] < n) return false;
+  G.inventory[id] -= n;
+  if (G.inventory[id] <= 0) delete G.inventory[id];
+  return true;
+}
+const notify = showNotification;
+
+// ============ STATUS EFFECTS (out of battle, persist) ============
+// statusEffects 存字串：'poison:N' / 'burn:N' / 'paralyze:N' / 'regen'（無回合）
+function hasStatus(id) { return G.statusEffects.some(s => s === id || s.startsWith(id + ':')); }
+function addStatus(id, turns) {
+  if (!hasStatus(id)) { G.statusEffects.push(turns ? id + ':' + turns : id); }
+  else { G.statusEffects = G.statusEffects.map(s => s.startsWith(id + ':') ? id + ':' + turns : s); }
+}
+function removeStatus(id) { G.statusEffects = G.statusEffects.filter(s => s !== id && !s.startsWith(id + ':')); }
+
+function tickPlayerStatuses() {
+  // 回合開始時的中毒/燃燒結算，回傳戰報
+  const logs = [];
+  G.statusEffects = G.statusEffects.map(s => {
+    if (s === 'regen') return s;
+    const [id, turnsStr] = s.split(':');
+    const turns = turnsStr | 0;
+    if (id === 'poison') {
+      const d = Math.max(1, Math.floor(G.maxHp * 0.08));
+      G.hp = Math.max(0, G.hp - d);
+      logs.push(`☠ 中毒：受到 ${d} 點傷害`);
+      return turns - 1 <= 0 ? null : id + ':' + (turns - 1);
+    }
+    if (id === 'burn') {
+      const d = Math.max(1, Math.floor(G.maxHp * 0.06));
+      G.hp = Math.max(0, G.hp - d);
+      logs.push(`🔥 燃燒：受到 ${d} 點傷害`);
+      return turns - 1 <= 0 ? null : id + ':' + (turns - 1);
+    }
+    if (id === 'paralyze') {
+      return turns - 1 <= 0 ? null : id + ':' + (turns - 1);
+    }
+    return s;
+  }).filter(Boolean);
+  return logs;
+}
+
+// 移動時的中毒/燃燒傷害（讓解毒藥有意義）
+function tickTravelStatuses() {
+  const logs = tickPlayerStatuses();
+  if (logs.length) {
+    logs.forEach(t => addBattleLog(t, 'damage'));
+    updateHUD();
+    if (G.hp <= 0) {
+      G.hp = Math.floor(G.maxHp * 0.3);
+      G.mp = Math.floor(G.maxMp * 0.3);
+      G.currentLocation = 'town';
+      G.statusEffects = [];
+      showNotification('昏倒了…', '毒素侵蝕使你倒下，被送回王城急救。', '💀');
+      drawWorldMap();
+      updateLocationButtons();
+      return;
+    }
+    showNotification('狀態異常', logs.join('；'), '⚠');
+  }
+}
+
+// ============ ELEMENT SYSTEM ============
+function elemMult(elem, enemy) {
+  if (!elem || elem === 'physical' || elem === 'earth' || elem === 'magic') return 1;
+  let m = 1;
+  if (enemy.weak && enemy.weak.includes(elem)) m *= 1.5;
+  if (enemy.resist && enemy.resist.includes(elem)) m *= 0.5;
+  return m;
+}
+function elemLabel(elem) {
+  return { fire: '🔥火', ice: '❄冰', thunder: '⚡雷', holy: '✨聖' }[elem] || '';
 }
 
 // =============================================
 // BATTLE SYSTEM
 // =============================================
 
-function startBattle(enemyId, isBoss = false) {
+function startBattle(enemyId, isBoss = false, opts = {}) {
   const enemyTemplate = ENEMIES[enemyId];
   if (!enemyTemplate) return;
 
+  // 難度（二周目）與競技場波次加成
+  const diff = G.difficulty || 0;
+  const hpMul = (1 + diff * 0.4) * (opts.wave ? (1 + (opts.wave - 1) * 0.45) : 1);
+  const atkMul = (1 + diff * 0.3) * (opts.wave ? (1 + (opts.wave - 1) * 0.25) : 1);
+  const enemy = {
+    ...enemyTemplate,
+    maxHp: Math.max(1, Math.floor(enemyTemplate.maxHp * hpMul)),
+    atk: Math.floor(enemyTemplate.atk * atkMul),
+  };
+  if (opts.elite) {
+    enemy.isElite = true;
+    enemy.maxHp = Math.floor(enemy.maxHp * 2.5);
+    enemy.atk = Math.floor(enemy.atk * 1.4);
+  }
+  enemy.hp = enemy.maxHp;
+  enemy.statuses = [];
+
   battleState = {
-    enemy: { ...enemyTemplate, hp: enemyTemplate.maxHp },
+    enemy,
     playerTurn: true,
     over: false,
     skillMenuOpen: false,
+    itemMenuOpen: false,
+    isBoss: !!isBoss,
+    isElite: !!opts.elite,
+    arena: !!opts.arena,
+    wave: opts.wave || 0,
+    pbuffs: { atk: 0, def: 0, spd: 0 },
+    shield: 0,
   };
 
   // Update battle UI
-  document.getElementById('battle-title').textContent = (isBoss ? '⚡ 頭目戰 ⚡ — ' : '— ⚔ 戰鬥 ⚔ — ') + battleState.enemy.name;
+  let titleText;
+  if (battleState.arena) titleText = `🏟 競技場 第${battleState.wave}/${ARENA_MAX_WAVES} 波 — `;
+  else if (isBoss) titleText = '⚡ 頭目戰 ⚡ — ';
+  else if (battleState.isElite) titleText = '✨ 稀有精英 ✨ — ';
+  else titleText = '— ⚔ 戰鬥 ⚔ — ';
+  titleText += battleState.enemy.name;
+  document.getElementById('battle-title').textContent = titleText;
+  document.getElementById('battle-title').style.color = battleState.isElite ? '#f0c96a' : (battleState.isBoss ? '#ef5350' : '#e0e0e0');
   document.getElementById('player-sprite').textContent = '🧙';
   document.getElementById('battle-player-name').textContent = G.playerName;
   document.getElementById('enemy-sprite').textContent = battleState.enemy.icon;
@@ -1873,14 +2393,14 @@ function startBattle(enemyId, isBoss = false) {
   updateBattleUI();
   clearBattleLog();
   addBattleLog(`⚔ 與 ${battleState.enemy.name} 展開戰鬥！`, 'system');
-
-  if (battleState.enemy.isBoss) {
-    addBattleLog(`💀 ${battleState.enemy.name} 是強大的頭目！`, 'system');
-  }
+  if (battleState.isElite) addBattleLog('✨ 稀有精英怪！擊敗它將獲得 3 倍獎勵！', 'system');
+  if (battleState.enemy.isBoss) addBattleLog(`💀 ${battleState.enemy.name} 是強大的頭目！`, 'system');
+  if (diff > 0) addBattleLog(`🌐 難度 ${diff}：魔物能力提升 ${diff * 40}%！`, 'system');
 
   showScreen('battle-screen');
   setBattleCommands(true);
   document.getElementById('skill-menu').classList.remove('show');
+  document.getElementById('item-menu').classList.remove('show');
 }
 
 function updateBattleUI() {
@@ -1891,12 +2411,40 @@ function updateBattleUI() {
   document.getElementById('battle-player-mp').textContent = `${G.mp}/${G.maxMp}`;
   document.getElementById('battle-player-hp-bar').style.width = phpPct + '%';
   document.getElementById('battle-player-mp-bar').style.width = pmpPct + '%';
+  document.getElementById('battle-player-mp-bar').classList.toggle('mp-low', G.mp / G.maxMp < 0.2);
 
   // Enemy
   const enemy = battleState.enemy;
   const ehpPct = Math.max(0, (enemy.hp / enemy.maxHp) * 100);
   document.getElementById('battle-enemy-hp').textContent = `${enemy.hp}/${enemy.maxHp}`;
   document.getElementById('battle-enemy-hp-bar').style.width = ehpPct + '%';
+
+  // 狀態圖示
+  renderBattleStatusChips();
+}
+
+function renderBattleStatusChips() {
+  const pe = document.getElementById('player-status-chips');
+  const ee = document.getElementById('enemy-status-chips');
+  if (!pe || !battleState) return;
+  const pIcons = [];
+  if (battleState.shield > 0) pIcons.push(`🛡${battleState.shield}`);
+  if (battleState.pbuffs.atk > 0) pIcons.push(`💪${battleState.pbuffs.atk}`);
+  if (battleState.pbuffs.def > 0) pIcons.push(`🧱${battleState.pbuffs.def}`);
+  if (battleState.pbuffs.spd > 0) pIcons.push(`🪽${battleState.pbuffs.spd}`);
+  G.statusEffects.forEach(s => {
+    const [id, t] = s.split(':');
+    const ico = { poison: '☠️', burn: '🔥', regen: '🌿', paralyze: '💫' }[id];
+    if (ico) pIcons.push(t ? `${ico}${t}` : ico);
+  });
+  pe.textContent = pIcons.join('  ');
+  const eIcons = [];
+  (battleState.enemy.statuses || []).forEach(s => {
+    const ico = { poison: '☠️', burn: '🔥', paralyze: '💫' }[s.id];
+    if (ico) eIcons.push(`${ico}${s.turns}`);
+  });
+  if (battleState.isElite) eIcons.unshift('✨精英');
+  ee.textContent = eIcons.join('  ');
 }
 
 function clearBattleLog() {
@@ -1925,6 +2473,8 @@ function toggleSkillMenu() {
   const menu = document.getElementById('skill-menu');
   battleState.skillMenuOpen = !battleState.skillMenuOpen;
   if (battleState.skillMenuOpen) {
+    document.getElementById('item-menu').classList.remove('show');
+    battleState.itemMenuOpen = false;
     menu.innerHTML = G.skills.map(sid => {
       const sk = SKILLS[sid];
       if (!sk) return '';
@@ -1940,21 +2490,114 @@ function toggleSkillMenu() {
   }
 }
 
+function toggleItemMenu() {
+  const menu = document.getElementById('item-menu');
+  battleState.itemMenuOpen = !battleState.itemMenuOpen;
+  if (battleState.itemMenuOpen) {
+    document.getElementById('skill-menu').classList.remove('show');
+    battleState.skillMenuOpen = false;
+    const usable = Object.entries(G.inventory).filter(([id, c]) => c > 0 && ITEMS[id] &&
+      (ITEMS[id].effect?.hp || ITEMS[id].effect?.mp || ITEMS[id].effect?.cure || ITEMS[id].effect?.dmg || ITEMS[id].effect?.flee || ITEMS[id].effect?.atkUp));
+    if (usable.length === 0) {
+      addBattleLog('沒有可使用的道具！', 'system');
+      battleState.itemMenuOpen = false;
+      return;
+    }
+    menu.innerHTML = usable.map(([id]) => {
+      const it = ITEMS[id];
+      return `<button class="sub-cmd" onclick="battleUseItem('${id}')">
+        <span>${it.icon} ${it.name}</span>
+        <span class="sub-cmd-mp">×${G.inventory[id]}</span>
+      </button>`;
+    }).join('');
+    menu.classList.add('show');
+  } else {
+    menu.classList.remove('show');
+  }
+}
+
+function battleUseItem(id) {
+  const it = ITEMS[id];
+  if (!it || !G.inventory[id] || !battleState.playerTurn || battleState.over) return;
+  battleState.itemMenuOpen = false;
+  document.getElementById('item-menu').classList.remove('show');
+  battleState.playerTurn = false;
+  setBattleCommands(false);
+  const fx = it.effect;
+  const consumed = !fx.flee; // flee 也會消耗，統一在下方
+  if (fx.hp) {
+    G.hp = Math.min(G.maxHp, G.hp + fx.hp);
+    addBattleLog(`${G.playerName} 使用 ${it.icon}${it.name}！恢復 ${fx.hp} HP！`, 'heal');
+    animateSprite('player-sprite', 'cast-anim');
+  } else if (fx.mp) {
+    G.mp = Math.min(G.maxMp, G.mp + fx.mp);
+    addBattleLog(`${G.playerName} 使用 ${it.icon}${it.name}！恢復 ${fx.mp} MP！`, 'heal');
+    animateSprite('player-sprite', 'cast-anim');
+  } else if (fx.cure) {
+    removeStatus(fx.cure);
+    addBattleLog(`${G.playerName} 使用 ${it.icon}${it.name}！解除「${fxcureName(fx.cure)}」異常狀態！`, 'heal');
+    animateSprite('player-sprite', 'cast-anim');
+  } else if (fx.dmg) {
+    let d = Math.floor(fx.dmg * elemMult(fx.elem, battleState.enemy));
+    battleState.enemy.hp = Math.max(0, battleState.enemy.hp - d);
+    animateSprite('player-sprite', 'attack-anim');
+    setTimeout(() => {
+      animateSprite('enemy-sprite', 'damage-anim');
+      showFloatDamage('enemy-combatant', d, '#ffab40');
+    }, 300);
+    addBattleLog(`💣 ${it.name} 造成 ${d} 點傷害！${elemMult(fx.elem, battleState.enemy) > 1 ? '（屬性相剋！）' : ''}`, 'damage');
+  } else if (fx.flee) {
+    consumeInv(id, 1);
+    addBattleLog(`💨 ${it.name} 煙霧瀰漫——成功逃跑！`, 'system');
+    setTimeout(() => endBattle(false, true), 600);
+    return;
+  } else if (fx.atkUp) {
+    battleState.pbuffs.atk = Math.max(battleState.pbuffs.atk, fx.atkUp);
+    addBattleLog(`🥤 使用 ${it.name}！攻擊力上升！（+50% ${fx.atkUp}回合）`, 'heal');
+    animateSprite('player-sprite', 'cast-anim');
+  }
+  consumeInv(id, 1);
+  updateBattleUI();
+  updateHUD();
+  if (fx.dmg && battleState.enemy.hp <= 0) {
+    setTimeout(() => endBattle(true), 800);
+    return;
+  }
+  setTimeout(() => enemyTurn(), 800);
+}
+
+function fxcureName(id) {
+  return { poison: '中毒', burn: '燃燒', paralyze: '麻痺' }[id] || id;
+}
+
 function battleAction(action, skillId = null) {
   if (!battleState.playerTurn || battleState.over) return;
   battleState.playerTurn = false;
   battleState.skillMenuOpen = false;
+  battleState.itemMenuOpen = false;
   document.getElementById('skill-menu').classList.remove('show');
+  document.getElementById('item-menu').classList.remove('show');
   setBattleCommands(false);
+
+  // 麻痺判定（混沌邪獸的終焉審判）
+  if (hasStatus('paralyze') && Math.random() < 0.4) {
+    addBattleLog('💫 麻痺發作，全身僵硬無法行動！', 'system');
+    removeStatus('paralyze');
+    updateBattleUI();
+    setTimeout(() => enemyTurn(), 700);
+    return;
+  }
 
   let playerDmg = 0;
   let actionText = '';
+  let actElem = null;
 
   if (action === 'attack') {
-    const atk = getPlayerAtk();
+    const atk = Math.floor(getPlayerAtk() * (battleState.pbuffs.atk > 0 ? 1.5 : 1));
     const def = battleState.enemy.def;
     playerDmg = Math.max(1, atk - Math.floor(def * 0.5) + Math.floor(Math.random() * 10 - 5));
     actionText = `${G.playerName} 發動攻擊！`;
+    actElem = 'physical';
     animateSprite('player-sprite', 'attack-anim');
     setTimeout(() => {
       animateSprite('enemy-sprite', 'damage-anim');
@@ -1969,7 +2612,20 @@ function battleAction(action, skillId = null) {
     if (sk.type === 'heal') {
       const healAmt = sk.heal + Math.floor(Math.random() * 20);
       G.hp = Math.min(G.maxHp, G.hp + healAmt);
-      actionText = `${G.playerName} 使用 ${sk.icon}${sk.name}！恢復 ${healAmt} HP！`;
+      if (sk.id === 'regen') addStatus('regen', 0);
+      actionText = `${G.playerName} 使用 ${sk.icon}${sk.name}！恢復 ${healAmt} HP！${sk.id === 'regen' ? '（附持續回血）' : ''}`;
+      addBattleLog(actionText, 'heal');
+      animateSprite('player-sprite', 'cast-anim');
+      updateBattleUI();
+      updateHUD();
+      setTimeout(() => enemyTurn(), 800);
+      return;
+    } else if (sk.type === 'buff') {
+      if (sk.atkUp) battleState.pbuffs.atk = Math.max(battleState.pbuffs.atk, sk.atkUp);
+      if (sk.defUp) battleState.pbuffs.def = Math.max(battleState.pbuffs.def, sk.defUp);
+      if (sk.spdUp) battleState.pbuffs.spd = Math.max(battleState.pbuffs.spd, sk.spdUp);
+      if (sk.shield) battleState.shield += Math.floor(sk.shield + getPlayerMdef() * 0.5);
+      actionText = `${G.playerName} 使用 ${sk.icon}${sk.name}！${sk.shield ? `展開護盾（吸收 ${battleState.shield}）！` : '能力提升！'}`;
       addBattleLog(actionText, 'heal');
       animateSprite('player-sprite', 'cast-anim');
       updateBattleUI();
@@ -1977,37 +2633,41 @@ function battleAction(action, skillId = null) {
       setTimeout(() => enemyTurn(), 800);
       return;
     } else {
-      const matk = getPlayerMatk();
-      playerDmg = Math.max(1, Math.floor((matk * sk.power) - battleState.enemy.def * 0.3 + Math.random() * 15));
+      const hits = sk.hits || 1;
+      let total = 0;
+      for (let h = 0; h < hits; h++) {
+        let d;
+        if (sk.type === 'physical') {
+          const base = Math.floor(getPlayerAtk() * (battleState.pbuffs.atk > 0 ? 1.5 : 1));
+          d = Math.max(1, Math.floor(base * sk.power - battleState.enemy.def * 0.3 + Math.random() * 15));
+        } else {
+          const base = Math.floor(getPlayerMatk() * (battleState.pbuffs.atk > 0 ? 1.5 : 1));
+          d = Math.max(1, Math.floor(base * sk.power - battleState.enemy.def * 0.3 + Math.random() * 15));
+        }
+        d = Math.max(1, Math.floor(d * elemMult(sk.elem, battleState.enemy)));
+        total += d;
+      }
+      playerDmg = total;
+      actElem = sk.elem;
       actionText = `${G.playerName} 使用 ${sk.icon}${sk.name}！`;
+      if (sk.hits && sk.hits > 1) actionText = `${G.playerName} 使用 ${sk.icon}${sk.name}（${sk.hits}連擊）！`;
       animateSprite('player-sprite', 'cast-anim');
       setTimeout(() => {
         animateSprite('enemy-sprite', 'damage-anim');
         showFloatDamage('enemy-combatant', playerDmg, '#ce93d8');
       }, 400);
+      if (sk.poison) addEnemyStatus('poison', sk.poison);
+      if (sk.burn) addEnemyStatus('burn', sk.burn);
     }
 
   } else if (action === 'item') {
-    // Use first available potion
-    const potIds = Object.keys(G.inventory).filter(id => G.inventory[id] > 0 && ITEMS[id]?.effect?.hp);
-    if (potIds.length === 0) {
-      addBattleLog('沒有可用的恢復道具！', 'system');
-      battleState.playerTurn = true;
-      setBattleCommands(true);
-      return;
-    }
-    const pot = ITEMS[potIds[0]];
-    G.hp = Math.min(G.maxHp, G.hp + pot.effect.hp);
-    G.inventory[potIds[0]]--;
-    if (G.inventory[potIds[0]] <= 0) delete G.inventory[potIds[0]];
-    addBattleLog(`${G.playerName} 使用 ${pot.icon}${pot.name}！恢復 ${pot.effect.hp} HP！`, 'heal');
-    updateBattleUI();
-    updateHUD();
-    setTimeout(() => enemyTurn(), 800);
+    toggleItemMenu();
+    battleState.playerTurn = true;
+    setBattleCommands(true);
     return;
 
   } else if (action === 'flee') {
-    const fleeChance = G.spd / (G.spd + battleState.enemy.level * 3);
+    const fleeChance = getPlayerSpd() / (getPlayerSpd() + battleState.enemy.level * 3);
     if (Math.random() < fleeChance) {
       addBattleLog('成功逃跑！', 'system');
       setTimeout(() => endBattle(false, true), 600);
@@ -2022,10 +2682,20 @@ function battleAction(action, skillId = null) {
   if (playerDmg > 0) {
     battleState.enemy.hp = Math.max(0, battleState.enemy.hp - playerDmg);
     addBattleLog(actionText, '');
+    if (actElem && elemMult(actElem, battleState.enemy) > 1) addBattleLog('💥 屬性相剋！傷害大幅提升！', 'damage');
+    if (actElem && elemMult(actElem, battleState.enemy) < 1) addBattleLog('🛡 屬性被抵抗，傷害減半！', 'system');
     addBattleLog(`⚔ 造成 ${playerDmg} 點傷害！`, 'damage');
     updateBattleUI();
     updateHUD();
 
+    if (battleState.enemy.hp <= 0) {
+      setTimeout(() => endBattle(true), 800);
+      return;
+    }
+    // 敵人中毒/燃燒結算
+    const st = tickEnemyStatuses();
+    st.forEach(t => addBattleLog(t, 'damage'));
+    updateBattleUI();
     if (battleState.enemy.hp <= 0) {
       setTimeout(() => endBattle(true), 800);
       return;
@@ -2035,41 +2705,99 @@ function battleAction(action, skillId = null) {
   setTimeout(() => enemyTurn(), 900);
 }
 
+function addEnemyStatus(id, turns) {
+  const e = battleState.enemy;
+  const existing = e.statuses.find(s => s.id === id);
+  if (existing) existing.turns = Math.max(existing.turns, turns);
+  else e.statuses.push({ id, turns });
+}
+
+function tickEnemyStatuses() {
+  const logs = [];
+  const e = battleState.enemy;
+  if (!e.statuses || !e.statuses.length) return logs;
+  e.statuses = e.statuses.map(s => {
+    if (s.id === 'poison') {
+      const d = Math.max(1, Math.floor(e.maxHp * 0.06));
+      e.hp = Math.max(0, e.hp - d);
+      logs.push(`☠ ${e.name} 中毒：受到 ${d} 點傷害`);
+    }
+    if (s.id === 'burn') {
+      const d = Math.max(1, Math.floor(e.maxHp * 0.05));
+      e.hp = Math.max(0, e.hp - d);
+      logs.push(`🔥 ${e.name} 燃燒：受到 ${d} 點傷害`);
+    }
+    s.turns--;
+    return s.turns <= 0 ? null : s;
+  }).filter(Boolean);
+  return logs;
+}
+
 function enemyTurn() {
   if (battleState.over) return;
   const enemy = battleState.enemy;
 
-  // Enemy attack types
-  let dmg = 0;
-  let attackType = 'normal';
+  // 挑選招式（權重隨機）
+  const moves = (enemy.moves && enemy.moves.length) ? enemy.moves : [{ n: '攻擊', e: 'physical', p: 1.0, w: 100 }];
+  let move = moves[0];
+  const totalW = moves.reduce((a, m) => a + (m.w || 1), 0);
+  let r = Math.random() * totalW;
+  for (const m of moves) { r -= (m.w || 1); if (r <= 0) { move = m; break; } }
 
-  if (enemy.magic && Math.random() < 0.4) {
-    attackType = 'magic';
-    dmg = Math.max(1, Math.floor(enemy.atk * 1.4 - G.mdef * 0.5 + Math.random() * 12));
-  } else {
-    dmg = Math.max(1, enemy.atk - getPlayerDef() * 0.5 + Math.floor(Math.random() * 10 - 5));
+  const isMagical = ['magic', 'fire', 'ice', 'thunder', 'holy'].includes(move.e);
+  const hits = move.hits || 1;
+  let total = 0;
+  for (let h = 0; h < hits; h++) {
+    let d;
+    if (isMagical) {
+      d = Math.max(1, Math.floor(enemy.atk * move.p - getPlayerMdef() * 0.5 + Math.random() * 12));
+    } else {
+      const defEff = Math.floor(getPlayerDef() * (battleState.pbuffs.def > 0 ? 1.5 : 1));
+      d = Math.max(1, Math.floor(enemy.atk * move.p - defEff * 0.5 + Math.random() * 10 - 5));
+    }
+    total += d;
   }
 
-  // Boss special attacks
-  if (enemy.isBoss && Math.random() < 0.2) {
-    dmg = Math.floor(dmg * 1.6);
-    addBattleLog(`💀 ${enemy.name} 發動必殺技！`, 'damage');
+  // 護盾吸收
+  if (battleState.shield > 0 && total > 0) {
+    const absorbed = Math.min(battleState.shield, total);
+    battleState.shield -= absorbed;
+    total -= absorbed;
+    if (absorbed > 0) addBattleLog(`🛡 神聖護盾吸收了 ${absorbed} 點傷害！`, 'system');
+    updateBattleUI();
   }
-
+  const dmg = Math.max(0, total);
   G.hp = Math.max(0, G.hp - dmg);
 
   animateSprite('enemy-sprite', 'attack-anim');
   setTimeout(() => {
-    animateSprite('player-sprite', 'damage-anim');
-    showFloatDamage('player-combatant', dmg, '#ff5252');
+    if (dmg > 0) {
+      animateSprite('player-sprite', 'damage-anim');
+      showFloatDamage('player-combatant', dmg, '#ff5252');
+    }
   }, 300);
 
-  addBattleLog(`${enemy.icon} ${enemy.name} 的${attackType === 'magic' ? '魔法' : ''}攻擊！`, '');
-  addBattleLog(`受到 ${dmg} 點傷害！`, 'damage');
+  addBattleLog(`${enemy.icon} ${enemy.name} 使用了「${move.n}」！`, '');
+  if (dmg > 0) addBattleLog(`受到 ${dmg} 點傷害！`, 'damage');
+  else addBattleLog('沒有造成傷害……', 'system');
+
+  // 招式附加效果（施加在玩家身上）
+  if (move.poison) { addStatus('poison', move.poison); addBattleLog(`☠ 中了${move.poison}回合中毒！`, 'damage'); }
+  if (move.burn) { addStatus('burn', move.burn); addBattleLog(`🔥 燃燒！每回合受到傷害（${move.burn}回合）`, 'damage'); }
+  if (move.paralyze) { addStatus('paralyze', move.paralyze); addBattleLog(`💫 麻痺！有機率無法行動（${move.paralyze}回合）`, 'damage'); }
 
   updateBattleUI();
   updateHUD();
 
+  if (G.hp <= 0) {
+    setTimeout(() => endBattle(false), 600);
+    return;
+  }
+
+  // 玩家異常狀態結算（中毒/燃燒）
+  const st = tickPlayerStatuses();
+  st.forEach(t => addBattleLog(t, 'damage'));
+  updateBattleUI();
   if (G.hp <= 0) {
     setTimeout(() => endBattle(false), 600);
     return;
@@ -2083,24 +2811,50 @@ function enemyTurn() {
     updateHUD();
   }
 
+  // 能力強化計時遞減
+  ['atk', 'def', 'spd'].forEach(k => { if (battleState.pbuffs[k] > 0) battleState.pbuffs[k]--; });
+
   battleState.playerTurn = true;
   setBattleCommands(true);
+  updateBattleUI();
 }
 
 function endBattle(won, fled = false) {
   battleState.over = true;
+  document.getElementById('skill-menu').classList.remove('show');
+  document.getElementById('item-menu').classList.remove('show');
 
   if (won) {
     const enemy = battleState.enemy;
-    const xpGain = enemy.xp;
-    const goldGain = enemy.gold;
+    let xpGain = enemy.xp;
+    let goldGain = enemy.gold;
+    if (enemy.isElite) { xpGain *= 3; goldGain *= 3; }
+    const diff = G.difficulty || 0;
+    xpGain = Math.floor(xpGain * (1 + diff * 0.25));
+    goldGain = Math.floor(goldGain * (1 + diff * 0.25));
 
     G.gold += goldGain;
     G.xp += xpGain;
     G.killCount[enemy.id] = (G.killCount[enemy.id] || 0) + 1;
+    if (enemy.isElite) G.elitesKilled = (G.elitesKilled || 0) + 1;
+    if (battleState.arena) G.arenaWins = (G.arenaWins || 0) + 1;
 
     addBattleLog(`🎉 擊敗 ${enemy.name}！`, 'system');
     addBattleLog(`獲得 XP+${xpGain}  金幣+${goldGain}`, 'heal');
+
+    // 掉落物
+    if (enemy.drops) {
+      enemy.drops.forEach(d => {
+        if (Math.random() * 100 < d.c) {
+          const n = d.n[0] + Math.floor(Math.random() * (d.n[1] - d.n[0] + 1));
+          if (n > 0) {
+            addInv(d.i, n);
+            const it = ITEMS[d.i];
+            addBattleLog(`🎒 獲得 ${it ? it.icon + it.name : d.i} ×${n}`, 'heal');
+          }
+        }
+      });
+    }
 
     // Check boss
     if (enemy.isBoss) {
@@ -2117,7 +2871,39 @@ function endBattle(won, fled = false) {
     // Check chapter progression
     checkChapterProgress();
 
+    // 成就
+    checkAchievements();
+
     updateHUD();
+
+    // 競技場流程
+    if (battleState.arena) {
+      if (battleState.wave >= ARENA_MAX_WAVES) {
+        const bonus = 800 + (G.arenaWins || 0) * 100;
+        G.gold += bonus;
+        addBattleLog(`🏟 競技場全勝！國王頒發獎金 ${bonus} 金幣！`, 'system');
+        G.arena = null;
+        checkAchievements();
+        setTimeout(() => {
+          showScreen('game-screen');
+          showPanel(activeTab);
+          autoSave();
+        }, 1800);
+      } else {
+        addBattleLog(`✨ 恢復 30% 狀態，準備第 ${battleState.wave + 1} 波！`, 'system');
+        G.hp = Math.min(G.maxHp, G.hp + Math.floor(G.maxHp * 0.3));
+        G.mp = Math.min(G.maxMp, G.mp + Math.floor(G.maxMp * 0.3));
+        updateBattleUI();
+        setTimeout(() => { if (battleState.over) arenaNextWave(); }, 1500);
+      }
+      return;
+    }
+
+    // 通關邪神 → 勝利畫面
+    if (enemy.id === 'finalBoss') {
+      setTimeout(() => { showVictory(); autoSave(); }, 1600);
+      return;
+    }
 
     setTimeout(() => {
       showScreen('game-screen');
@@ -2126,7 +2912,15 @@ function endBattle(won, fled = false) {
     }, 1500);
 
   } else if (fled) {
-    setTimeout(() => showScreen('game-screen'), 500);
+    if (battleState.arena) {
+      G.arena = null;
+      addBattleLog('🏟 你離開了競技場……', 'system');
+    }
+    setTimeout(() => {
+      showScreen('game-screen');
+      showPanel(activeTab);
+      updateLocationButtons();
+    }, 500);
   } else {
     // Game over
     addBattleLog('💀 你被擊倒了...', 'damage');
@@ -2134,13 +2928,96 @@ function endBattle(won, fled = false) {
     G.hp = Math.floor(G.maxHp * 0.3);
     G.mp = Math.floor(G.maxMp * 0.3);
     G.currentLocation = 'town';
+    G.arena = null;
+    G.statusEffects = [];
     setTimeout(() => {
       showScreen('game-screen');
       updateHUD();
       showNotification('被擊倒', '你被傳送回王城，小心休息...', '💀');
       drawWorldMap();
+      updateLocationButtons();
       autoSave();
     }, 2000);
+  }
+}
+
+// ============ 競技場 ============
+function startArena() {
+  G.arena = { wave: 1, active: true };
+  const id = ARENA_POOL[Math.floor(Math.random() * ARENA_POOL.length)];
+  startBattle(id, false, { arena: true, wave: 1 });
+}
+
+function arenaNextWave() {
+  if (!G.arena) return;
+  G.arena.wave++;
+  const isFinalWave = G.arena.wave >= ARENA_MAX_WAVES;
+  const id = isFinalWave
+    ? ['bossOrc', 'bossLich', 'frostDragon', 'fireDemon'][Math.floor(Math.random() * 4)]
+    : ARENA_POOL[Math.floor(Math.random() * ARENA_POOL.length)];
+  startBattle(id, isFinalWave, { arena: true, wave: G.arena.wave });
+}
+
+// ============ 成就系統 ============
+function checkAchievements() {
+  if (!G.achievements) G.achievements = [];
+  ACHIEVEMENTS.forEach(a => {
+    if (!G.achievements.includes(a.id) && a.test(G)) {
+      G.achievements.push(a.id);
+      showNotification('🏆 成就解鎖！', `${a.icon} ${a.name}`, '🏆');
+    }
+  });
+}
+
+// ============ 勝利畫面 / 二周目 ============
+function showVictory() {
+  document.getElementById('victory-level').textContent = G.level;
+  document.getElementById('victory-kills').textContent = getTotalKills();
+  document.getElementById('victory-gold').textContent = G.gold.toLocaleString();
+  const mins = Math.max(0, Math.floor(((G.playtime || 0) * 60 + (Date.now() - (G.startTs || Date.now())) / 1000) / 60));
+  document.getElementById('victory-time').textContent = mins >= 60 ? `${Math.floor(mins / 60)} 小時 ${mins % 60} 分` : `${mins} 分`;
+  document.getElementById('victory-quests').textContent = G.completedQuests.length;
+  document.getElementById('victory-diff').textContent = G.difficulty;
+  document.getElementById('victory-overlay').classList.add('show');
+}
+
+function closeVictory() {
+  document.getElementById('victory-overlay').classList.remove('show');
+  showScreen('game-screen');
+  showPanel(activeTab);
+}
+
+function startNGPlus() {
+  closeVictory();
+  const prevDiff = G.difficulty || 0;
+  const keepAch = G.achievements || [];
+  const keepArena = G.arenaWins || 0;
+  const keepElite = G.elitesKilled || 0;
+  startNewGame();
+  G.difficulty = prevDiff + 1;
+  G.achievements = keepAch;
+  G.arenaWins = keepArena;
+  G.elitesKilled = keepElite;
+  G.flags.shrineKey = true; // 二周目直接開啟祕境
+  showNotification('🔥 二周目開始！', `難度提升至 ${G.difficulty}！魔物更強，獎勵更多！`, '🔥');
+  checkAchievements();
+  updateHUD();
+  updateLocationButtons();
+}
+
+// 隨機旅行事件
+function triggerTravelEvent() {
+  // 祕境祭司事件（未拿鑰匙且有資格時優先）
+  if (!G.flags.shrineKey && !G.bosses.finalBoss && (G.level >= 18)) {
+    const ev = EVENTS.find(e => e.id === 'priest');
+    showDialogue(`🔮 ${ev.name}`, ev.lines, ev.choices.map(c => ({ text: c.text, action: () => { c.fn(); closeDialogue(); } })));
+    return;
+  }
+  const ev = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+  if (ev.choices) {
+    showDialogue(`${ev.icon} ${ev.name}`, ev.lines, ev.choices.map(c => ({ text: c.text, action: () => { c.fn(); closeDialogue(); } })));
+  } else {
+    showDialogue(`${ev.icon} ${ev.name}`, ev.lines);
   }
 }
 
@@ -2249,6 +3126,9 @@ function checkQuestProgress(type, target) {
     if (type === 'boss' && g.type === 'boss' && g.target === target) {
       completed = true;
     }
+    if (type === 'collect' && g.type === 'collect' && g.target === target) {
+      if ((G.inventory[g.target] || 0) >= g.count) completed = true;
+    }
 
     if (completed && !G.completedQuests.includes(qid)) {
       G.completedQuests.push(qid);
@@ -2256,35 +3136,39 @@ function checkQuestProgress(type, target) {
       G.gold += quest.reward.gold;
       G.xp += quest.reward.xp;
       if (quest.reward.item) {
-        G.inventory[quest.reward.item] = (G.inventory[quest.reward.item] || 0) + 1;
+        addInv(quest.reward.item, 1);
       }
       showNotification('任務完成！', quest.name, '🎉');
       checkLevelUp();
+      checkAchievements();
       showPanel('quest');
     }
   });
 }
 
 function checkChapterProgress() {
+  const pushChapterQuests = (ch) => {
+    QUESTS.filter(q => q.chapterReq <= ch && !G.activeQuests.includes(q.id) && !G.completedQuests.includes(q.id)).forEach(q => G.activeQuests.push(q.id));
+  };
   // Chapter 2 after defeating bossOrc
   if (G.chapter < 2 && G.bosses['bossOrc']) {
     G.chapter = 2;
-    G.activeQuests.push(...QUESTS.filter(q => q.chapterReq === 2 && !G.activeQuests.includes(q.id) && !G.completedQuests.includes(q.id)).map(q => q.id));
+    pushChapterQuests(2);
     showNotification('新章節！', CHAPTER_NAMES[2], '📖');
   }
   if (G.chapter < 3 && G.level >= 7) {
     G.chapter = 3;
-    G.activeQuests.push(...QUESTS.filter(q => q.chapterReq === 3 && !G.activeQuests.includes(q.id) && !G.completedQuests.includes(q.id)).map(q => q.id));
+    pushChapterQuests(3);
     showNotification('新章節！', CHAPTER_NAMES[3], '📖');
   }
   if (G.chapter < 4 && G.bosses['bossLich']) {
     G.chapter = 4;
-    G.activeQuests.push(...QUESTS.filter(q => q.chapterReq === 4 && !G.activeQuests.includes(q.id) && !G.completedQuests.includes(q.id)).map(q => q.id));
+    pushChapterQuests(4);
     showNotification('新章節！', CHAPTER_NAMES[4], '📖');
   }
   if (G.chapter < 5 && G.level >= 16) {
     G.chapter = 5;
-    G.activeQuests.push(...QUESTS.filter(q => q.chapterReq === 5 && !G.activeQuests.includes(q.id) && !G.completedQuests.includes(q.id)).map(q => q.id));
+    pushChapterQuests(5);
     showNotification('最終章節！', CHAPTER_NAMES[5], '⚡');
   }
   updateHUD();
@@ -2467,6 +3351,9 @@ function triggerEncounter() {
 // =============================================
 
 function saveGame() {
+  // 更新遊玩時間（自動計時）
+  if (G.startTs) G.playtime = Math.floor((Date.now() - G.startTs) / 60000);
+  G.lastSave = new Date().toISOString();
   localStorage.setItem('rpg_save', JSON.stringify(G));
   localStorage.setItem('rpg_save_time', new Date().toISOString());
   const ind = document.getElementById('save-indicator');
@@ -2482,7 +3369,22 @@ function autoSave() {
 function loadGame() {
   const save = localStorage.getItem('rpg_save');
   if (!save) { startNewGame(); return; }
-  G = JSON.parse(save);
+  try {
+    G = JSON.parse(save);
+  } catch (e) {
+    showNotification('存檔損壞', '無法讀取存檔，重新開始新的冒險', '⚠');
+    startNewGame();
+    return;
+  }
+  // 舊版存檔欄位正規化
+  G.difficulty = G.difficulty || 0;
+  G.achievements = Array.isArray(G.achievements) ? G.achievements : [];
+  G.arenaWins = G.arenaWins || 0;
+  G.elitesKilled = G.elitesKilled || 0;
+  G.flags = G.flags || {};
+  G.arena = null;
+  G.statusEffects = Array.isArray(G.statusEffects) ? G.statusEffects : [];
+  G.startTs = Date.now() - ((G.playtime || 0) * 60000);
   initGame(false);
 }
 
