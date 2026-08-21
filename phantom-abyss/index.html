@@ -194,12 +194,13 @@ function genDun(fl){
   if(fl%5!==0&&Math.random()<0.5){
     var rm=rooms[rn(Math.floor(rooms.length/2),rooms.length-1)];
     var shx=Math.floor(rm.x+rm.w/2),shy=Math.floor(rm.y+rm.h/2);
-    map[shy][shx]=4;
+    if(map[shy][shx]===1){map[shy][shx]=4;
     var si=[];for(var i=0;i<4;i++)si.push(genItem(fl));
-    ent.push({tp:'sh',x:shx,y:shy,items:si,id:uid(),alive:true});
+    ent.push({tp:'sh',x:shx,y:shy,items:si,id:uid(),alive:true});}
   }
   if(Math.random()<0.3){var rm=rooms[rn(1,rooms.length-1)];
-    map[Math.floor(rm.y+rm.h/2)][Math.floor(rm.x+rm.w/2)]=6;}
+    var ry2=Math.floor(rm.y+rm.h/2),rx2=Math.floor(rm.x+rm.w/2);
+    if(map[ry2][rx2]===1)map[ry2][rx2]=6;}
   return{map:map,rooms:rooms,exp:exp,ent:ent,sx:px,sy:py};
 }
 
@@ -238,7 +239,7 @@ function pAction(act,si){
       if(sk.nm==='\u6BD2\u64CA'){e.de.push({tp:'poison',dur:3,dm:Math.floor(p.atk*0.3)});addLog('\u2620 \u4E2D\u6BD2');}
       if(sk.nm==='\u6697\u6BBA'&&e.hp<e.mhp*0.3){e.hp=0;addLog('\uD83D\uDC80 \u6697\u6BBA\u5373\u6BBA');}
       if(sk.nm==='\u5ED6\u8853\u7206\u7834'){shk=12;spawnHit(true);}
-    }else if(sk.tp==='heal'){if(sk.nm==='\u5FA9\u6D3B')p.usedR=true;var amt=Math.floor(p.mhp*0.4);p.hp=Math.min(p.mhp,p.hp+amt);addLog('\uD83D\uDC9A '+sk.nm+' +'+amt);spawnHeal();}
+    }else if(sk.tp==='heal'){if(sk.nm==='\u5FA9\u6D3B')p.usedR=true;var amt=Math.floor(p.mhp*(sk.nm==='\u5FA9\u6D3B'?0.5:0.4));p.hp=Math.min(p.mhp,p.hp+amt);addLog('\uD83D\uDC9A '+sk.nm+' +'+amt);spawnHeal();}
     else if(sk.tp==='buff'){
       if(sk.nm==='\u6230\u543C'||sk.nm==='\u795D\u798F'){p.buffs.push({tp:'atkUp',dur:3,val:0.3});addLog('\u2694 ATK+30%');}
       if(sk.nm==='\u72C2\u66B4'){p.buffs.push({tp:'atkUp',dur:3,val:0.5});p.buffs.push({tp:'defDown',dur:3,val:0.3});addLog('\uD83D\uDD25 \u72C2\u66B4');}
@@ -445,6 +446,7 @@ function equipItem(idx){
   if(it.tp==='cons'){if(it.nm.charAt(0)==='\u751F'){p.hp=Math.min(p.mhp,p.hp+it.val);toast('+'+it.val+'HP');}
     else if(it.nm.charAt(0)==='\u9B54'){p.mp=Math.min(p.mmp,p.mp+it.val);toast('+'+it.val+'MP');}
     else if(it.nm.indexOf('\u89E3')>=0){p.de=[];toast('\u89E3\u6BD2');}
+    else if(it.nm.indexOf('\u70B8')>=0){toast('\u6230\u9B25\u4E2D\u624D\u80FD\u4F7F\u7528');return;}
     else{p.hp=Math.min(p.mhp,p.hp+Math.floor(p.mhp*0.5));toast('50%HP');}
     p.inv.splice(idx,1);
   }else{var slot=it.tp==='wpn'?'weapon':it.tp==='arm'?'armor':'accessory';
