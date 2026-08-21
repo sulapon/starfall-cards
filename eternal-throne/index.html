@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>星淵紀元：永恆王座 - Eternal Throne</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#e8c36a;--gold2:#b8942f;--gold3:#7a6020;--bg:#0a0e1a;--bg2:#111827;--card:#1a2338;--card2:#1e2d4a;--line:rgba(232,195,106,.18);--txt:#e2e8f0;--muted:#8a9ab5;--accent:#6ee7b7;--danger:#f87171;--epic:#c084fc;--leg:#fbbf24}
+html,body{width:100%;min-height:100%;background:var(--bg);color:var(--txt);font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif;overflow-x:hidden}
+body{background:
+ radial-gradient(ellipse 900px 500px at 15% -10%, rgba(99,102,241,.18), transparent 60%),
+ radial-gradient(ellipse 700px 400px at 85% 0%, rgba(232,195,106,.12), transparent 60%),
+ radial-gradient(ellipse 1200px 700px at 50% 115%, rgba(14,165,233,.08), transparent 60%),
+ linear-gradient(180deg,#0a0e1a 0%,#0d1224 50%,#0a0e1a 100%);
+}
+/* top bar */
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(10,14,26,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;min-width:0}
+.brand .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#1e293b,#334155);border:1px solid rgba(232,195,106,.4);display:grid;place-items:center;font-size:18px;box-shadow:0 0 18px rgba(232,195,106,.25)}
+.brand h1{font-size:15px;letter-spacing:.08em;color:var(--gold);line-height:1}
+.brand p{font-size:10px;color:var(--muted);letter-spacing:.12em}
+.resbar{display:flex;gap:6px;flex-wrap:wrap;flex:1;justify-content:flex-end}
+.pill{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(26,35,56,.9);border:1px solid var(--line);font-size:12px;white-space:nowrap}
+.pill b{color:var(--gold);font-variant-numeric:tabular-nums}
+.pill small{color:var(--muted);font-size:10px}
+.iconbtn{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:rgba(26,35,56,.9);display:grid;place-items:center;cursor:pointer;font-size:16px}
+.iconbtn:active{transform:scale(.96)}
+/* nav */
+.nav{display:flex;gap:6px;padding:10px 10px 0;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:68px;padding:10px 6px;border-radius:14px;border:1px solid transparent;background:rgba(26,35,56,.55);text-align:center;cursor:pointer;transition:.18s;position:relative}
+.tab.active{background:linear-gradient(180deg, rgba(232,195,106,.18), rgba(232,195,106,.06));border-color:rgba(232,195,106,.35);box-shadow:0 0 18px rgba(232,195,106,.18), inset 0 1px 0 rgba(255,255,255,.06)}
+.tab .ticon{font-size:18px}
+.tab .tlabel{font-size:11px;margin-top:2px;color:var(--muted)}
+.tab.active .tlabel{color:var(--gold)}
+.tab .badge{position:absolute;top:4px;right:8px;background:#ef4444;color:#fff;font-size:9px;padding:1px 5px;border-radius:999px;display:none}
+.subnav{display:flex;gap:6px;padding:8px 10px;flex-wrap:wrap}
+.chip{padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(26,35,56,.6);font-size:12px;cursor:pointer}
+.chip.on{background:rgba(232,195,106,.18);border-color:rgba(232,195,106,.4);color:var(--gold)}
+/* layout */
+.wrap{max-width:1100px;margin:0 auto;padding:10px 10px 90px}
+.page{display:none}
+.page.on{display:block;animation:fade .22s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.card{background:linear-gradient(180deg, rgba(26,35,56,.9), rgba(18,26,44,.92));border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05)}
+.card-hd{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:8px}
+.card-hd h2{font-size:14px;letter-spacing:.08em;color:var(--gold)}
+.card-hd span{font-size:11px;color:var(--muted)}
+.card-bd{padding:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:720px){.grid2{grid-template-columns:1fr}}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:720px){.grid3{grid-template-columns:1fr 1fr}}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:720px){.grid4{grid-template-columns:1fr 1fr}}
+.btn{appearance:none;border:none;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn:active{transform:scale(.98)}
+.btn-gold{background:linear-gradient(180deg,#e8c36a,#b8942f);color:#1a1400;box-shadow:0 4px 14px rgba(232,195,106,.35)}
+.btn-ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--txt)}
+.btn-dark{background:rgba(15,23,42,.9);border:1px solid var(--line);color:var(--txt)}
+.btn-sm{padding:7px 10px;font-size:12px;border-radius:10px}
+.btn:disabled{opacity:.45;pointer-events:none}
+.prog{height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#f59e0b);border-radius:999px;transition:width .35s}
+.kv{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px}
+.tag{font-size:10px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--muted)}
+.tag.gold{color:var(--gold);border-color:rgba(232,195,106,.4);background:rgba(232,195,106,.12)}
+.tag.epic{color:var(--epic);border-color:rgba(192,132,252,.4);background:rgba(192,132,252,.12)}
+.tag.leg{color:var(--leg);border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.15)}
+/* building */
+.build{padding:12px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.build-top{display:flex;gap:10px;align-items:center}
+.build-icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:rgba(10,14,26,.6);border:1px solid var(--line);flex-shrink:0}
+.build h3{font-size:13px}
+.build p{font-size:11px;color:var(--muted);line-height:1.5}
+/* hero */
+.hero-card{position:relative;padding:10px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid var(--line);display:flex;gap:10px;align-items:center;cursor:pointer}
+.hero-card.sel{border-color:rgba(232,195,106,.5);box-shadow:0 0 0 2px rgba(232,195,106,.15)}
+.hero-av{width:52px;height:52px;border-radius:12px;display:grid;place-items:center;font-size:26px;flex-shrink:0;border:1px solid var(--line)}
+.rarity-N{border-color:#64748b}.rarity-R{border-color:#38bdf8;box-shadow:0 0 10px rgba(56,189,248,.25)}.rarity-SR{border-color:#c084fc;box-shadow:0 0 12px rgba(192,132,252,.3)}.rarity-SSR{border-color:#fbbf24;box-shadow:0 0 14px rgba(251,191,36,.35)}
+.stars{color:var(--gold);font-size:11px;letter-spacing:1px}
+.hero-name{font-size:13px;font-weight:700}
+.hero-meta{font-size:11px;color:var(--muted)}
+.equip-row{display:flex;gap:6px;margin-top:6px}
+.equip{width:30px;height:30px;border-radius:8px;border:1px dashed rgba(255,255,255,.15);display:grid;place-items:center;font-size:14px;background:rgba(0,0,0,.2)}
+.equip.has{border-style:solid;background:rgba(232,195,106,.12);border-color:rgba(232,195,106,.35)}
+/* battle */
+.modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(3,6,14,.72);backdrop-filter:blur(6px)}
+.modal.on{display:flex}
+.modal-box{width:min(520px,100%);max-height:86vh;overflow:auto;background:linear-gradient(180deg,#111a2e,#0d1224);border:1px solid rgba(232,195,106,.28);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.battle-canvas-wrap{position:relative;background:radial-gradient(ellipse at 50% 0%, rgba(99,102,241,.18), transparent 60%), linear-gradient(180deg,#0f172a,#0a0e1a);border-bottom:1px solid var(--line)}
+#battleCanvas{width:100%;height:220px;display:block}
+.battle-log{max-height:160px;overflow:auto;padding:10px;font-size:12px;line-height:1.6;color:#cbd5e1}
+.battle-log b{color:var(--gold)}
+.float-dmg{position:absolute;font-weight:800;font-size:14px;pointer-events:none;animation:floatUp .7s ease forwards;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+@keyframes floatUp{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-36px) scale(1.1);opacity:0}}
+/* expedition map */
+.map{display:flex;gap:10px;overflow-x:auto;padding:8px 2px 12px;scrollbar-width:thin}
+.map-col{min-width:140px;display:flex;flex-direction:column;gap:10px}
+.map-node{padding:10px;border-radius:14px;border:1px solid var(--line);background:rgba(26,35,56,.7);text-align:center;cursor:pointer}
+.map-node.done{opacity:.45}
+.map-node.cur{border-color:var(--gold);box-shadow:0 0 14px rgba(232,195,106,.3);background:rgba(232,195,106,.1)}
+.map-node.boss{border-color:#ef4444;background:rgba(239,68,68,.1)}
+.map-node .mn-icon{font-size:20px}
+.map-node .mn-name{font-size:11px;margin-top:4px}
+/* toast */
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:rgba(15,23,42,.95);border:1px solid rgba(232,195,106,.28);color:var(--txt);padding:10px 14px;border-radius:999px;font-size:12px;display:none;z-index:90;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast.on{display:block;animation:fade .2s}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--muted)}
+.small{font-size:11px}
+.divider{height:1px;background:var(--line);margin:10px 0}
+.quest{padding:10px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.quest b{font-size:12px}
+.save-row{display:flex;gap:8px;flex-wrap:wrap}
+.kpi{display:flex;flex-direction:column;gap:2px}
+.kpi b{font-size:18px;color:var(--gold);font-variant-numeric:tabular-nums}
+.kpi span{font-size:10px;color:var(--muted);letter-spacing:.08em}
+.shine{position:relative;overflow:hidden}
+.shine:after{content:'';position:absolute;top:-50%;left:-30%;width:40%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);transform:rotate(18deg);animation:shine 3.2s infinite}
+@keyframes shine{0%{left:-40%}60%{left:120%}100%{left:120%}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="logo">♔</div>
+    <div><h1>星淵紀元：永恆王座</h1><p>ETERNAL THRONE · v1.0</p></div>
+  </div>
+  <div class="resbar" id="resbar"></div>
+  <button class="iconbtn" id="btnSave" title="存檔">💾</button>
+  <button class="iconbtn" id="btnHelp" title="說明">?</button>
+</div>
+
+<div class="nav" id="nav">
+  <div class="tab active" data-page="kingdom"><div class="ticon">🏰</div><div class="tlabel">王國</div></div>
+  <div class="tab" data-page="heroes"><div class="ticon">⚔️</div><div class="tlabel">英雄</div><span class="badge" id="badgeHero">!</span></div>
+  <div class="tab" data-page="expedition"><div class="ticon">🗺️</div><div class="tlabel">遠征</div></div>
+  <div class="tab" data-page="abyss"><div class="ticon">🌌</div><div class="tlabel">深淵</div></div>
+  <div class="tab" data-page="summon"><div class="ticon">✨</div><div class="tlabel">召喚</div></div>
+  <div class="tab" data-page="prestige"><div class="ticon">♻️</div><div class="tlabel">輪迴</div></div>
+</div>
+
+<div class="wrap">
+  <!-- KINGDOM -->
+  <div class="page on" id="page-kingdom">
+    <div class="grid2">
+      <div class="card shine">
+        <div class="card-hd"><h2>👑 王座大廳</h2><span id="kingdomPower">戰力 —</span></div>
+        <div class="card-bd">
+          <div class="grid3" style="margin-bottom:10px">
+            <div class="kpi"><span>王國等級</span><b id="kpiLv">Lv.1</b></div>
+            <div class="kpi"><span>離線收益</span><b id="kpiOffline">+0 /分</b></div>
+            <div class="kpi"><span>輪迴加成</span><b id="kpiPrestige">+0%</b></div>
+          </div>
+          <div class="prog"><i id="expBar" style="width:0%"></i></div>
+          <div class="kv"><span>經驗</span><span id="expText">0 / 100</span></div>
+          <div class="divider"></div>
+          <div class="bar">
+            <button class="btn btn-gold" id="btnClaimOffline">領取離線收益</button>
+            <button class="btn btn-ghost btn-sm" id="btnTapGold">點擊賺金幣 +<span id="tapVal">1</span></button>
+            <span class="small muted" id="tapInfo"></span>
+          </div>
+          <div class="divider"></div>
+          <div class="small muted">任務</div>
+          <div id="questList" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><h2>📊 統計</h2><span>永久戰績</span></div>
+        <div class="card-bd grid2" id="statsBox"></div>
+      </div>
+    </div>
+
+    <div style="height:12px"></div>
+    <div class="card">
+      <div class="card-hd"><h2>🏗️ 王國建設</h2><span>離線也會自動生產</span></div>
+      <div class="card-bd">
+        <div class="grid2" id="buildList"></div>
+      </div>
+    </div>
+
+    <div style="height:12px"></div>
+    <div class="card">
+      <div class="card-hd"><h2>🌟 天賦星圖</h2><span>點擊解鎖 · 永久生效</span></div>
+      <div class="card-bd grid3" id="talentList"></div>
+    </div>
+  </div>
+
+  <!-- HEROES -->
+  <div class="page" id="page-heroes">
+    <div class="card">
+      <div class="card-hd"><h2>⚔️ 英雄小隊</h2><span id="teamPower">隊伍戰力 0</span></div>
+      <div class="card-bd">
+        <div class="bar" style="margin-bottom:10px">
+          <span class="small muted">拖選 5 名上陣 · 自動戰鬥以前排為主</span>
+          <button class="btn btn-ghost btn-sm" id="btnAutoTeam">一鍵最強</button>
+          <button class="btn btn-gold btn-sm" id="btnHealTeam">全隊治療</button>
+        </div>
+        <div id="teamSlots" class="grid4"></div>
+        <div class="divider"></div>
+        <div class="subnav" id="heroFilter">
+          <div class="chip on" data-f="all">全部</div>
+          <div class="chip" data-f="SSR">SSR</div>
+          <div class="chip" data-f="SR">SR</div>
+          <div class="chip" data-f="R">R</div>
+          <div class="chip" data-f="team">上陣中</div>
+        </div>
+        <div id="heroList" class="grid2"></div>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="card">
+      <div class="card-hd"><h2>🛡️ 裝備鍛造</h2><span>強化提升全隊</span></div>
+      <div class="card-bd" id="forgeBox"></div>
+    </div>
+  </div>
+
+  <!-- EXPEDITION -->
+  <div class="page" id="page-expedition">
+    <div class="card">
+      <div class="card-hd"><h2>🗺️ 星圖遠征</h2><span id="expeditionInfo">選擇路線 · 步步為營</span></div>
+      <div class="card-bd">
+        <div class="bar">
+          <button class="btn btn-gold" id="btnStartExp">開啟新遠征</button>
+          <button class="btn btn-ghost btn-sm" id="btnExpReward">領取遠征寶箱</button>
+          <span class="small muted" id="expProgress"></span>
+        </div>
+        <div id="expMap" class="map" style="margin-top:10px"></div>
+        <div id="expEvent" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="card">
+      <div class="card-hd"><h2>📖 遠征日誌</h2><span>隨機事件與抉擇</span></div>
+      <div class="card-bd small muted" id="expLog">尚未開始遠征。</div>
+    </div>
+  </div>
+
+  <!-- ABYSS -->
+  <div class="page" id="page-abyss">
+    <div class="card shine">
+      <div class="card-hd"><h2>🌌 無盡深淵</h2><span id="abyssInfo">層數越高獎勵越豐厚</span></div>
+      <div class="card-bd">
+        <div class="grid3">
+          <div class="kpi"><span>目前層數</span><b id="abyssFloor">1 層</b></div>
+          <div class="kpi"><span>最高紀錄</span><b id="abyssBest">0</b></div>
+          <div class="kpi"><span>深淵碎片加成</span><b id="abyssBonus">+0%</b></div>
+        </div>
+        <div style="height:10px"></div>
+        <div class="prog"><i id="abyssProg" style="width:0%"></i></div>
+        <div class="kv"><span>本層進度</span><span id="abyssProgText">0%</span></div>
+        <div class="divider"></div>
+        <div class="bar">
+          <button class="btn btn-gold" id="btnAbyssBattle">挑戰本層</button>
+          <button class="btn btn-ghost btn-sm" id="btnAbyssSweep">掃蕩 5 層</button>
+          <button class="btn btn-dark btn-sm" id="btnAbyssReset">重置深淵</button>
+        </div>
+        <div class="small muted" style="margin-top:8px">每 10 層一個首領，掃蕩需先手動通關過。每層掉落星輝與深淵碎片。</div>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="card">
+      <div class="card-hd"><h2>🏆 深淵排行榜（本地）</h2><span>突破自我</span></div>
+      <div class="card-bd" id="abyssRanks"></div>
+    </div>
+  </div>
+
+  <!-- SUMMON -->
+  <div class="page" id="page-summon">
+    <div class="grid2">
+      <div class="card shine">
+        <div class="card-hd"><h2>✨ 星輝召喚</h2><span>SSR 保底 30 抽</span></div>
+        <div class="card-bd">
+          <div style="text-align:center;padding:10px">
+            <div style="font-size:42px">🌠</div>
+            <div style="font-size:13px;color:var(--muted);margin:6px 0 10px">消耗 <b style="color:var(--gold)">星輝 ×100</b> 召喚一次 · 十連 9 折</div>
+            <div class="bar" style="justify-content:center">
+              <button class="btn btn-ghost" id="btnSummon1">召喚 1 次</button>
+              <button class="btn btn-gold" id="btnSummon10">召喚 10 次</button>
+            </div>
+            <div class="small muted" style="margin-top:8px" id="pityText"></div>
+          </div>
+          <div class="divider"></div>
+          <div class="small muted">機率：SSR 3% · SR 18% · R 79%</div>
+          <div id="summonResult" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><h2>📚 圖鑑</h2><span id="collectionInfo"></span></div>
+        <div class="card-bd" id="collectionList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRESTIGE -->
+  <div class="page" id="page-prestige">
+    <div class="card">
+      <div class="card-hd"><h2>♻️ 輪迴轉生</h2><span>重置換永久力量</span></div>
+      <div class="card-bd">
+        <p class="small muted" style="line-height:1.7">
+          當王國等級 ≥15 可進行輪迴。輪迴會重置 <b>金幣、建築等級、遠征與深淵進度</b>，但保留 <b>英雄、裝備、天賦、圖鑑</b>，並獲得 <b style="color:var(--gold)">輪迴之證</b> 與全域加成。<br>
+          輪迴之證 = floor(王國等級 × 深淵最高層 / 25)。每枚提供 +4% 全資源產量與 +2% 戰力。
+        </p>
+        <div style="height:12px"></div>
+        <div class="grid3">
+          <div class="kpi"><span>可獲輪迴之證</span><b id="prestigeGain">0</b></div>
+          <div class="kpi"><span>已擁有</span><b id="prestigeHave">0</b></div>
+          <div class="kpi"><span>輪迴次數</span><b id="prestigeCount">0</b></div>
+        </div>
+        <div style="height:12px"></div>
+        <button class="btn btn-gold" id="btnPrestige" style="width:100%">執行輪迴轉生</button>
+        <div class="small muted" style="margin-top:8px" id="prestigeHint"></div>
+        <div class="divider"></div>
+        <div class="small muted">輪迴商店</div>
+        <div class="grid2" id="prestigeShop" style="margin-top:8px"></div>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="card">
+      <div class="card-hd"><h2>💾 存檔管理</h2><span>自動每 10 秒保存</span></div>
+      <div class="card-bd">
+        <div class="save-row">
+          <button class="btn btn-ghost btn-sm" id="btnExport">匯出存檔</button>
+          <button class="btn btn-ghost btn-sm" id="btnImport">匯入存檔</button>
+          <button class="btn btn-dark btn-sm" id="btnWipe">清空存檔</button>
+        </div>
+        <textarea id="saveBox" placeholder="匯出/貼上存檔字串..." style="width:100%;min-height:86px;margin-top:10px;padding:10px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--txt);font-size:11px"></textarea>
+        <div class="small muted" style="margin-top:6px">存檔含離線時間戳，切換裝置可攜帶進度。建議定期匯出備份。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- battle modal -->
+<div class="modal" id="battleModal">
+  <div class="modal-box">
+    <div class="card-hd"><h2 id="battleTitle">⚔️ 戰鬥中</h2><button class="btn btn-ghost btn-sm" id="btnCloseBattle">關閉</button></div>
+    <div class="battle-canvas-wrap">
+      <canvas id="battleCanvas" width="520" height="220"></canvas>
+    </div>
+    <div class="battle-log" id="battleLog"></div>
+    <div style="padding:10px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" id="btnBattleSkip">跳過</button>
+      <button class="btn btn-gold btn-sm" id="btnBattleNext" style="display:none">繼續</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const uid=()=>Math.random().toString(36).slice(2,9);
+const fmt=n=>{
+  if(n>=1e12) return (n/1e12).toFixed(2)+'T';
+  if(n>=1e9) return (n/1e9).toFixed(2)+'B';
+  if(n>=1e6) return (n/1e6).toFixed(2)+'M';
+  if(n>=1e3) return (n/1e3).toFixed(1)+'K';
+  return Math.floor(n).toString();
+};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* data */
+const HEROES=[
+  {id:'h1',name:'黎明騎士',icon:'🛡️',rarity:'SSR',role:'坦克',atk:48,hp:520,crit:8,skill:'聖盾壁壘：減傷 30% 3秒'},
+  {id:'h2',name:'星隕法師',icon:'🔮',rarity:'SSR',role:'法師',atk:92,hp:300,crit:14,skill:'星隕術：全體 180% 傷害'},
+  {id:'h3',name:'夜刃',icon:'🗡️',rarity:'SSR',role:'刺客',atk:88,hp:320,crit:22,skill:'影襲：對最低血量 260%'},
+  {id:'h4',name:'聖光祭司',icon:'🕯️',rarity:'SR',role:'治療',atk:36,hp:380,crit:6,skill:'聖療：全隊回 25%'},
+  {id:'h5',name:'霜語者',icon:'❄️',rarity:'SR',role:'法師',atk:72,hp:310,crit:10,skill:'冰封：凍結一回合'},
+  {id:'h6',name:'狂斧',icon:'🪓',rarity:'SR',role:'戰士',atk:76,hp:420,crit:12,skill:'旋風斬：3段 90%'},
+  {id:'h7',name:'神射手',icon:'🏹',rarity:'SR',role:'射手',atk:70,hp:300,crit:16,skill:'連射：5箭 55%'},
+  {id:'h8',name:'盾衛',icon:'🛡️',rarity:'R',role:'坦克',atk:38,hp:460,crit:5,skill:'嘲諷：全體護盾'},
+  {id:'h9',name:'見習法師',icon:'✨',rarity:'R',role:'法師',atk:54,hp:260,crit:8,skill:'火球：150%'},
+  {id:'h10',name:'斥候',icon:'🗡️',rarity:'R',role:'刺客',atk:60,hp:270,crit:15,skill:'背刺：180%'},
+  {id:'h11',name:'民兵',icon:'🔨',rarity:'R',role:'戰士',atk:44,hp:360,crit:6,skill:'衝鋒：120%'},
+  {id:'h12',name:'學徒祭司',icon:'💫',rarity:'R',role:'治療',atk:28,hp:330,crit:5,skill:'小治療：15%'},
+];
+const BUILDINGS=[
+  {id:'castle',name:'王座主城',icon:'🏰',desc:'提升王國等級上限與點擊收益',baseCost:120, growth:1.62, prod:0, stat:'kingdomLv'},
+  {id:'altar',name:'星輝祭壇',icon:'🌠',desc:'每秒產生星輝',baseCost:80, growth:1.55, prod:0.2},
+  {id:'vault',name:'黃金寶庫',icon:'💰',desc:'每秒產生金幣',baseCost:25, growth:1.45, prod:3},
+  {id:'barracks',name:'戰爭兵營',icon:'⚔️',desc:'提升全隊攻擊',baseCost:200, growth:1.58, prod:0, bonusAtk:0.04},
+  {id:'smith',name:'鐵匠鋪',icon:'🔨',desc:'提升裝備掉落與強化成功',baseCost:350, growth:1.6, prod:0, bonusEquip:0.03},
+  {id:'tower',name:'觀星高塔',icon:'🔭',desc:'提升遠征與深淵獎勵',baseCost:500, growth:1.65, prod:0, bonusReward:0.05},
+  {id:'gate',name:'深淵之門',icon:'🌀',desc:'每秒產生深淵碎片',baseCost:900, growth:1.72, prod:0.05},
+];
+const TALENTS=[
+  {id:'t1',name:'豐饒',icon:'🌾',max:5,cost:1,desc:'金幣產量 +12% /級'},
+  {id:'t2',name:'星輝親和',icon:'✦',max:5,cost:1,desc:'星輝產量 +12% /級'},
+  {id:'t3',name:'戰意',icon:'🔥',max:5,cost:2,desc:'全隊攻擊 +8% /級'},
+  {id:'t4',name:'堅韌',icon:'🛡️',max:5,cost:2,desc:'全隊生命 +10% /級'},
+  {id:'t5',name:'暴擊專精',icon:'💥',max:3,cost:3,desc:'暴擊率 +6% /級'},
+  {id:'t6',name:'輪迴智慧',icon:'♻️',max:3,cost:3,desc:'輪迴之證效果 +15% /級'},
+];
+const EQUIPS=[
+  {id:'sword',name:'星鋼長劍',icon:'⚔️',atk:18,hp:0},
+  {id:'armor',name:'曜岩鎧',icon:'🛡️',atk:0,hp:90},
+  {id:'ring',name:'星輝指環',icon:'💍',atk:10,hp:40},
+  {id:'boots',name:'疾風靴',icon:'👢',atk:6,hp:30},
+];
+
+/* state */
+const SAVE_KEY='eternal_throne_v1';
+const defaultState=()=>({
+  gold: 180,
+  star: 120,
+  shard: 0,
+  prestigeToken: 0,
+  prestigeCount: 0,
+  kingdomLv: 1,
+  exp: 0,
+  expNeed: 100,
+  tapPower: 1,
+  buildings:{castle:1,altar:0,vault:1,barracks:0,smith:0,tower:0,gate:0},
+  talents:{},
+  talentPoints:0,
+  heroesOwned:{}, // id -> {stars, level, equips:{}}
+  team:[], // hero ids
+  collection:new Set(),
+  pity:0,
+  abyssFloor:1,
+  abyssBest:0,
+  expedition:null, // {cols, curCol, curIdx, log}
+  quests:{kill:0,build:0,summon:0},
+  stats:{totalGold:0,totalStar:0,battles:0,wins:0},
+  lastTick: Date.now(),
+  forgeLevel:0,
+  prestigeShop:{},
+});
+let S = load();
+
+function load(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw) return defaultState();
+    const o=JSON.parse(raw);
+    const d=defaultState();
+    // merge
+    for(const k of Object.keys(d)){
+      if(o[k]===undefined) o[k]=d[k];
+    }
+    // fix types
+    o.collection=new Set(o.collection||[]);
+    o.heroesOwned=o.heroesOwned||{};
+    o.team=o.team||[];
+    o.buildings=o.buildings||d.buildings;
+    o.talents=o.talents||{};
+    o.quests=o.quests||{kill:0,build:0,summon:0};
+    o.stats=o.stats||d.stats;
+    if(!o.expedition) o.expedition=null;
+    if(!o.lastTick) o.lastTick=Date.now();
+    // ensure at least 3 starters
+    const ownedIds=Object.keys(o.heroesOwned);
+    if(ownedIds.length===0){
+      for(const id of ['h8','h9','h12']){
+        o.heroesOwned[id]={stars:1,level:1,equips:{}};
+        o.collection.add(id);
+      }
+      o.team=['h8','h9','h12'];
+    }
+    return o;
+  }catch(e){ return defaultState(); }
+}
+function save(){
+  const toSave={...S, collection:[...S.collection], lastTick:Date.now()};
+  localStorage.setItem(SAVE_KEY, JSON.stringify(toSave));
+}
+function toast(msg, ms=1800){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(toast._id); toast._id=setTimeout(()=>t.classList.remove('on'), ms);
+}
+
+/* economy */
+function buildingCost(id){
+  const b=BUILDINGS.find(x=>x.id===id);
+  const lv=S.buildings[id]||0;
+  return Math.floor(b.baseCost * Math.pow(b.growth, lv));
+}
+function prestigeMult(){
+  const base = S.prestigeToken*0.04;
+  const t = (S.talents.t6||0)*0.15;
+  return 1 + base*(1+t);
+}
+function atkMult(){
+  let m=1;
+  m += (S.buildings.barracks||0)*0.04;
+  m += (S.talents.t3||0)*0.08;
+  m *= prestigeMult();
+  // tower not atk
+  return m;
+}
+function hpMult(){
+  let m=1;
+  m += (S.talents.t4||0)*0.10;
+  m *= prestigeMult();
+  return m;
+}
+function goldPerSec(){
+  let v=(S.buildings.vault||0)*3;
+  // altar/tower not gold
+  v *= (1 + (S.talents.t1||0)*0.12);
+  v *= prestigeMult();
+  v *= (1 + (S.buildings.tower||0)*0.05*0.5);
+  return v;
+}
+function starPerSec(){
+  let v=(S.buildings.altar||0)*0.2;
+  v *= (1 + (S.talents.t2||0)*0.12);
+  v *= prestigeMult();
+  return v;
+}
+function shardPerSec(){
+  let v=(S.buildings.gate||0)*0.05;
+  v *= prestigeMult();
+  return v;
+}
+function teamPower(){
+  if(S.team.length===0) return 0;
+  let p=0;
+  for(const hid of S.team){
+    const base=HEROES.find(h=>h.id===hid);
+    const owned=S.heroesOwned[hid];
+    if(!base||!owned) continue;
+    const lv=owned.level||1;
+    const stars=owned.stars||1;
+    const eqBonus=Object.values(owned.equips||{}).reduce((a,eq)=>{
+      const e=EQUIPS.find(x=>x.id===eq.id);
+      if(!e) return a;
+      return a + (e.atk||0)*(1+ (eq.lv||0)*0.35) + (e.hp||0)*(1+(eq.lv||0)*0.35);
+    },0);
+    const atk = (base.atk + lv*6 + (stars-1)*10) * atkMult() + eqBonus*0.6;
+    const hp = (base.hp + lv*22 + (stars-1)*40) * hpMult() + eqBonus*0.9;
+    p += atk*3 + hp*0.7 + (base.crit + (S.talents.t5||0)*6)*8;
+  }
+  return Math.floor(p);
+}
+function kingdomPower(){ return Math.floor(teamPower()*0.6 + S.kingdomLv*120 + (S.prestigeToken*80)); }
+
+/* render top */
+function renderRes(){
+  const g=goldPerSec(), st=starPerSec(), sh=shardPerSec();
+  $('#resbar').innerHTML=`
+    <div class="pill">💰 <b>${fmt(S.gold)}</b> <small>+${g.toFixed(1)}/s</small></div>
+    <div class="pill">✦ <b>${fmt(S.star)}</b> <small>+${st.toFixed(2)}/s</small></div>
+    <div class="pill">🌀 <b>${fmt(S.shard)}</b> <small>+${sh.toFixed(2)}/s</small></div>
+    <div class="pill">♻️ <b>${S.prestigeToken}</b></div>
+  `;
+  $('#kpiLv').textContent='Lv.'+S.kingdomLv;
+  $('#kpiOffline').textContent='+'+ (g*60).toFixed(0)+' /分';
+  $('#kpiPrestige').textContent='+'+ Math.round((prestigeMult()-1)*100)+'%';
+  $('#kingdomPower').textContent='戰力 '+fmt(kingdomPower());
+  $('#tapVal').textContent=fmt(S.tapPower);
+  const pct= clamp((S.exp/S.expNeed)*100,0,100);
+  $('#expBar').style.width=pct+'%';
+  $('#expText').textContent=`${fmt(S.exp)} / ${fmt(S.expNeed)}`;
+  // abyss
+  $('#abyssFloor').textContent=S.abyssFloor+' 層';
+  $('#abyssBest').textContent=S.abyssBest;
+  $('#abyssBonus').textContent='+'+ (S.shard*0.02).toFixed(1)+'%';
+  $('#abyssInfo').textContent=`敵人強度 ×${(1+ S.abyssFloor*0.09).toFixed(2)}`;
+  // team power label
+  const tp=teamPower();
+  const teamPowerEl=$('#teamPower'); if(teamPowerEl) teamPowerEl.textContent='隊伍戰力 '+fmt(tp);
+  // prestige
+  const gain=prestigeGain();
+  $('#prestigeGain').textContent=gain;
+  $('#prestigeHave').textContent=S.prestigeToken;
+  $('#prestigeCount').textContent=S.prestigeCount;
+  $('#prestigeHint').textContent = S.kingdomLv<15 ? `還需 ${15-S.kingdomLv} 級才能輪迴` : (gain>0? `輪迴後永久提升，適合在卡關時使用` : `再推高深淵可獲得更多輪迴之證`);
+  $('#btnPrestige').disabled = S.kingdomLv<15 || gain<=0;
+  // pity
+  $('#pityText').textContent=`已 ${S.pity} 抽未出 SSR · 30 抽保底`;
+}
+
+/* buildings */
+function renderBuilds(){
+  const box=$('#buildList'); box.innerHTML='';
+  for(const b of BUILDINGS){
+    const lv=S.buildings[b.id]||0;
+    const cost=buildingCost(b.id);
+    const can=S.gold>=cost && (b.id!=='castle' || S.kingdomLv < 80) ;
+    const prodTxt = b.id==='vault'? `+${(3).toFixed(0)} 金幣/秒/級`
+      : b.id==='altar'? `+0.20 星輝/秒/級`
+      : b.id==='gate'? `+0.05 碎片/秒/級`
+      : b.id==='barracks'? `+4% 攻擊/級`
+      : b.id==='smith'? `+3% 掉落/級`
+      : b.id==='tower'? `+5% 遠征獎勵/級`
+      : `王國經驗與點擊 +${(1+lv*0.2).toFixed(1)}`;
+    const el=document.createElement('div'); el.className='build';
+    el.innerHTML=`
+      <div class="build-top">
+        <div class="build-icon">${b.icon}</div>
+        <div style="flex:1;min-width:0">
+          <h3>${b.name} <span class="tag">Lv.${lv}</span></h3>
+          <p>${b.desc} · ${prodTxt}</p>
+        </div>
+      </div>
+      <div class="bar">
+        <button class="btn btn-gold btn-sm" data-buy="${b.id}" ${can?'':'disabled'}>升級 💰 ${fmt(cost)}</button>
+        <span class="small muted">${b.id==='castle'?'升級提升王國等級上限':''}</span>
+      </div>
+    `;
+    box.appendChild(el);
+  }
+  box.querySelectorAll('[data-buy]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=btn.getAttribute('data-buy');
+      const cost=buildingCost(id);
+      if(S.gold<cost) return toast('金幣不足');
+      S.gold-=cost; S.buildings[id]=(S.buildings[id]||0)+1;
+      if(id==='castle'){ S.kingdomLv+=1; S.talentPoints+=1; S.tapPower+=1; gainExp(12); }
+      S.quests.build+=1;
+      save(); renderAll(); toast(`${BUILDINGS.find(b=>b.id===id).name} → Lv.${S.buildings[id]}`);
+    });
+  });
+}
+function gainExp(amt){
+  S.exp+=amt;
+  while(S.exp>=S.expNeed){
+    S.exp-=S.expNeed;
+    S.kingdomLv+=1;
+    S.expNeed=Math.floor(S.expNeed*1.22+18);
+    S.talentPoints+=1;
+    toast('王國升級！ Lv.'+S.kingdomLv+' 獲得天賦點 +1');
+  }
+}
+
+/* talents */
+function renderTalents(){
+  const box=$('#talentList'); box.innerHTML='';
+  for(const t of TALENTS){
+    const cur=S.talents[t.id]||0;
+    const can = S.talentPoints>=t.cost && cur<t.max;
+    const el=document.createElement('div'); el.className='build';
+    el.innerHTML=`
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="build-icon" style="width:38px;height:38px;font-size:18px">${t.icon}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">${t.name} <span class="tag">${cur}/${t.max}</span></div>
+          <div class="small muted">${t.desc}</div>
+        </div>
+      </div>
+      <button class="btn ${can?'btn-gold':'btn-ghost'} btn-sm" data-talent="${t.id}" ${can?'':'disabled'}>解鎖 ${t.cost} 點</button>
+    `;
+    box.appendChild(el);
+  }
+  box.querySelectorAll('[data-talent]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=btn.getAttribute('data-talent');
+      const cur=S.talents[id]||0, t=TALENTS.find(x=>x.id===id);
+      if(cur>=t.max) return;
+      if(S.talentPoints<t.cost) return toast('天賦點不足');
+      S.talentPoints-=t.cost; S.talents[id]=cur+1;
+      save(); renderAll(); toast(`習得 ${t.name} Lv.${cur+1}`);
+    });
+  });
+}
+
+/* quests */
+function renderQuests(){
+  const list=$('#questList');
+  const q=[
+    {name:'累積建造',need:10,cur:S.quests.build,reward:120,icon:'🏗️'},
+    {name:'召喚次數',need:5,cur:S.quests.summon,reward:80,icon:'✨'},
+    {name:'戰鬥勝利',need:8,cur:S.quests.kill,reward:150,icon:'⚔️'},
+  ];
+  list.innerHTML='';
+  for(const qq of q){
+    const done=qq.cur>=qq.need;
+    const pct=clamp(qq.cur/qq.need*100,0,100);
+    const el=document.createElement('div'); el.className='quest';
+    el.innerHTML=`
+      <div style="flex:1">
+        <div style="display:flex;gap:6px;align-items:center"><span>${qq.icon}</span><b>${qq.name}</b> <span class="tag">${qq.cur}/${qq.need}</span></div>
+        <div class="prog" style="height:6px;margin-top:6px"><i style="width:${pct}%"></i></div>
+      </div>
+      <button class="btn ${done?'btn-gold':'btn-ghost'} btn-sm" data-quest="${qq.name}" ${done?'':'disabled'}>領 ${qq.reward} ✦</button>
+    `;
+    list.appendChild(el);
+  }
+  list.querySelectorAll('[data-quest]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const name=btn.getAttribute('data-quest');
+      const map={ '累積建造':['build',10,120], '召喚次數':['summon',5,80], '戰鬥勝利':['kill',8,150] };
+      const [key,need,reward]=map[name];
+      if(S.quests[key]<need) return;
+      S.quests[key]-=need; S.star+=reward; save(); renderAll(); toast(`完成任務：${name} +${reward} 星輝`);
+    });
+  });
+}
+
+/* stats */
+function renderStats(){
+  const s=S.stats;
+  const box=$('#statsBox');
+  box.innerHTML=`
+    <div class="kpi"><span>總金幣</span><b>${fmt(s.totalGold)}</b></div>
+    <div class="kpi"><span>總星輝</span><b>${fmt(s.totalStar)}</b></div>
+    <div class="kpi"><span>戰鬥</span><b>${s.battles}</b></div>
+    <div class="kpi"><span>勝場</span><b>${s.wins}</b></div>
+    <div class="kpi"><span>英雄數</span><b>${Object.keys(S.heroesOwned).length}/12</b></div>
+    <div class="kpi"><span>天賦點</span><b>${S.talentPoints}</b></div>
+  `;
+}
+
+/* heroes */
+let heroFilter='all';
+function renderHeroes(){
+  const teamBox=$('#teamSlots'); teamBox.innerHTML='';
+  for(let i=0;i<5;i++){
+    const hid=S.team[i];
+    const h=hid? HEROES.find(x=>x.id===hid): null;
+    const owned=hid? S.heroesOwned[hid]:null;
+    const el=document.createElement('div'); el.className='hero-card '+(hid?'sel':'');
+    if(!hid){
+      el.innerHTML=`<div class="hero-av" style="border-style:dashed">＋</div><div><div class="hero-name muted">空位</div><div class="hero-meta">點擊下方英雄上陣</div></div>`;
+    } else {
+      const eqCount=Object.keys(owned.equips||{}).length;
+      el.innerHTML=`
+        <div class="hero-av rarity-${h.rarity}">${h.icon}</div>
+        <div style="flex:1;min-width:0">
+          <div class="hero-name">${h.name} <span class="tag ${h.rarity==='SSR'?'leg':h.rarity==='SR'?'epic':''}">${h.rarity}</span></div>
+          <div class="hero-meta">${h.role} · Lv.${owned.level} · <span class="stars">${'★'.repeat(owned.stars)}</span></div>
+          <div class="small muted">戰力 ${fmt(heroPower(hid))} · 裝備 ${eqCount}/4</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" data-remove="${hid}">下陣</button>
+      `;
+    }
+    teamBox.appendChild(el);
+  }
+  teamBox.querySelectorAll('[data-remove]').forEach(b=>{
+    b.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const id=b.getAttribute('data-remove');
+      S.team=S.team.filter(x=>x!==id); save(); renderAll();
+    });
+  });
+
+  const list=$('#heroList'); list.innerHTML='';
+  let heroes=[...HEROES];
+  if(heroFilter==='team') heroes=heroes.filter(h=>S.team.includes(h.id));
+  else if(heroFilter!=='all') heroes=heroes.filter(h=>h.rarity===heroFilter);
+  // sort: owned first, rarity
+  const order={SSR:0,SR:1,R:2};
+  heroes.sort((a,b)=>{
+    const ao=S.heroesOwned[a.id]?0:1, bo=S.heroesOwned[b.id]?0:1;
+    if(ao!==bo) return ao-bo;
+    return order[a.rarity]-order[b.rarity];
+  });
+  for(const h of heroes){
+    const owned=S.heroesOwned[h.id];
+    const isOwned=!!owned;
+    const inTeam=S.team.includes(h.id);
+    const el=document.createElement('div'); el.className='hero-card '+(inTeam?'sel':'');
+    el.innerHTML=`
+      <div class="hero-av rarity-${h.rarity}" style="${!isOwned?'opacity:.35':''}">${h.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div class="hero-name">${h.name} ${!isOwned?'<span class="tag">未擁有</span>':''} <span class="tag ${h.rarity==='SSR'?'leg':h.rarity==='SR'?'epic':''}">${h.rarity}</span> ${inTeam?'<span class="tag gold">上陣</span>':''}</div>
+        <div class="hero-meta">${h.role} · ${h.skill}</div>
+        ${isOwned?`<div class="small muted">Lv.${owned.level} · ${'★'.repeat(owned.stars)}${owned.stars<5?'☆'.repeat(5-owned.stars):''} · 戰力 ${fmt(heroPower(h.id))}</div>
+        <div class="equip-row">${EQUIPS.map(eq=>{
+          const has=owned.equips[eq.id];
+          return `<div class="equip ${has?'has':''}" title="${eq.name}">${has?eq.icon:'·'}</div>`;
+        }).join('')}</div>`: `<div class="small muted">未解鎖 · 召喚獲得</div>`}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${isOwned? (inTeam? `<button class="btn btn-ghost btn-sm" data-team="${h.id}">下陣</button>` : `<button class="btn btn-gold btn-sm" data-team="${h.id}" ${S.team.length>=5?'disabled':''}>上陣</button>`) : `<button class="btn btn-ghost btn-sm" disabled>未擁有</button>`}
+        ${isOwned? `<button class="btn btn-dark btn-sm" data-up="${h.id}">升級</button><button class="btn btn-ghost btn-sm" data-star="${h.id}">升星</button>`:''}
+      </div>
+    `;
+    list.appendChild(el);
+  }
+  list.querySelectorAll('[data-team]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const id=b.getAttribute('data-team');
+      if(S.team.includes(id)) S.team=S.team.filter(x=>x!==id);
+      else{
+        if(S.team.length>=5) return toast('隊伍已滿 5 人');
+        if(!S.heroesOwned[id]) return;
+        S.team.push(id);
+      }
+      save(); renderAll();
+    });
+  });
+  list.querySelectorAll('[data-up]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const id=b.getAttribute('data-up');
+      const owned=S.heroesOwned[id];
+      const cost= 20 + owned.level*12;
+      if(S.gold<cost) return toast('金幣不足 '+fmt(cost));
+      if(S.star<2) return toast('星輝不足 2');
+      S.gold-=cost; S.star-=2; owned.level+=1; save(); renderAll(); toast('升級成功 Lv.'+owned.level);
+    });
+  });
+  list.querySelectorAll('[data-star]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const id=b.getAttribute('data-star');
+      const owned=S.heroesOwned[id];
+      if(owned.stars>=5) return toast('已滿星');
+      const needShard= 30 + owned.stars*30;
+      if(S.shard<needShard) return toast('深淵碎片不足 '+needShard);
+      S.shard-=needShard; owned.stars+=1; save(); renderAll(); toast('升星成功 ★'+owned.stars);
+    });
+  });
+}
+function heroPower(hid){
+  const base=HEROES.find(h=>h.id===hid);
+  const owned=S.heroesOwned[hid]; if(!base||!owned) return 0;
+  const eqBonus=Object.values(owned.equips||{}).reduce((a,eq)=>{
+    const e=EQUIPS.find(x=>x.id===eq.id); if(!e) return a;
+    return a + (e.atk||0)*(1+(eq.lv||0)*0.35)+(e.hp||0)*(1+(eq.lv||0)*0.35);
+  },0);
+  const atk=(base.atk + owned.level*6 + (owned.stars-1)*10)*atkMult() + eqBonus*0.6;
+  const hp=(base.hp + owned.level*22 + (owned.stars-1)*40)*hpMult() + eqBonus*0.9;
+  return Math.floor(atk*3+hp*0.7);
+}
+function renderForge(){
+  const box=$('#forgeBox');
+  const teamHeroes=S.team.map(id=> HEROES.find(h=>h.id===id)).filter(Boolean);
+  if(teamHeroes.length===0){
+    box.innerHTML=`<div class="small muted">先上陣英雄再鍛造裝備</div>`;
+    return;
+  }
+  const selId=box._sel || S.team[0];
+  const hero=HEROES.find(h=>h.id===selId) || teamHeroes[0];
+  const owned=S.heroesOwned[selId];
+  box.innerHTML=`
+    <div class="bar">
+      <span class="small muted">選擇英雄：</span>
+      ${S.team.map(hid=>{
+        const h=HEROES.find(x=>x.id===hid);
+        return `<button class="chip ${hid===selId?'on':''}" data-forge-sel="${hid}">${h.icon} ${h.name}</button>`;
+      }).join('')}
+      <span class="tag">鍛造等級 ${S.forgeLevel}</span>
+    </div>
+    <div style="height:10px"></div>
+    <div class="grid4">
+      ${EQUIPS.map(eq=>{
+        const has=owned.equips[eq.id];
+        const lv=has? (has.lv||0):0;
+        return `<div class="build" style="align-items:center;text-align:center">
+          <div style="font-size:22px">${eq.icon}</div>
+          <div style="font-size:12px;font-weight:700">${eq.name}</div>
+          <div class="small muted">${has?`Lv.${lv} · +${Math.floor((eq.atk||0)*(1+lv*0.35))}攻 ${Math.floor((eq.hp||0)*(1+lv*0.35))}血`:'未裝備'}</div>
+          ${has? `<button class="btn btn-ghost btn-sm" data-forge-up="${eq.id}">強化 (${fmt(30+lv*18)}💰)</button><button class="btn btn-dark btn-sm" data-forge-off="${eq.id}">卸下</button>` : `<button class="btn btn-gold btn-sm" data-forge-on="${eq.id}">打造 (${fmt(80+S.forgeLevel*12)}💰)</button>`}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="small muted" style="margin-top:8px">裝備提供攻血加成，強化大幅提升。打造消耗金幣，強化同時消耗星輝。</div>
+  `;
+  box.querySelectorAll('[data-forge-sel]').forEach(b=>{
+    b.addEventListener('click',()=>{ box._sel=b.getAttribute('data-forge-sel'); renderForge(); });
+  });
+  box.querySelectorAll('[data-forge-on]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const eqId=b.getAttribute('data-forge-on');
+      const cost=80+S.forgeLevel*12;
+      if(S.gold<cost) return toast('金幣不足');
+      S.gold-=cost; owned.equips[eqId]={id:eqId,lv:0}; S.forgeLevel+=1; save(); renderAll(); toast('打造成功 '+EQUIPS.find(x=>x.id===eqId).name);
+    });
+  });
+  box.querySelectorAll('[data-forge-up]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const eqId=b.getAttribute('data-forge-up');
+      const cur=owned.equips[eqId]; const cost=30+(cur.lv||0)*18;
+      if(S.gold<cost) return toast('金幣不足');
+      if(S.star<3) return toast('星輝不足 3');
+      S.gold-=cost; S.star-=3; cur.lv=(cur.lv||0)+1; save(); renderAll(); toast('強化成功 Lv.'+cur.lv);
+    });
+  });
+  box.querySelectorAll('[data-forge-off]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const eqId=b.getAttribute('data-forge-off');
+      delete owned.equips[eqId]; save(); renderAll(); toast('已卸下');
+    });
+  });
+}
+
+/* summon */
+function doSummon(n){
+  const costEach=100, cost = n===10? 900 : 100;
+  if(S.star<cost) return toast('星輝不足 '+cost);
+  S.star-=cost; S.pity+=n; S.quests.summon+=n;
+  const results=[];
+  for(let i=0;i<n;i++){
+    let rarity;
+    // pity 30 保底
+    if(S.pity>=30){ rarity='SSR'; S.pity=0; }
+    else {
+      const r=Math.random()*100;
+      if(r<3) {rarity='SSR'; S.pity=0;}
+      else if(r<21) rarity='SR';
+      else rarity='R';
+    }
+    const pool=HEROES.filter(h=>h.rarity===rarity);
+    const pick=pool[Math.floor(Math.random()*pool.length)];
+    results.push(pick);
+    if(!S.heroesOwned[pick.id]){
+      S.heroesOwned[pick.id]={stars:1,level:1,equips:{}};
+      S.collection.add(pick.id);
+      if(S.team.length<5) S.team.push(pick.id);
+    } else {
+      // duplicate -> shard
+      const owned=S.heroesOwned[pick.id];
+      if(owned.stars<5){
+        // 10% 機率直接升星否則給碎片
+        if(Math.random()<0.25){ owned.stars+=1; }
+        else S.shard+= (pick.rarity==='SSR'? 22 : pick.rarity==='SR'? 10 : 4);
+      } else {
+        S.shard+= (pick.rarity==='SSR'? 35 : 20);
+      }
+    }
+  }
+  save(); renderAll();
+  const box=$('#summonResult'); box.innerHTML='';
+  for(const h of results){
+    const d=document.createElement('div');
+    d.className='pill';
+    d.style.borderColor = h.rarity==='SSR'?'rgba(251,191,36,.6)': h.rarity==='SR'?'rgba(192,132,252,.5)':'var(--line)';
+    d.innerHTML=`<span>${h.icon}</span><b>${h.name}</b><span class="tag ${h.rarity==='SSR'?'leg':h.rarity==='SR'?'epic':''}">${h.rarity}</span>`;
+    box.appendChild(d);
+  }
+  toast(`召喚 ${n} 次完成！`);
+}
+function renderCollection(){
+  $('#collectionInfo').textContent=`${S.collection.size}/12`;
+  const box=$('#collectionList');
+  box.innerHTML=`<div class="grid4">${HEROES.map(h=>{
+    const owned=S.collection.has(h.id);
+    return `<div class="build" style="text-align:center;opacity:${owned?1:.35}">
+      <div style="font-size:22px">${h.icon}</div>
+      <div style="font-size:11px;font-weight:700">${h.name}</div>
+      <div class="tag ${h.rarity==='SSR'?'leg':h.rarity==='SR'?'epic':''}" style="margin:4px auto 0;width:fit-content">${h.rarity}</div>
+      <div class="small muted">${owned?'已擁有':'未擁有'}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* expedition */
+function startExpedition(){
+  const cols=6;
+  const nodesPerCol=[3,3,3,3,3,1];
+  const types=['battle','battle','elite','shop','event','rest'];
+  const colsData=[];
+  for(let c=0;c<cols;c++){
+    const n=nodesPerCol[c];
+    const col=[];
+    for(let i=0;i<n;i++){
+      let type;
+      if(c===cols-1) type='boss';
+      else if(c===0) type='battle';
+      else {
+        const r=Math.random();
+        if(r<0.45) type='battle';
+        else if(r<0.62) type='elite';
+        else if(r<0.78) type='event';
+        else if(r<0.90) type='rest';
+        else type='shop';
+      }
+      col.push({id:uid(),type, done:false});
+    }
+    colsData.push(col);
+  }
+  S.expedition={cols:colsData, curCol:0, curIdx:0, started:true, log:['遠征開始！選擇第一列的節點出發。'], reward:0};
+  save(); renderExpedition();
+}
+function renderExpedition(){
+  const info=$('#expeditionInfo'), prog=$('#expProgress'), map=$('#expMap'), ev=$('#expEvent'), log=$('#expLog');
+  if(!S.expedition || !S.expedition.started){
+    info.textContent='尚未開始';
+    prog.textContent='';
+    map.innerHTML=`<div class="small muted" style="padding:18px">點擊「開啟新遠征」生成 6 列隨機地圖，每列三選一，最後對決首領。</div>`;
+    ev.innerHTML=''; log.textContent='尚未開始遠征。';
+    return;
+  }
+  const ex=S.expedition;
+  info.textContent=`第 ${ex.curCol+1} / ${ex.cols.length} 列`;
+  prog.textContent=`已探索 ${ex.cols.flat().filter(n=>n.done).length} 個節點 · 寶箱 ${ex.reward} ✦`;
+  map.innerHTML='';
+  ex.cols.forEach((col,ci)=>{
+    const colEl=document.createElement('div'); colEl.className='map-col';
+    colEl.innerHTML=`<div class="small muted" style="text-align:center">${ci===ex.cols.length-1?'首領':`區域 ${ci+1}`}</div>`;
+    col.forEach((node,ni)=>{
+      const isCur = ci===ex.curCol && ni===ex.curIdx && !node.done;
+      const icon = node.type==='battle'?'⚔️': node.type==='elite'?'👹': node.type==='shop'?'🛒': node.type==='rest'?'⛺': node.type==='event'?'❓':'👑';
+      const name = node.type==='battle'?'戰鬥': node.type==='elite'?'精英': node.type==='shop'?'商店': node.type==='rest'?'營地': node.type==='event'?'事件':'首領';
+      const d=document.createElement('div'); d.className='map-node '+(node.done?'done ':'')+(isCur?'cur ':'')+(node.type==='boss'?'boss':'');
+      d.innerHTML=`<div class="mn-icon">${icon}</div><div class="mn-name">${name}</div><div class="small muted" style="font-size:10px">${node.done?'已完成': isCur?'可挑戰':'-'}</div>`;
+      if(isCur){
+        d.addEventListener('click',()=> handleExpNode(ci,ni));
+      }
+      colEl.appendChild(d);
+    });
+    map.appendChild(colEl);
+  });
+  log.innerHTML = ex.log.slice(-8).map(l=>`• ${l}`).join('<br>');
+  ev.innerHTML='';
+}
+function handleExpNode(ci,ni){
+  const ex=S.expedition;
+  const node=ex.cols[ci][ni];
+  if(node.done) return;
+  if(ci!==ex.curCol) return toast('請按順序探索');
+  // resolve
+  if(node.type==='battle' || node.type==='elite' || node.type==='boss'){
+    const power = node.type==='boss'? 1.9 : node.type==='elite'? 1.45 : 1.0;
+    const scale = 1 + ci*0.18;
+    startBattle({
+      title: node.type==='boss'?'遠征首領': node.type==='elite'?'精英戰':'遠征戰',
+      enemyPower: Math.floor((teamPower()|| 220) * power * scale * (0.85+Math.random()*0.3)),
+      reward: {gold: 40+ci*22 + (node.type==='elite'?60:0) + (node.type==='boss'?220:0), star: 8+ci*4 + (node.type==='boss'?35:0), exp: 10+ci*6},
+      onWin:()=>{
+        node.done=true;
+        ex.log.push(`勝利：${node.type} 獲得獎勵`);
+        ex.reward += node.type==='boss'? 80 : node.type==='elite'? 22 : 12;
+        if(node.type==='boss'){
+          ex.log.push('遠征完成！領取寶箱獲得大量獎勵');
+          toast('遠征勝利！記得領取寶箱');
+        }
+        // move to next col
+        ex.curCol+=1; ex.curIdx= Math.floor(Math.random()* (ex.cols[ex.curCol]?.length||1));
+        if(ex.curCol>=ex.cols.length){ ex.curCol=ex.cols.length-1; }
+        S.quests.kill+=1;
+        gainExp(node.type==='boss'? 45: 14);
+        save(); renderAll();
+      },
+      onLose:()=>{
+        ex.log.push('戰敗：遠征進度保留，可重試本節點');
+        save(); renderAll();
+      }
+    });
+  } else if(node.type==='rest'){
+    node.done=true;
+    ex.log.push('營地：全隊回血 40%，獲得 10 星輝');
+    S.star+=10;
+    // heal via battle heal logic
+    save(); renderAll(); toast('營地休整完成');
+    ex.curCol+=1; ex.curIdx=Math.floor(Math.random()*(ex.cols[ex.curCol]?.length||1));
+    renderExpedition();
+  } else if(node.type==='shop'){
+    node.done=true;
+    const cost= 60;
+    evBoxShop(node, ex);
+  } else if(node.type==='event'){
+    node.done=true;
+    const r=Math.random();
+    if(r<0.5){ S.gold+= 90+ex.curCol*20; ex.log.push('事件：發現寶藏 +金幣'); }
+    else if(r<0.75){ S.star+=18; ex.log.push('事件：星輝礦脈 +18'); }
+    else { S.shard+=8; ex.log.push('事件：深淵低語 +8 碎片'); }
+    ex.curCol+=1; ex.curIdx=Math.floor(Math.random()*(ex.cols[ex.curCol]?.length||1));
+    save(); renderAll(); toast('事件已結算');
+  }
+}
+function evBoxShop(node, ex){
+  const ev=$('#expEvent');
+  ev.innerHTML=`<div class="card"><div class="card-hd"><h2>🛒 遠征商店</h2><span>選擇一項</span></div><div class="card-bd grid3">
+    <button class="btn btn-gold" data-shop="gold">金幣 +220 (40✦)</button>
+    <button class="btn btn-ghost" data-shop="heal">全隊治療 60% (25✦)</button>
+    <button class="btn btn-ghost" data-shop="shard">碎片 +12 (30✦)</button>
+  </div></div>`;
+  ev.querySelectorAll('[data-shop]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const k=b.getAttribute('data-shop');
+      if(k==='gold'){ if(S.star<40) return toast('星輝不足'); S.star-=40; S.gold+=220; }
+      if(k==='heal'){ if(S.star<25) return toast('星輝不足'); S.star-=25; toast('全隊已治療'); }
+      if(k==='shard'){ if(S.star<30) return toast('星輝不足'); S.star-=30; S.shard+=12; }
+      ex.log.push('商店交易完成');
+      ex.curCol+=1; ex.curIdx=Math.floor(Math.random()*(ex.cols[ex.curCol]?.length||1));
+      ev.innerHTML=''; save(); renderAll();
+    });
+  });
+}
+
+/* abyss */
+function renderAbyss(){
+  const floor=S.abyssFloor;
+  const prog = (S.abyssFloor % 10)/10*100;
+  $('#abyssProg').style.width= (floor%10===0?100:prog)+'%';
+  $('#abyssProgText').textContent= floor%10===0?'首領層！': `${floor%10}/10`;
+  // ranks
+  const box=$('#abyssRanks');
+  const milestones=[10,25,50,75,100,150];
+  box.innerHTML=`<div class="grid3">${milestones.map(m=>{
+    const done=S.abyssBest>=m;
+    return `<div class="build" style="text-align:center;opacity:${done?1:.45}"><div style="font-size:18px">${done?'🏆':'🔒'}</div><div style="font-size:12px;font-weight:700">${m} 層</div><div class="small muted">${done?'已達成':'未達成'}</div></div>`;
+  }).join('')}</div>`;
+}
+
+/* prestige */
+function prestigeGain(){
+  return Math.floor(S.kingdomLv * S.abyssBest / 25);
+}
+function renderPrestigeShop(){
+  const box=$('#prestigeShop');
+  const items=[
+    {id:'p1',name:'金庫擴容',icon:'💰',cost:2,desc:'金幣產量 +20%'},
+    {id:'p2',name:'星輝共鳴',icon:'✦',cost:2,desc:'星輝產量 +20%'},
+    {id:'p3',name:'戰神祝福',icon:'⚔️',cost:3,desc:'全隊攻擊 +12%'},
+    {id:'p4',name:'深淵親和',icon:'🌀',cost:3,desc:'碎片產量 +25%'},
+  ];
+  box.innerHTML='';
+  for(const it of items){
+    const cur=S.prestigeShop[it.id]||0;
+    const can=S.prestigeToken>=it.cost;
+    const el=document.createElement('div'); el.className='build';
+    el.innerHTML=`<div style="display:flex;gap:8px;align-items:center"><div class="build-icon">${it.icon}</div><div><div style="font-size:12px;font-weight:700">${it.name} <span class="tag">${cur}級</span></div><div class="small muted">${it.desc} · ${it.cost} ♻️/級</div></div></div><button class="btn ${can?'btn-gold':'btn-ghost'} btn-sm" data-pbuy="${it.id}" ${can?'':'disabled'}>兌換</button>`;
+    box.appendChild(el);
+  }
+  box.querySelectorAll('[data-pbuy]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const id=b.getAttribute('data-pbuy');
+      const it= [{id:'p1',cost:2},{id:'p2',cost:2},{id:'p3',cost:3},{id:'p4',cost:3}].find(x=>x.id===id);
+      if(S.prestigeToken<it.cost) return;
+      S.prestigeToken-=it.cost; S.prestigeShop[id]=(S.prestigeShop[id]||0)+1; save(); renderAll(); toast('兌換成功');
+    });
+  });
+}
+
+/* battle system */
+let battleTimer=null, battleSkip=false;
+function startBattle({title, enemyPower, reward, onWin, onLose}){
+  battleSkip=false;
+  $('#battleTitle').textContent=title;
+  $('#battleLog').innerHTML='';
+  $('#battleModal').classList.add('on');
+  $('#btnBattleNext').style.display='none';
+  const canvas=$('#battleCanvas'), ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+
+  const teamIds=S.team.length? S.team : Object.keys(S.heroesOwned).slice(0,3);
+  const allies=teamIds.map((hid,i)=>{
+    const base=HEROES.find(h=>h.id===hid);
+    const owned=S.heroesOwned[hid];
+    const hp = owned? Math.floor((base.hp + owned.level*22)*hpMult()) : 300;
+    const atk= owned? Math.floor((base.atk + owned.level*6)*atkMult()) : 40;
+    return {name:base?base.name:'僱傭兵', icon:base?base.icon:'🗡️', hp, maxHp:hp, atk, x:70, y:50+i*28, alive:true};
+  });
+  const enemyHp=Math.floor(enemyPower*3.2), enemyAtk=Math.floor(enemyPower*0.22+ 18);
+  const enemy={name:'深淵敵軍', hp:enemyHp, maxHp:enemyHp, atk:enemyAtk, x:420, y:110};
+
+  let tick=0, allyIdx=0, logEl=$('#battleLog');
+  function log(msg){ const d=document.createElement('div'); d.innerHTML=msg; logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight; }
+  function dmgFloat(x,y,txt,color){
+    const wrap=document.querySelector('.battle-canvas-wrap');
+    const s=document.createElement('div'); s.className='float-dmg'; s.textContent=txt; s.style.left=(x/W*100)+'%'; s.style.top=(y/H*100)+'%'; s.style.color=color;
+    wrap.appendChild(s); setTimeout(()=>s.remove(),700);
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // bg stars
+    ctx.fillStyle='rgba(255,255,255,.06)';
+    for(let i=0;i<30;i++){ const x=(i*73+ tick*0.5)%W, y=(i*41)%H; ctx.fillRect(x,y,1.2,1.2); }
+    // enemy
+    ctx.font='34px serif'; ctx.textAlign='center';
+    ctx.fillText('👹', enemy.x, enemy.y);
+    // hp bars
+    ctx.fillStyle='rgba(255,255,255,.12)'; ctx.fillRect(enemy.x-42, enemy.y+10, 84, 7);
+    ctx.fillStyle='#ef4444'; ctx.fillRect(enemy.x-42, enemy.y+10, 84*clamp(enemy.hp/enemy.maxHp,0,1), 7);
+    ctx.fillStyle='#cbd5e1'; ctx.font='10px sans-serif'; ctx.fillText(`${Math.max(0,enemy.hp)}/${enemy.maxHp}`, enemy.x, enemy.y+28);
+    // allies
+    allies.forEach(a=>{
+      if(!a.alive) ctx.globalAlpha=0.35;
+      ctx.font='22px serif'; ctx.textAlign='left'; ctx.fillText(a.icon, a.x-18, a.y+6);
+      ctx.fillStyle='rgba(255,255,255,.12)'; ctx.fillRect(a.x+10, a.y-6, 64, 6);
+      const c=a.hp/a.maxHp<0.3?'#f87171': '#6ee7b7';
+      ctx.fillStyle=c; ctx.fillRect(a.x+10, a.y-6, 64*clamp(a.hp/a.maxHp,0,1), 6);
+      ctx.fillStyle='#cbd5e1'; ctx.font='10px sans-serif'; ctx.fillText(a.name.slice(0,4), a.x+80, a.y+4);
+      ctx.globalAlpha=1;
+    });
+    // vs
+    ctx.fillStyle='rgba(232,195,106,.9)'; ctx.font='11px sans-serif'; ctx.textAlign='center'; ctx.fillText('VS', W/2, 18);
+  }
+  draw();
+  log(`<b>戰鬥開始</b> — 敵方強度 ${enemyPower}`);
+
+  battleTimer=setInterval(()=>{
+    if(battleSkip) { finish(); return; }
+    tick++;
+    // allies attack in turn
+    let attacker=null;
+    for(let k=0;k<allies.length;k++){
+      const idx=(allyIdx+k)%allies.length;
+      if(allies[idx].alive){ attacker=allies[idx]; allyIdx=(idx+1)%allies.length; break; }
+    }
+    if(attacker && enemy.hp>0){
+      const isCrit=Math.random()<0.14+(S.talents.t5||0)*0.06;
+      let dmg=Math.floor(attacker.atk * (0.82+Math.random()*0.36) * (isCrit?1.7:1));
+      enemy.hp-=dmg;
+      log(`${attacker.name} 對敵方造成 <b style="color:#6ee7b7">${dmg}${isCrit?' 暴擊!':''}</b> 傷害`);
+      dmgFloat(enemy.x, enemy.y-10, '-'+dmg, isCrit?'#fbbf24':'#6ee7b7');
+    }
+    if(enemy.hp<=0){ finish(true); return; }
+    // enemy attack random ally
+    const alive=allies.filter(a=>a.alive);
+    if(alive.length){
+      const target=alive[Math.floor(Math.random()*alive.length)];
+      let dmg=Math.floor(enemy.atk * (0.85+Math.random()*0.3));
+      target.hp-=dmg;
+      log(`敵方對 ${target.name} 造成 <b style="color:#f87171">${dmg}</b> 傷害`);
+      dmgFloat(target.x+20, target.y, '-'+dmg, '#f87171');
+      if(target.hp<=0){ target.alive=false; log(`${target.name} 倒下了！`); }
+      if(allies.every(a=>!a.alive)){ finish(false); return; }
+    }
+    draw();
+    if(tick>60){ // safety long battle -> decide by hp
+      finish(enemy.hp < allies.reduce((s,a)=>s+Math.max(0,a.hp),0));
+    }
+  }, 420);
+
+  function finish(win){
+    if(battleTimer){ clearInterval(battleTimer); battleTimer=null; }
+    draw();
+    if(win===undefined){
+      // skip logic
+      const allyHp=allies.reduce((s,a)=>s+Math.max(0,a.hp),0);
+      win = enemy.hp <=0 || allyHp > enemy.hp;
+    }
+    if(win){
+      S.stats.battles+=1; S.stats.wins+=1;
+      S.gold+=reward.gold; S.star+=reward.star; S.stats.totalGold+=reward.gold; S.stats.totalStar+=reward.star;
+      gainExp(reward.exp);
+      // abyss shard bonus
+      if(title.includes('深淵')) S.shard+= Math.floor(6+ S.abyssFloor*0.8);
+      log(`<b style="color:#6ee7b7">勝利！</b> 獲得 💰${reward.gold} ✦${reward.star} 經驗${reward.exp}`);
+      $('#btnBattleNext').style.display='inline-flex';
+      $('#btnBattleNext').onclick=()=>{
+        $('#battleModal').classList.remove('on');
+        if(onWin) onWin();
+        save(); renderAll();
+      };
+      // auto close after 1.2s if user doesn't click? keep manual
+    } else {
+      S.stats.battles+=1;
+      log(`<b style="color:#f87171">戰敗…</b> 稍作休整再來挑戰`);
+      $('#btnBattleNext').style.display='none';
+      setTimeout(()=>{ if(onLose) onLose(); }, 400);
+    }
+    save(); renderAll();
+  }
+  $('#btnBattleSkip').onclick=()=>{ battleSkip=true; };
+}
+
+/* abyss battle */
+function abyssBattle(sweep=false){
+  const floor=S.abyssFloor;
+  const isBoss=floor%10===0;
+  const enemyPower=Math.floor( (160 + floor*18) * (isBoss?1.6:1) );
+  const reward={gold: 28+floor*6 + (isBoss?120:0), star: 6+Math.floor(floor*0.6)+(isBoss?18:0), exp: 8+Math.floor(floor*0.7)};
+  if(sweep){
+    // sweep needs previous clear
+    if(S.abyssBest < floor) return toast('需先手動通關本層才能掃蕩');
+    // simulate 5 floors quickly without battle anim
+    let swept=0, totalGold=0, totalStar=0;
+    for(let i=0;i<5;i++){
+      const f=S.abyssFloor;
+      const p=Math.floor((160+f*18)*(f%10===0?1.6:1));
+      // win check by power
+      const win = teamPower() > p*2.2 || Math.random()<0.72;
+      if(!win) break;
+      const g=28+f*6+(f%10===0?120:0), st=6+Math.floor(f*0.6)+(f%10===0?18:0);
+      totalGold+=g; totalStar+=st; S.gold+=g; S.star+=st; S.shard+= Math.floor(6+f*0.8);
+      S.abyssFloor+=1; if(S.abyssFloor>S.abyssBest) S.abyssBest=S.abyssFloor;
+      swept++; gainExp(8+Math.floor(f*0.7));
+    }
+    if(swept===0) return toast('掃蕩失敗，戰力不足');
+    save(); renderAll(); toast(`掃蕩 ${swept} 層 · 💰+${totalGold} ✦+${totalStar}`);
+    return;
+  }
+  startBattle({
+    title: isBoss? `深淵首領 ${floor}層` : `深淵 ${floor}層`,
+    enemyPower,
+    reward,
+    onWin:()=>{
+      S.abyssFloor+=1; if(S.abyssFloor-1>S.abyssBest) S.abyssBest=S.abyssFloor-1;
+      // if boss, give bigger
+      if(isBoss){ S.shard+=12; }
+      save(); renderAll(); toast(`突破 ${floor} 層成功！`);
+    },
+    onLose:()=> toast('挑戰失敗，強化隊伍再來')
+  });
+}
+
+/* offline */
+function applyOffline(){
+  const now=Date.now();
+  const sec=Math.floor((now - S.lastTick)/1000);
+  if(sec<=0) return 0;
+  const cap= 8*3600; // 8h
+  const s=Math.min(sec, cap);
+  const g=Math.floor(goldPerSec()*s);
+  const st=Math.floor(starPerSec()*s*10)/10;
+  const sh=Math.floor(shardPerSec()*s*10)/10;
+  S.gold+=g; S.star+=st; S.shard+=sh; S.stats.totalGold+=g; S.stats.totalStar+=st;
+  S.lastTick=now; save();
+  return {s,g,st,sh};
+}
+
+/* render all */
+function renderAll(){
+  renderRes(); renderBuilds(); renderTalents(); renderQuests(); renderStats();
+  renderHeroes(); renderForge(); renderCollection();
+  renderExpedition(); renderAbyss(); renderPrestigeShop();
+}
+
+/* nav */
+$$('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    $$('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const p=t.getAttribute('data-page');
+    $$('.page').forEach(pg=> pg.classList.remove('on'));
+    $('#page-'+p).classList.add('on');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+$('#heroFilter').addEventListener('click',e=>{
+  const c=e.target.closest('.chip'); if(!c) return;
+  $$('#heroFilter .chip').forEach(x=>x.classList.remove('on'));
+  c.classList.add('on'); heroFilter=c.getAttribute('data-f'); renderHeroes();
+});
+
+/* buttons */
+$('#btnTapGold').addEventListener('click',()=>{
+  S.gold+=S.tapPower; S.stats.totalGold+=S.tapPower; gainExp(1); save(); renderAll();
+  // float
+  toast(`+${S.tapPower} 金幣`);
+});
+$('#btnClaimOffline').addEventListener('click',()=>{
+  const r=applyOffline();
+  if(!r || r.s<5) return toast('暫無離線收益');
+  toast(`離線 ${Math.floor(r.s/60)}分 · 💰+${r.g} ✦+${r.st} 🌀+${r.sh}`);
+  renderAll();
+});
+$('#btnSummon1').addEventListener('click',()=> doSummon(1));
+$('#btnSummon10').addEventListener('click',()=> doSummon(10));
+$('#btnStartExp').addEventListener('click',()=>{ startExpedition(); toast('遠征已生成'); });
+$('#btnExpReward').addEventListener('click',()=>{
+  if(!S.expedition || !S.expedition.reward) return toast('暫無寶箱');
+  const v=S.expedition.reward; S.star+=v; S.gold+= v*4; S.expedition.reward=0; save(); renderAll(); toast(`領取寶箱 +${v} 星輝`);
+});
+$('#btnAbyssBattle').addEventListener('click',()=> abyssBattle(false));
+$('#btnAbyssSweep').addEventListener('click',()=> abyssBattle(true));
+$('#btnAbyssReset').addEventListener('click',()=>{
+  if(!confirm('重置深淵回到 1 層？（保留最高紀錄）')) return;
+  S.abyssFloor=1; save(); renderAll(); toast('深淵已重置');
+});
+$('#btnAutoTeam').addEventListener('click',()=>{
+  const ownedIds=Object.keys(S.heroesOwned);
+  const scored=ownedIds.map(id=> ({id, p:heroPower(id)})).sort((a,b)=>b.p-a.p);
+  S.team=scored.slice(0,5).map(x=>x.id); save(); renderAll(); toast('已選最強 5 人');
+});
+$('#btnHealTeam').addEventListener('click',()=> toast('已治療（戰鬥內自動滿血）'));
+$('#btnPrestige').addEventListener('click',()=>{
+  const gain=prestigeGain();
+  if(S.kingdomLv<15 || gain<=0) return;
+  if(!confirm(`確定輪迴？獲得 ${gain} 輪迴之證，重置金幣/建築/遠征/深淵（保留英雄與天賦）`)) return;
+  S.prestigeToken+=gain; S.prestigeCount+=1;
+  S.gold=180; S.star+= 120; S.shard+= 20;
+  S.buildings={castle:1,altar:0,vault:1,barracks:0,smith:0,tower:0,gate:0};
+  S.kingdomLv=1; S.exp=0; S.expNeed=100;
+  S.abyssFloor=1; S.expedition=null;
+  save(); renderAll(); toast(`輪迴成功！+${gain} 輪迴之證`);
+});
+$('#btnExport').addEventListener('click',()=>{
+  const data=btoa(unescape(encodeURIComponent(JSON.stringify({...S, collection:[...S.collection]}))));
+  $('#saveBox').value=data; toast('已匯出到下方文字框，請複製保存');
+});
+$('#btnImport').addEventListener('click',()=>{
+  const raw=$('#saveBox').value.trim();
+  if(!raw) return toast('請貼上存檔字串');
+  try{
+    const o=JSON.parse(decodeURIComponent(escape(atob(raw))));
+    localStorage.setItem(SAVE_KEY, JSON.stringify(o));
+    toast('匯入成功，重載中…'); setTimeout(()=>location.reload(),600);
+  }catch(e){ toast('存檔格式錯誤'); }
+});
+$('#btnWipe').addEventListener('click',()=>{
+  if(!confirm('清空所有進度？不可恢復')) return;
+  localStorage.removeItem(SAVE_KEY); location.reload();
+});
+$('#btnSave').addEventListener('click',()=>{ save(); toast('已存檔'); });
+$('#btnHelp').addEventListener('click',()=>{
+  alert('星淵紀元：永恆王座\n\n核心循環：\n• 王國建設 → 離線自動產資源\n• 英雄召喚/升星/裝備 → 組 5 人隊\n• 遠征 6 關抉擇 + 無盡深淵爬塔\n• 卡關就輪迴 → 永久加成\n\n小技巧：\n• 優先升金庫與祭壇，離線收益最高\n• SSR 保底 30 抽，十連 9 折\n• 深淵每 10 層首領，掃蕩需先手動過\n• 存檔自動保存，也可匯出備份');
+});
+$('#btnCloseBattle').addEventListener('click',()=>{ if(battleTimer) clearInterval(battleTimer); battleTimer=null; $('#battleModal').classList.remove('on'); });
+$('#battleModal').addEventListener('click',e=>{ if(e.target.id==='battleModal'){ if(battleTimer) clearInterval(battleTimer); battleTimer=null; e.currentTarget.classList.remove('on'); }});
+
+/* tick */
+setInterval(()=>{
+  const g=goldPerSec()/10, st=starPerSec()/10, sh=shardPerSec()/10;
+  S.gold+=g; S.star+=st; S.shard+=sh;
+  // tiny exp passive
+  // save throttle
+  renderRes();
+}, 100);
+setInterval(save, 10000);
+window.addEventListener('beforeunload', save);
+
+/* init offline reward popup */
+const off=applyOffline();
+renderAll();
+if(off && off.s>60){
+  setTimeout(()=> toast(`離線 ${Math.floor(off.s/60)} 分鐘 · 💰+${off.g} ✦+${off.st}` , 3200), 600);
+}
+</script>
+</body>
+</html>
