@@ -1232,8 +1232,8 @@ const Combat = {
         }
         /* effects */
         AudioSys.play(b.isCrit?'crit':'hit');
-        if(b.isCrit)floatTxt(e.x,e.y-10,'暴擊！','#ffd54f',16);
-        floatTxt(e.x,e.y-10,'-'+b.dmg,b.isCrit?'#ffd54f':'#ef5350');
+        if(b.isCrit)floatTxt(e.x,e.y-10,'暴擊！','#ffd54f',22);
+        floatTxt(e.x,e.y-10,'-'+b.dmg,b.isCrit?'#ffd54f':'#ef5350',b.isCrit?22:16);
         spark(e.x,e.y,b.color,4);
         /* chain lightning */
         if(p.chainChance>0&&Math.random()<p.chainChance){
@@ -2454,7 +2454,7 @@ const UI = {
     $('hud-floor').textContent='🏰 第 '+G.floor+' 關';
     /* stats row */
     $('hud-atk').textContent='⚔️'+p.atk;
-    $('hud-crit').textContent='💥'+Math.round((p.critChance||0)*100)+'%';
+    $('hud-crit').textContent='💥'+Math.round((p.crit||0)*100)+'%';
     $('hud-def').textContent='🛡️'+p.def;
     $('hud-spd').textContent='⚡'+(p.atkSpd||1).toFixed(1)+'x';
     $('hud-lifesteal').textContent='💚'+Math.round((p.lifesteal||0)*100)+'%';
