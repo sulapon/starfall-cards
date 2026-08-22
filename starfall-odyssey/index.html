@@ -182,6 +182,13 @@ canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;display:block;z-inde
   </div>
   <div class="hud-right">
     <div class="hud-row"><span id="hud-coins" style="color:#ffb74d">💰 0</span></div>
+    <div class="hud-row" style="font-size:10px;color:#7a8aaa;gap:8px;flex-wrap:wrap">
+      <span id="hud-atk">⚔️0</span>
+      <span id="hud-crit">💥0%</span>
+      <span id="hud-def">🛡️0</span>
+      <span id="hud-spd">⚡1.0x</span>
+      <span id="hud-lifesteal" style="color:#69f0ae">💚0%</span>
+    </div>
     <div class="hud-row"><span id="hud-xp" style="color:#66bb6a;font-size:11px"></span></div>
     <div class="hud-row"><span id="hud-floor" style="color:#ab47bc;font-size:11px"></span></div>
   </div>
@@ -1395,7 +1402,8 @@ const Stage = {
     G.floor=floor;G.wave=0;
     G.enemies=[];G.projectiles=[];G.drops=[];
     G.waveTimer=0;G.waveDelay=1.5;
-    G.stageKills=0;G.stageCoins=0;
+    G.stageKills=0;
+    /* DON'T reset stageCoins — coins persist across floors */
     G.bossSpawned=false;G.bossAlive=false;
     G.stageCleared=false;
     this.spawnTimer=0;
@@ -1901,6 +1909,14 @@ const Game = {
         }
         puff(p.x,p.y,'#ffeb3b',30,4,5);G.shake=0.8;AudioSys.play('explode');break;
     }
+  },
+  applyRandomPassive(){
+    const p=G.player;if(!p)return;
+    const pool=Object.keys(PASSIVES).filter(k=>!p.passiveList.includes(k)&&(!PASSIVES[k].req||p.passiveList.includes(PASSIVES[k].req)));
+    if(pool.length===0){toast('已滿級！');return;}
+    const id=pick(pool);
+    Player.applyPassive(id);
+    toast('✦ '+PASSIVES[id].name);
   },
   stageClear(){
     if(G.state!=='playing')return;
@@ -2436,6 +2452,12 @@ const UI = {
     $('hud-xp').textContent='Lv.'+(p._level||1)+' '+((p._exp||0))+'/'+(p._expNeed||20);
     $('hud-wave').textContent='波 '+G.wave+'/'+G.waveMax;
     $('hud-floor').textContent='🏰 第 '+G.floor+' 關';
+    /* stats row */
+    $('hud-atk').textContent='⚔️'+p.atk;
+    $('hud-crit').textContent='💥'+Math.round((p.critChance||0)*100)+'%';
+    $('hud-def').textContent='🛡️'+p.def;
+    $('hud-spd').textContent='⚡'+(p.atkSpd||1).toFixed(1)+'x';
+    $('hud-lifesteal').textContent='💚'+Math.round((p.lifesteal||0)*100)+'%';
     this.updateSkillBar(p);
   },
   updateSkillBar(p){
