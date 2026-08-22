@@ -1,0 +1,2477 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>星海遠征 Starfall Odyssey</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#050510;font-family:'Segoe UI',system-ui,sans-serif;color:#e0e8ff;touch-action:none;user-select:none;-webkit-user-select:none}
+canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;display:block;z-index:1}
+#ui{position:fixed;top:0;left:0;width:100%;height:100%;z-index:10;pointer-events:none}
+#ui>*{pointer-events:auto}
+.scr{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+/* ===== screens ===== */
+.screen{display:none;position:absolute;inset:0;z-index:20}
+.screen.show{display:flex;flex-direction:column}
+/* title */
+#title-screen{align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,#0a0a2e 0%,#050510 100%)}
+#title-screen h1{font-size:42px;font-weight:900;background:linear-gradient(135deg,#4fc3f7,#ab47bc,#ff7043);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 40px rgba(79,195,247,.3);margin-bottom:8px;letter-spacing:4px}
+#title-screen .sub{font-size:14px;color:#7a8aaa;margin-bottom:40px}
+.menu-btn{width:240px;padding:14px 0;border:2px solid rgba(79,195,247,.4);border-radius:12px;background:rgba(10,15,40,.8);color:#4fc3f7;font-size:17px;font-weight:700;cursor:pointer;text-align:center;margin:6px 0;transition:all .2s;letter-spacing:1px}
+.menu-btn:hover,.menu-btn:active{background:rgba(79,195,247,.15);border-color:#4fc3f7;transform:scale(1.03)}
+.menu-btn.gold{border-color:rgba(255,183,77,.5);color:#ffb74d}
+.menu-btn.gold:hover{background:rgba(255,183,77,.12);border-color:#ffb74d}
+.menu-btn.danger{border-color:rgba(239,83,80,.4);color:#ef5350}
+.menu-btn.danger:hover{background:rgba(239,83,80,.12)}
+/* ship select */
+#ship-screen{align-items:center;padding:20px;background:radial-gradient(ellipse at 50% 40%,#0c0c2a,#050510)}
+#ship-screen h2{font-size:26px;font-weight:800;color:#4fc3f7;margin-bottom:16px;text-shadow:0 0 20px rgba(79,195,247,.3)}
+.ship-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:400px;max-height:60vh;overflow-y:auto;padding:4px}
+.ship-card{border:2px solid rgba(79,195,247,.25);border-radius:12px;padding:12px;background:rgba(10,15,40,.85);cursor:pointer;transition:all .2s;text-align:center}
+.ship-card:hover,.ship-card:active{border-color:#4fc3f7;background:rgba(79,195,247,.1)}
+.ship-card.locked{opacity:.4;pointer-events:none}
+.ship-card .icon{font-size:36px;display:block;margin-bottom:4px}
+.ship-card .name{font-size:15px;font-weight:700;color:#e0e8ff}
+.ship-card .desc{font-size:11px;color:#7a8aaa;margin-top:4px;line-height:1.4}
+/* HUD */
+#hud{position:fixed;top:0;left:0;width:100%;z-index:30;display:none;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top,0px));background:linear-gradient(to bottom,rgba(5,5,16,.9),transparent)}
+#hud.show{display:flex;justify-content:space-between;align-items:flex-start}
+.hud-left,.hud-right{display:flex;flex-direction:column;gap:4px}
+.hud-right{align-items:flex-end}
+.hud-row{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
+.hp-bar{width:120px;height:10px;border-radius:5px;background:rgba(255,255,255,.1);overflow:hidden;position:relative}
+.hp-bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#ef5350,#ff7043);transition:width .3s}
+.shield-bar{width:120px;height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:2px}
+.shield-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#42a5f5,#4fc3f7)}
+.skill-bar{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:30;display:none}
+.skill-bar.show{display:flex}
+.skill-btn{width:52px;height:52px;border-radius:12px;border:2px solid rgba(79,195,247,.3);background:rgba(10,15,40,.85);display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;position:relative;transition:all .15s}
+.skill-btn:active{transform:scale(.92)}
+.skill-btn .cd-mask{position:absolute;inset:0;border-radius:10px;background:rgba(0,0,0,.6);display:none}
+.skill-btn.on-cd .cd-mask{display:block}
+.skill-btn .cd-text{position:absolute;font-size:11px;font-weight:700;color:#ff7043}
+#btn-pause{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:12px;z-index:35;width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);background:rgba(10,15,40,.7);color:#aab;font-size:16px;cursor:pointer;display:none;align-items:center;justify-content:center}
+#btn-pause.show{display:flex}
+/* pause overlay */
+#pause-overlay{position:fixed;inset:0;z-index:50;background:rgba(5,5,16,.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+#pause-overlay.show{display:flex}
+#pause-overlay h2{font-size:28px;font-weight:800;color:#4fc3f7;margin-bottom:12px}
+/* reward overlay */
+#reward-overlay{position:fixed;inset:0;z-index:50;background:rgba(5,5,16,.9);display:none;align-items:center;justify-content:center;flex-direction:column}
+#reward-overlay.show{display:flex}
+#reward-overlay h2{font-size:22px;font-weight:800;color:#ffb74d;margin-bottom:16px}
+.reward-cards{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.reward-card{width:130px;border:2px solid rgba(255,183,77,.3);border-radius:14px;padding:14px 10px;background:rgba(15,12,35,.9);cursor:pointer;text-align:center;transition:all .2s}
+.reward-card:hover,.reward-card:active{border-color:#ffb74d;transform:scale(1.05)}
+.reward-card .r-icon{font-size:32px;display:block;margin-bottom:6px}
+.reward-card .r-name{font-size:13px;font-weight:700;color:#e0e8ff}
+.reward-card .r-desc{font-size:10px;color:#8a96b0;margin-top:4px;line-height:1.4}
+/* result screen */
+#result-screen{align-items:center;justify-content:center;background:rgba(5,5,16,.95);gap:16px}
+#result-screen h2{font-size:30px;font-weight:900}
+#result-screen .stats{font-size:14px;color:#8a96b0;text-align:center;line-height:1.8}
+/* upgrade overlay */
+#upgrade-overlay{position:fixed;inset:0;z-index:50;background:rgba(5,5,16,.9);display:none;align-items:center;justify-content:center;flex-direction:column}
+#upgrade-overlay.show{display:flex}
+#upgrade-overlay h2{font-size:22px;font-weight:800;color:#66bb6a;margin-bottom:16px}
+.upg-cards{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.upg-card{width:130px;border:2px solid rgba(102,187,106,.3);border-radius:14px;padding:14px 10px;background:rgba(15,12,35,.9);cursor:pointer;text-align:center;transition:all .2s}
+.upg-card:hover,.upg-card:active{border-color:#66bb6a;transform:scale(1.05)}
+.upg-card .r-icon{font-size:28px;display:block;margin-bottom:6px}
+.upg-card .r-name{font-size:13px;font-weight:700;color:#e0e8ff}
+.upg-card .r-desc{font-size:10px;color:#8a96b0;margin-top:4px;line-height:1.4}
+/* event overlay */
+#event-overlay{position:fixed;inset:0;z-index:50;background:rgba(5,5,16,.9);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:20px}
+#event-overlay.show{display:flex}
+#event-overlay .ev-title{font-size:20px;font-weight:800;color:#ab47bc}
+#event-overlay .ev-desc{font-size:13px;color:#aab;text-align:center;line-height:1.6;max-width:320px}
+.ev-btns{display:flex;flex-direction:column;gap:8px;width:100%;max-width:280px}
+/* meta shop */
+#meta-screen{align-items:center;padding:20px;background:radial-gradient(ellipse at 50% 30%,#0c0c2a,#050510)}
+#meta-screen h2{font-size:24px;font-weight:800;color:#ffb74d;margin-bottom:12px}
+.meta-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;max-width:380px;max-height:55vh;overflow-y:auto;padding:4px}
+.meta-item{border:1px solid rgba(255,183,77,.25);border-radius:10px;padding:10px;background:rgba(15,12,35,.85);cursor:pointer;transition:all .2s}
+.meta-item:hover{border-color:#ffb74d;background:rgba(255,183,77,.08)}
+.meta-item.maxed{opacity:.5;pointer-events:none}
+.meta-item .m-name{font-size:13px;font-weight:700;color:#e0e8ff}
+.meta-item .m-desc{font-size:10px;color:#7a8aaa;margin-top:2px}
+.meta-item .m-cost{font-size:12px;color:#ffb74d;font-weight:700;margin-top:4px}
+/* toast */
+#toast{position:fixed;top:calc(60px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:60;padding:10px 20px;border-radius:10px;background:rgba(10,15,40,.92);border:1px solid rgba(79,195,247,.3);font-size:14px;font-weight:700;color:#4fc3f7;text-align:center;opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.show{opacity:1}
+/* bestiary */
+#bestiary-screen{align-items:center;padding:20px;background:radial-gradient(ellipse at 50% 40%,#0c0c2a,#050510)}
+#bestiary-screen h2{font-size:22px;font-weight:800;color:#ab47bc;margin-bottom:12px}
+.best-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:380px;max-height:60vh;overflow-y:auto;padding:4px}
+.best-card{border:1px solid rgba(171,71,188,.2);border-radius:10px;padding:10px;background:rgba(15,12,35,.85);text-align:center}
+.best-card.locked{opacity:.3}
+.best-card .b-icon{font-size:28px}
+.best-card .b-name{font-size:11px;font-weight:700;color:#e0e8ff;margin-top:4px}
+.best-card .b-info{font-size:9px;color:#7a8aaa;margin-top:2px}
+/* common */
+.back-btn{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:12px;z-index:35;width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);background:rgba(10,15,40,.7);color:#aab;font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center}
+.back-btn.show{display:flex}
+/* damage flash */
+#dmg-flash{position:fixed;inset:0;z-index:40;background:radial-gradient(ellipse,transparent 40%,rgba(239,83,80,.25));pointer-events:none;opacity:0;transition:opacity .15s}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="ui">
+  <!-- title -->
+  <div id="title-screen" class="screen show">
+    <h1>星海遠征</h1>
+    <div class="sub">STARFALL ODYSSEY</div>
+    <div class="menu-btn" onclick="UI.showScreen('ship')">🚀 開始遠征</div>
+    <div class="menu-btn gold" onclick="UI.showScreen('meta')">✦ 星際商店</div>
+    <div class="menu-btn" onclick="UI.showScreen('bestiary')">📖 圖鑑</div>
+    <div class="menu-btn" onclick="UI.showScreen('help')">❓ 操作說明</div>
+  </div>
+  <!-- ship select -->
+  <div id="ship-screen" class="screen">
+    <button class="back-btn show" onclick="UI.goBack()">←</button>
+    <h2>選擇戰艦</h2>
+    <div class="ship-grid" id="ship-grid"></div>
+  </div>
+  <!-- result -->
+  <div id="result-screen" class="screen">
+    <h2 id="result-title"></h2>
+    <div class="stats" id="result-stats"></div>
+    <div class="menu-btn" onclick="UI.goBack()">返回基地</div>
+  </div>
+  <!-- meta shop -->
+  <div id="meta-screen" class="screen">
+    <button class="back-btn show" onclick="UI.goBack()">←</button>
+    <h2>星際商店</h2>
+    <div style="font-size:14px;color:#ffb74d;margin-bottom:12px" id="meta-coins"></div>
+    <div class="meta-grid" id="meta-grid"></div>
+  </div>
+  <!-- bestiary -->
+  <div id="bestiary-screen" class="screen">
+    <button class="back-btn show" onclick="UI.goBack()">←</button>
+    <h2>敵人圖鑑</h2>
+    <div class="best-grid" id="best-grid"></div>
+  </div>
+  <!-- help -->
+  <div id="help-screen" class="screen">
+    <button class="back-btn show" onclick="UI.goBack()">←</button>
+    <div style="padding:20px;max-width:400px;margin:0 auto">
+      <h2 style="font-size:22px;font-weight:800;color:#4fc3f7;margin-bottom:16px;text-align:center">操作說明</h2>
+      <div style="font-size:13px;line-height:2;color:#aab">
+        <b style="color:#e0e8ff">📱 手機：</b>虛擬搖桿移動（全屏觸控）· 自動射擊最近敵人<br>
+        <b style="color:#e0e8ff">🖥️ 電腦：</b>WASD / 方向鍵移動 · 滑鼠瞄準 · 左鍵技能<br><br>
+        <b style="color:#4fc3f7">🎯 核心玩法：</b><br>
+        • 擊敗敵人獲取經驗值，升級可選強化<br>
+        • 每關結束從 3 個隨機獎勵中選 1 個<br>
+        • 每 5 關出現 BOSS，擊敗後選聖物<br>
+        • 闖過更多關卡解鎖新戰艦與永久升級<br><br>
+        <b style="color:#ffb74d">✦ 永久升級：</b>使用星幣在星際商店購買<br>
+        <b style="color:#ab47bc">📖 圖鑑：</b>收集擊敗過的敵人資訊
+      </div>
+    </div>
+  </div>
+</div>
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-left">
+    <div class="hud-row"><span id="hud-hp-text" style="color:#ff7043"></span></div>
+    <div class="hp-bar"><div class="hp-bar-fill" id="hud-hp-bar"></div></div>
+    <div class="shield-bar"><div class="shield-bar-fill" id="hud-shield-bar"></div></div>
+    <div class="hud-row" style="margin-top:4px"><span id="hud-wave" style="color:#7a8aaa;font-size:11px"></span></div>
+  </div>
+  <div class="hud-right">
+    <div class="hud-row"><span id="hud-coins" style="color:#ffb74d">💰 0</span></div>
+    <div class="hud-row"><span id="hud-xp" style="color:#66bb6a;font-size:11px"></span></div>
+    <div class="hud-row"><span id="hud-floor" style="color:#ab47bc;font-size:11px"></span></div>
+  </div>
+</div>
+<div class="skill-bar" id="skill-bar"></div>
+<button id="btn-pause" onclick="Game.togglePause()">⏸</button>
+<!-- overlays -->
+<div id="pause-overlay">
+  <h2>⏸ 暫停</h2>
+  <div class="menu-btn" onclick="Game.togglePause()">▶ 繼續</div>
+  <div class="menu-btn danger" onclick="Game.quitRun()">🚪 離開</div>
+</div>
+<div id="reward-overlay">
+  <h2 id="reward-title">選擇獎勵</h2>
+  <div class="reward-cards" id="reward-cards"></div>
+</div>
+<div id="upgrade-overlay">
+  <h2>選擇強化</h2>
+  <div class="upg-cards" id="upg-cards"></div>
+</div>
+<div id="event-overlay">
+  <div class="ev-title" id="ev-title"></div>
+  <div class="ev-desc" id="ev-desc"></div>
+  <div class="ev-btns" id="ev-btns"></div>
+</div>
+<div id="dmg-flash"></div>
+<div id="toast"><span id="toast-t"></span></div>
+<script>/* ================= 星海遠征 core：全域狀態 / 迴圈 / 輸入 / 粒子 / 音效 / 工具 ================= */
+'use strict';
+/* ---------- 全域狀態 ---------- */
+const G = {
+  cv:null, ctx:null, W:540, H:960, scale:1, viewW:540, viewH:960,
+  state:'title', // title | playing | paused | reward | upgrade | event | dead | result
+  t:0, last:0, dt:0, speed:1, paused:false,
+  /* player */
+  player:null,
+  /* world */
+  projectiles:[], enemies:[], particles:[], floaters:[], drops:[],
+  stars:[], nebulae:[],
+  /* stage */
+  floor:1, wave:0, waveMax:0, waveTimer:0, waveDelay:2,
+  stageKills:0, totalKills:0, stageCoins:0,
+  stageCleared:false, bossSpawned:false, bossAlive:false,
+  /* meta */
+  screenStack:['title'],
+  shake:0, flashT:0,
+  /* touch */
+  joyActive:false, joyX:0, joyY:0, joyId:null, joyOX:0, joyOY:0,
+  /* mouse */
+  mouseX:0, mouseY:0, mouseDown:false,
+  /* keys */
+  keys:{},
+};
+/* ---------- 視窗適配 ---------- */
+function fitViewport(){
+  const vv=window.visualViewport;
+  const h=vv&&vv.height?vv.height:innerHeight;
+  const vt=vv&&typeof vv.offsetTop==='number'?Math.max(0,vv.offsetTop):0;
+  document.documentElement.style.setProperty('--vh',h+'px');
+  document.documentElement.style.setProperty('--vt',vt+'px');
+  resizeCanvas();
+}
+function resizeCanvas(){
+  const cv=G.cv;if(!cv)return;
+  const cw=cv.clientWidth||390,ch=cv.clientHeight||700;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.round(cw*dpr);cv.height=Math.round(ch*dpr);
+  G.scale=Math.max(cv.width/G.W,cv.height/G.H);
+  G.viewW=cv.width/G.scale;G.viewH=cv.height/G.scale;
+}
+window.addEventListener('resize',fitViewport);
+window.addEventListener('orientationchange',()=>setTimeout(fitViewport,220));
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',fitViewport);
+  window.visualViewport.addEventListener('scroll',fitViewport);
+}
+/* ---------- 輸入 ---------- */
+function initInput(){
+  const cv=G.cv;
+  /* keyboard */
+  document.addEventListener('keydown',e=>{G.keys[e.key]=true;if(e.key==='Escape')Game.togglePause();if(e.key===' ')Game.useSkill(0);});
+  document.addEventListener('keyup',e=>{G.keys[e.key]=false;});
+  /* mouse */
+  cv.addEventListener('mousemove',e=>{
+    const r=cv.getBoundingClientRect();
+    G.mouseX=(e.clientX-r.left)/r.width*G.viewW;
+    G.mouseY=(e.clientY-r.top)/r.height*G.viewH;
+  });
+  cv.addEventListener('mousedown',e=>{G.mouseDown=true;AudioSys.resume();});
+  cv.addEventListener('mouseup',()=>{G.mouseDown=false;});
+  cv.addEventListener('click',()=>{AudioSys.resume();});
+  /* touch - joystick */
+  cv.addEventListener('touchstart',e=>{
+    AudioSys.resume();
+    for(const t of e.changedTouches){
+      if(!G.joyActive){
+        G.joyActive=true;G.joyId=t.identifier;
+        G.joyOX=t.clientX;G.joyOY=t.clientY;
+      }
+    }
+    e.preventDefault();
+  },{passive:false});
+  cv.addEventListener('touchmove',e=>{
+    if(!G.joyActive)return;
+    for(const t of e.changedTouches){
+      if(t.identifier===G.joyId){
+        const dx=t.clientX-G.joyOX, dy=t.clientY-G.joyOY;
+        const dist=Math.hypot(dx,dy);
+        const maxR=54;
+        if(dist>8){
+          const clamped=Math.min(dist,maxR);
+          G.joyX=dx/dist*clamped/maxR;
+          G.joyY=dy/dist*clamped/maxR;
+        }else{G.joyX=0;G.joyY=0;}
+      }
+    }
+    e.preventDefault();
+  },{passive:false});
+  const touchEnd=e=>{
+    for(const t of e.changedTouches){
+      if(t.identifier===G.joyId){
+        G.joyActive=false;G.joyX=0;G.joyY=0;G.joyId=null;
+      }
+    }
+  };
+  cv.addEventListener('touchend',touchEnd);
+  cv.addEventListener('touchcancel',touchEnd);
+}
+function axis(){
+  let ax=0,ay=0;
+  if(G.joyActive){ax=G.joyX;ay=G.joyY;}
+  if(G.keys['ArrowLeft']||G.keys['a']||G.keys['A'])ax-=1;
+  if(G.keys['ArrowRight']||G.keys['d']||G.keys['D'])ax+=1;
+  if(G.keys['ArrowUp']||G.keys['w']||G.keys['W'])ay-=1;
+  if(G.keys['ArrowDown']||G.keys['s']||G.keys['S'])ay+=1;
+  const len=Math.hypot(ax,ay);
+  if(len>1){ax/=len;ay/=len;}
+  return{x:ax,y:ay};
+}
+/* ---------- 粒子 / 浮字 ---------- */
+function puff(x,y,color,n,spd,sz){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2,s=(0.3+Math.random()*0.9)*(spd||1);
+    G.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,
+      life:0,max:18+Math.random()*22,size:(sz||3)*(0.4+Math.random()),
+      color,type:Math.random()<0.3?'ring':'dot'});
+  }
+  if(G.particles.length>400)G.particles.splice(0,G.particles.length-400);
+}
+function spark(x,y,color,n){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2,s=1+Math.random()*2.5;
+    G.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,
+      life:0,max:8+Math.random()*10,size:1+Math.random()*2,
+      color,type:'spark'});
+  }
+}
+function floatTxt(x,y,txt,color,sz){
+  G.floaters.push({x,y,txt,color,sz:sz||18,life:0,max:50,vy:-1.8});
+  if(G.floaters.length>80)G.floaters.shift();
+}
+function stepParticles(d){
+  for(let i=G.particles.length-1;i>=0;i--){
+    const p=G.particles[i];p.life+=d;
+    if(p.life>=p.max){G.particles.splice(i,1);continue;}
+    p.x+=p.vx*d*60;p.y+=p.vy*d*60;
+    if(p.type==='dot')p.vy+=0.03*d*60;
+  }
+  for(let i=G.floaters.length-1;i>=0;i--){
+    const f=G.floaters[i];f.life+=d;f.y+=f.vy*d*60;
+    if(f.life>=f.max)G.floaters.splice(i,1);
+  }
+}
+/* ---------- WebAudio ---------- */
+const AudioSys={
+  ctx:null,on:true,_last:{},
+  resume(){
+    if(!this.ctx){try{this.ctx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+    if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume();
+  },
+  _t(freq,dur,type,vol,slide){
+    if(!this.on||!this.ctx)return;
+    const o=this.ctx.createOscillator(),g=this.ctx.createGain(),t=this.ctx.currentTime;
+    o.type=type||'square';o.frequency.setValueAtTime(freq,t);
+    if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,freq*slide),t+dur);
+    g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.connect(g);g.connect(this.ctx.destination);o.start(t);o.stop(t+dur+0.02);
+  },
+  _n(dur,vol,hp){
+    if(!this.on||!this.ctx)return;
+    const n=this.ctx.sampleRate*dur|0,b=this.ctx.createBuffer(1,n,this.ctx.sampleRate),c=b.getChannelData(0);
+    for(let i=0;i<n;i++)c[i]=(Math.random()*2-1)*(1-i/n);
+    const s=this.ctx.createBufferSource();s.buffer=b;
+    const g=this.ctx.createGain();g.gain.value=vol;
+    const f=this.ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=hp||800;f.Q.value=0.8;
+    s.connect(f);f.connect(g);g.connect(this.ctx.destination);s.start();
+  },
+  play(name){
+    if(!this.on)return;this.resume();
+    const t=this.ctx?this.ctx.currentTime:0;
+    if(this._last[name]&&t-this._last[name]<0.05)return;
+    this._last[name]=t;
+    switch(name){
+      case 'hit':this._n(0.05,0.15,1200);break;
+      case 'crit':this._n(0.07,0.25,1600);this._t(880,0.07,'square',0.1);break;
+      case 'kill':this._t(300,0.08,'square',0.12,1.8);break;
+      case 'coin':this._t(1240,0.05,'sine',0.08);this._t(1660,0.07,'sine',0.06);break;
+      case 'hurt':this._t(160,0.12,'sawtooth',0.18,0.6);break;
+      case 'skill':this._t(420,0.14,'sawtooth',0.12,1.8);this._n(0.1,0.12,600);break;
+      case 'laser':this._t(880,0.12,'sawtooth',0.08,2.5);break;
+      case 'missile':this._n(0.15,0.18,400);this._t(220,0.12,'sawtooth',0.1,2);break;
+      case 'shield':this._t(520,0.1,'triangle',0.12,0.8);break;
+      case 'heal':this._t(660,0.1,'sine',0.1,1.6);this._t(990,0.14,'sine',0.08,1.2);break;
+      case 'boss':this._t(70,0.4,'sawtooth',0.25,2.4);this._t(55,0.5,'square',0.18,1.8);break;
+      case 'lvup':this._t(523,0.08,'square',0.1);setTimeout(()=>this._t(659,0.08,'square',0.1),80);setTimeout(()=>this._t(784,0.14,'square',0.1),160);break;
+      case 'click':this._t(700,0.04,'sine',0.05);break;
+      case 'explode':this._n(0.2,0.25,300);this._t(100,0.3,'sawtooth',0.15,0.3);break;
+      case 'pickup':this._t(880,0.05,'sine',0.07);this._t(1320,0.08,'sine',0.07);break;
+      case 'evade':this._t(1200,0.06,'sine',0.06,0.5);break;
+      case 'death':this._t(300,0.4,'sawtooth',0.2,0.4);this._n(0.25,0.18,300);break;
+    }
+  }
+};
+document.addEventListener('touchstart',()=>AudioSys.resume(),{passive:true});
+document.addEventListener('click',()=>AudioSys.resume(),{passive:true});
+/* ---------- 工具 ---------- */
+function $(id){return document.getElementById(id);}
+function clamp(v,lo,hi){return v<lo?lo:v>hi?hi:v;}
+function lerp(a,b,t){return a+(b-a)*t;}
+function rng(lo,hi){return lo+Math.random()*(hi-lo);}
+function rngInt(lo,hi){return Math.floor(rng(lo,hi+1));}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rngInt(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;}
+function pick(a){return a[rngInt(0,a.length-1)];}
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function fmt(n){
+  if(n>=1e12)return(n/1e12).toFixed(1)+'T';
+  if(n>=1e9)return(n/1e9).toFixed(1)+'B';
+  if(n>=1e6)return(n/1e6).toFixed(1)+'M';
+  if(n>=1e4)return(n/1e3).toFixed(1)+'K';
+  return Math.floor(n).toLocaleString();
+}
+function toast(msg,dur){
+  const el=$('toast');if(!el)return;
+  $('toast-t').textContent=msg;
+  el.classList.add('show');
+  clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),dur||2000);
+}
+function damageFlash(){
+  const el=$('dmg-flash');if(!el)return;
+  el.style.opacity='1';setTimeout(()=>el.style.opacity='0',150);
+}
+/* ---------- 星空背景生成 ---------- */
+function genStars(){
+  G.stars=[];G.nebulae=[];
+  for(let i=0;i<200;i++){
+    G.stars.push({x:Math.random()*G.W,y:Math.random()*G.H,
+      size:0.3+Math.random()*1.8,bright:0.3+Math.random()*0.7,
+      twinkle:Math.random()*Math.PI*2,speed:0.02+Math.random()*0.08});
+  }
+  const nebColors=['rgba(100,60,180,','rgba(40,120,200,','rgba(180,60,100,','rgba(60,180,140,'];
+  for(let i=0;i<6;i++){
+    G.nebulae.push({x:Math.random()*G.W,y:Math.random()*G.H,
+      r:60+Math.random()*120,color:pick(nebColors),alpha:0.03+Math.random()*0.04});
+  }
+}
+/* ---------- 主迴圈 ---------- */
+function loop(ts){
+  requestAnimationFrame(loop);
+  if(!G.cv)return;
+  const d=Math.min(0.05,(ts-(G.last||ts))/1000||0.016);
+  G.last=ts;G.dt=d;
+  if(G.paused){Render.draw();return;}
+  if(G.state==='playing'&&G.player){
+    G.t+=d;
+    Game.update(d*G.speed);
+  }
+  stepParticles(d);
+  if(G.shake>0)G.shake=Math.max(0,G.shake-d*3);
+  if(G.flashT>0)G.flashT=Math.max(0,G.flashT-d);
+  Render.draw();
+}
+/* ---------- 啟動 ---------- */
+window.addEventListener('DOMContentLoaded',()=>{
+  G.cv=$('cv');G.ctx=G.cv.getContext('2d');
+  fitViewport();initInput();genStars();
+  Save.load();Meta.init();
+  requestAnimationFrame(loop);
+});
+</script>
+<script>/* ================= 飛船資料 (8 艘) ================= */
+const SHIPS = {
+  striker:{
+    id:'striker',name:'突擊者',icon:'🛩️',color:'#4fc3f7',body:'#2196f3',
+    desc:'均衡型戰艦，新手首選',unlock:0,
+    hp:100,atk:10,def:2,spd:3.2,crit:0.08,
+    skill:'scatter',skillName:'散彈齊射',skillCd:8,
+    passive:'攻速 +10%',
+    passiveFn:h=>{h.atkSpd*=1.1;},
+  },
+  destroyer:{
+    id:'destroyer',name:'毀滅者',icon:'🛸',color:'#ef5350',body:'#c62828',
+    desc:'高攻低血，暴力輸出',unlock:0,
+    hp:70,atk:16,def:1,spd:2.8,crit:0.12,
+    skill:'railgun',skillName:'磁軌砲',skillCd:12,
+    passive:'暴擊傷害 +50%',
+    passiveFn:h=>{h.critDmg=(h.critDmg||1.5)+0.5;},
+  },
+  guardian:{
+    id:'guardian',name:'守護者',icon:'🛡️',color:'#66bb6a',body:'#2e7d32',
+    desc:'高防高血，鐵壁防禦',unlock:0,
+    hp:140,atk:7,def:6,spd:2.5,crit:0.05,
+    skill:'barrier',skillName:'能量護盾',skillCd:10,
+    passive:'護盾回復 +50%',
+    passiveFn:h=>{h.shieldRegen=(h.shieldRegen||0)+0.05*0.5;},
+  },
+  phantom:{
+    id:'phantom',name:'幻影號',icon:'👻',color:'#ab47bc',body:'#7b1fa2',
+    desc:'高速閃避，暴擊刺客',unlock:200,
+    hp:60,atk:12,def:1,spd:4.2,crit:0.18,
+    skill:'blink',skillName:'閃現',skillCd:6,
+    passive:'閃避 +15%',
+    passiveFn:h=>{h.evade=(h.evade||0)+0.15;},
+  },
+  artillery:{
+    id:'artillery',name:'砲艦',icon:'💣',color:'#ff7043',body:'#d84315',
+    desc:'範圍火力覆蓋，清場專家',unlock:500,
+    hp:85,atk:14,def:2,spd:2.2,crit:0.08,
+    skill:'orbital',skillName:'軌道轟炸',skillCd:15,
+    passive:'範圍傷害 +20%',
+    passiveFn:h=>{h.aoeMul=(h.aoeMul||1)+0.2;},
+  },
+  oracle:{
+    id:'oracle',name:'預言者',icon:'🔮',color:'#ffd54f',body:'#f9a825',
+    desc:'智慧型戰艦，技能快速冷卻',unlock:800,
+    hp:75,atk:11,def:2,spd:3.0,crit:0.10,
+    skill:'timewarp',skillName:'時間扭曲',skillCd:18,
+    passive:'技能冷卻 -25%',
+    passiveFn:h=>{h.cdMul=(h.cdMul||1)-0.25;},
+  },
+  viper:{
+    id:'viper',name:'毒蛇號',icon:'🐍',color:'#69f0ae',body:'#00c853',
+    desc:'持續毒素傷害，慢慢磨死敵人',unlock:1200,
+    hp:80,atk:9,def:2,spd:3.5,crit:0.08,
+    skill:'poisoncloud',skillName:'毒霧',skillCd:9,
+    passive:'攻擊附帶毒素',
+    passiveFn:h=>{h.poisonOnHit=true;},
+  },
+  titan:{
+    id:'titan',name:'泰坦',icon:'⭐',color:'#ffb74d',body:'#ff8f00',
+    desc:'終極戰艦，全方位強化',unlock:2000,
+    hp:120,atk:13,def:4,spd:3.0,crit:0.12,
+    skill:'supernova',skillName:'超新星',skillCd:20,
+    passive:'全屬性 +8%',
+    passiveFn:h=>{h.maxHp=Math.round(h.maxHp*1.08);h.hp=h.maxHp;h.atk=Math.round(h.atk*1.08);h.def=Math.round(h.def*1.08);h.spd*=1.08;},
+  },
+};
+const SHIP_ORDER=['striker','destroyer','guardian','phantom','artillery','oracle','viper','titan'];
+</script>
+<script>/* ================= 武器資料 (40+) ================= */
+const WPN_TYPES = {
+  /* --- 直射型 --- */
+  laser1:{name:'雷射',icon:'🔫',tier:1,type:'beam',dmg:14,spd:12,range:500,cd:0.25,color:'#4fc3f7',desc:'基本雷射，直線射擊'},
+  laser2:{name:'雙管雷射',icon:'🔫',tier:2,type:'beam',dmg:12,spd:14,range:550,cd:0.22,color:'#42a5f5',desc:'雙管並射，火力加倍',evolve:'laser1'},
+  laser3:{name:'三連光束',icon:'🔫',tier:3,type:'beam',dmg:16,spd:16,range:600,cd:0.18,color:'#2196f3',desc:'三管齊射，壓制力驚人',evolve:'laser2'},
+  pulse:{name:'脈衝砲',icon:'💫',tier:1,type:'pulse',dmg:14,spd:8,range:400,cd:0.5,color:'#ab47bc',desc:'脈衝能量彈，傷害較高'},
+  pulse2:{name:'強化脈衝',icon:'💫',tier:2,type:'pulse',dmg:22,spd:9,range:450,cd:0.45,color:'#9c27b0',desc:'強化脈衝，穿透力增強',evolve:'pulse'},
+  /* --- 追蹤型 --- */
+  homing:{name:'追蹤飛彈',icon:'🚀',tier:1,type:'homing',dmg:10,spd:4,range:600,cd:0.8,color:'#ff7043',desc:'自動追蹤最近敵人'},
+  homing2:{name:'導彈群',icon:'🚀',tier:2,type:'homing',dmg:8,spd:4.5,range:650,cd:0.6,color:'#ff5722',desc:'發射 3 枚追蹤飛彈',evolve:'homing',projN:3},
+  homing3:{name:'地獄火',icon:'🚀',tier:3,type:'homing',dmg:12,spd:5,range:700,cd:0.5,color:'#d84315',desc:'5 枚追蹤飛彈，全場清掃',evolve:'homing2',projN:5},
+  /* --- 散射型 --- */
+  scatter:{name:'散彈',icon:'💥',tier:1,type:'scatter',dmg:6,spd:7,range:300,cd:0.6,color:'#66bb6a',desc:'扇形散射 5 發',projN:5,spread:0.5},
+  scatter2:{name:'暴雨散彈',icon:'💥',tier:2,type:'scatter',dmg:7,spd:8,range:350,cd:0.5,color:'#4caf50',desc:'扇形散射 8 發',projN:8,spread:0.6,evolve:'scatter'},
+  /* --- 雷電型 --- */
+  chain:{name:'連鎖闪电',icon:'⚡',tier:1,type:'chain',dmg:12,spd:0,range:250,cd:1.0,color:'#ffd54f',desc:'閃電連鎖 3 個敵人'},
+  chain2:{name:'暴風雷',icon:'⚡',tier:2,type:'chain',dmg:16,spd:0,range:300,cd:0.8,color:'#ffeb3b',desc:'閃電連鎖 5 個敵人',evolve:'chain'},
+  /* --- 迴旋型 --- */
+  boomerang:{name:'迴旋鏢',icon:'🪃',tier:1,type:'boomerang',dmg:10,spd:5,range:200,cd:1.2,color:'#80cbc4',desc:'飛出去再飛回來'},
+  boomerang2:{name:'月刃',icon:'🌙',tier:2,type:'boomerang',dmg:14,spd:6,range:250,cd:1.0,color:'#4db6ac',desc:'月牙刀刃，雙倍傷害',evolve:'boomerang'},
+  /* --- 擊退型 --- */
+  shockwave:{name:'衝擊波',icon:'🌊',tier:1,type:'shockwave',dmg:8,spd:0,range:180,cd:1.5,color:'#80deea',desc:'環形衝擊波擊退敵人'},
+  shockwave2:{name:'超新星衝擊',icon:'🌊',tier:2,type:'shockwave',dmg:14,spd:0,range:220,cd:1.2,color:'#26c6da',desc:'超新星衝擊波，全場擊退',evolve:'shockwave'},
+  /* --- 火焰型 --- */
+  flame:{name:'火焰噴射',icon:'🔥',tier:1,type:'flame',dmg:5,spd:0,range:120,cd:0.1,color:'#ff8a65',desc:'近距離火焰持續灼燒'},
+  flame2:{name:'烈焰風暴',icon:'🔥',tier:2,type:'flame',dmg:8,spd:0,range:160,cd:0.08,color:'#ff7043',desc:'增強火焰，範圍更廣',evolve:'flame'},
+  /* --- 冰霜型 --- */
+  frost:{name:'冰霜射線',icon:'❄️',tier:1,type:'frost',dmg:6,spd:10,range:350,cd:0.35,color:'#81d4fa',desc:'冰霜射線減速敵人'},
+  frost2:{name:'暴風雪',icon:'❄️',tier:2,type:'frost',dmg:10,spd:12,range:400,cd:0.28,color:'#4fc3f7',desc:'暴風雪射線，大範圍冰凍',evolve:'frost'},
+  /* --- 激光網 --- */
+  grid:{name:'雷射網',icon:'🔲',tier:1,type:'grid',dmg:4,spd:0,range:300,cd:2.0,color:'#ce93d8',desc:'佈置雷射網切割敵人'},
+  grid2:{name:'死亡之網',icon:'🔲',tier:2,type:'grid',dmg:7,spd:0,range:350,cd:1.6,color:'#ab47bc',desc:'更高傷害的雷射網',evolve:'grid'},
+  /* --- 螺旋型 --- */
+  spiral:{name:'螺旋彈',icon:'🌀',tier:1,type:'spiral',dmg:6,spd:6,range:400,cd:0.4,color:'#a5d6a7',desc:'螺旋前進的子彈'},
+  spiral2:{name:'星蝕',icon:'🌀',tier:2,type:'spiral',dmg:9,spd:7,range:450,cd:0.35,color:'#66bb6a',desc:'雙螺旋交叉射擊',evolve:'spiral',projN:2},
+  /* --- 雷射炮 --- */
+  cannon:{name:'雷射炮',icon:'💥',tier:2,type:'cannon',dmg:30,spd:6,range:500,cd:1.8,color:'#ffab91',desc:'高傷害雷射炮彈'},
+  cannon2:{name:'主砲',icon:'💥',tier:3,type:'cannon',dmg:50,spd:7,range:550,cd:1.5,color:'#ff8a65',desc:'毀滅級主砲',evolve:'cannon'},
+  /* --- 分裂型 --- */
+  split:{name:'分裂彈',icon:'🔱',tier:2,type:'split',dmg:8,spd:5,range:300,cd:0.9,color:'#80cbc4',desc:'擊中後分裂 3 枚',projN:3},
+  split2:{name:'星爆彈',icon:'🔱',tier:3,type:'split',dmg:12,spd:6,range:350,cd:0.7,color:'#4db6ac',desc:'擊中後分裂 5 枚',projN:5,evolve:'split'},
+  /* --- 毒液型 --- */
+  venom:{name:'毒液',icon:'☠️',tier:2,type:'venom',dmg:4,spd:6,range:300,cd:0.5,color:'#69f0ae',desc:'附帶持續毒素傷害'},
+  venom2:{name:'劇毒風暴',icon:'☠️',tier:3,type:'venom',dmg:7,spd:7,range:350,cd:0.4,color:'#00e676',desc:'劇毒風暴，疊加毒素',evolve:'venom'},
+  /* --- 護盾型 --- */
+  shield_orb:{name:'護盾球',icon:'🛡️',tier:2,type:'orbit',dmg:6,spd:0,range:90,cd:0.0,color:'#64b5f6',desc:'環繞飛船的護盾球',projN:3,orbit:true},
+  shield_orb2:{name:'多重護盾',icon:'🛡️',tier:3,type:'orbit',dmg:8,spd:0,range:100,cd:0.0,color:'#42a5f5',desc:'5 顆護盾球環繞',projN:5,orbit:true,evolve:'shield_orb'},
+  /* --- 電磁型 --- */
+  emp:{name:'EMP',icon:'📡',tier:2,type:'emp',dmg:10,spd:0,range:200,cd:2.5,color:'#fff176',desc:'電磁脈衝癱瘓敵人'},
+  emp2:{name:'EMP風暴',icon:'📡',tier:3,type:'emp',dmg:16,spd:0,range:250,cd:2.0,color:'#ffee58',desc:'大範圍EMP，癱瘓+傷害',evolve:'emp'},
+  /* --- 隱形型 --- */
+  phase:{name:'相位彈',icon:'👻',tier:2,type:'phase',dmg:14,spd:10,range:400,cd:0.7,color:'#ce93d8',desc:'穿透敵人的相位彈'},
+  phase2:{name:'虛空之矛',icon:'👻',tier:3,type:'phase',dmg:20,spd:12,range:450,cd:0.5,color:'#ba68c8',desc:'高傷害穿透彈',evolve:'phase'},
+  /* --- 衝刺型 --- */
+  ram:{name:'衝撞',icon:'🚀',tier:1,type:'ram',dmg:15,spd:0,range:60,cd:2.0,color:'#ef5350',desc:'衝撞敵人造成傷害'},
+  ram2:{name:'流星衝撞',icon:'☄️',tier:2,type:'ram',dmg:25,spd:0,range:80,cd:1.5,color:'#e53935',desc:'高速流星衝撞',evolve:'ram'},
+  /* --- 魔法型 --- */
+  arcane:{name:'奧術彈',icon:'✨',tier:1,type:'arcane',dmg:10,spd:7,range:400,cd:0.6,color:'#b39ddb',desc:'奧術能量彈'},
+  arcane2:{name:'奧術風暴',icon:'✨',tier:2,type:'arcane',dmg:16,spd:8,range:450,cd:0.5,color:'#9575cd',desc:'奧術風暴連射',evolve:'arcane'},
+  /* --- 磁力型 --- */
+  magnetic:{name:'磁力場',icon:'🧲',tier:2,type:'magnetic',dmg:6,spd:0,range:180,cd:1.8,color:'#f48fb1',desc:'吸引並傷害敵人'},
+  /* --- 重力型 --- */
+  gravity:{name:'重力井',icon:'🕳️',tier:3,type:'gravity',dmg:10,spd:0,range:250,cd:3.0,color:'#7e57c2',desc:'吸引全場敵人並造成傷害'},
+};
+function getWeaponsByTier(tier){return Object.keys(WPN_TYPES).filter(k=>WPN_TYPES[k].tier===tier);}
+function getWeapon(id){return WPN_TYPES[id]||null;}
+function weaponEvolveTree(id){
+  const r=[];let cur=id;
+  while(cur){r.unshift(cur);const w=WPN_TYPES[cur];cur=w&&w.evolve?null:cur;}
+  return r;
+}
+</script>
+<script>/* ================= 被動升級資料 (30+) ================= */
+const PASSIVES = {
+  /* 攻擊類 */
+  atkUp1:{name:'攻擊力+',icon:'⚔️',tier:1,desc:'攻擊力 +15%',fn:h=>{h.atk=Math.round(h.atk*1.15);}},
+  atkUp2:{name:'攻擊力++',icon:'⚔️',tier:2,desc:'攻擊力 +25%',fn:h=>{h.atk=Math.round(h.atk*1.25);},req:'atkUp1'},
+  atkUp3:{name:'攻擊力+++',icon:'⚔️',tier:3,desc:'攻擊力 +35%',fn:h=>{h.atk=Math.round(h.atk*1.35);},req:'atkUp2'},
+  spdUp1:{name:'攻速+',icon:'🏹',tier:1,desc:'攻速 +15%',fn:h=>{h.atkSpd*=1.15;}},
+  spdUp2:{name:'攻速++',icon:'🏹',tier:2,desc:'攻速 +25%',fn:h=>{h.atkSpd*=1.25;},req:'spdUp1'},
+  critUp1:{name:'暴擊+',icon:'💥',tier:1,desc:'暴擊率 +8%',fn:h=>{h.crit+=0.08;}},
+  critUp2:{name:'暴擊++',icon:'💥',tier:2,desc:'暴擊率 +12%',fn:h=>{h.crit+=0.12;},req:'critUp1'},
+  critDmg:{name:'暴擊傷害',icon:'💢',tier:1,desc:'暴擊傷害 +40%',fn:h=>{h.critDmg=(h.critDmg||1.5)+0.4;}},
+  piercing:{name:'穿透射擊',icon:'📌',tier:2,desc:'子彈穿透 1 個敵人',fn:h=>{h.pierce=(h.pierce||0)+1;}},
+  pierce2:{name:'雙重穿透',icon:'📌',tier:3,desc:'再穿透 1 個敵人',fn:h=>{h.pierce=(h.pierce||0)+1;},req:'piercing'},
+  multishot:{name:'多重射擊',icon:'🎯',tier:2,desc:'每次攻擊 +1 發子彈',fn:h=>{h.extraProj=(h.extraProj||0)+1;}},
+  /* 防禦類 */
+  hpUp1:{name:'生命+',icon:'❤️',tier:1,desc:'最大生命 +20%',fn:h=>{const m=h.maxHp;h.maxHp=Math.round(m*1.2);h.hp+=h.maxHp-m;}},
+  hpUp2:{name:'生命++',icon:'❤️',tier:2,desc:'最大生命 +30%',fn:h=>{const m=h.maxHp;h.maxHp=Math.round(m*1.3);h.hp+=h.maxHp-m;},req:'hpUp1'},
+  defUp1:{name:'防禦+',icon:'🛡️',tier:1,desc:'防禦 +20%',fn:h=>{h.def=Math.round(h.def*1.2);}},
+  defUp2:{name:'防禦++',icon:'🛡️',tier:2,desc:'防禦 +30%',fn:h=>{h.def=Math.round(h.def*1.3);},req:'defUp1'},
+  regen:{name:'生命回復',icon:'💚',tier:1,desc:'每秒回復 1% 生命',fn:h=>{h.regen=(h.regen||0)+0.01;}},
+  regen2:{name:'強化回復',icon:'💚',tier:2,desc:'每秒回復 +1.5%',fn:h=>{h.regen=(h.regen||0)+0.015;},req:'regen'},
+  shield1:{name:'護盾',icon:'🔵',tier:1,desc:'開局獲得 20 護盾',fn:h=>{h.shield+=20;h.maxShield=(h.maxShield||0)+20;}},
+  shield2:{name:'強化護盾',icon:'🔵',tier:2,desc:'護盾上限 +30',fn:h=>{h.maxShield=(h.maxShield||0)+30;h.shield=Math.min(h.shield+30,h.maxShield);},req:'shield1'},
+  thorns:{name:'荊棘',icon:'🌵',tier:2,desc:'反傷 15%',fn:h=>{h.thorns=(h.thorns||0)+0.15;}},
+  /* 移動類 */
+  spdMove:{name:'移速+',icon:'💨',tier:1,desc:'移動速度 +15%',fn:h=>{h.moveSpd*=1.15;}},
+  spdMove2:{name:'移速++',icon:'💨',tier:2,desc:'移動速度 +25%',fn:h=>{h.moveSpd*=1.25;},req:'spdMove'},
+  evade1:{name:'閃避+',icon:'💫',tier:1,desc:'閃避 +8%',fn:h=>{h.evade=(h.evade||0)+0.08;}},
+  evade2:{name:'閃避++',icon:'💫',tier:2,desc:'閃避 +12%',fn:h=>{h.evade=(h.evade||0)+0.12;},req:'evade1'},
+  /* 特殊類 */
+  coinMult:{name:'金幣加成',icon:'💰',tier:1,desc:'金幣掉落 +25%',fn:h=>{h.coinMul=(h.coinMul||1)+0.25;}},
+  coinMult2:{name:'金幣加成+',icon:'💰',tier:2,desc:'金幣掉落 +40%',fn:h=>{h.coinMul=(h.coinMul||1)+0.4;},req:'coinMult'},
+  xpMult:{name:'經驗加成',icon:'📊',tier:1,desc:'經驗值 +20%',fn:h=>{h.xpMul=(h.xpMul||1)+0.2;}},
+  lifeSteal:{name:'吸血',icon:'🩸',tier:2,desc:'攻擊回復 5% 傷害',fn:h=>{h.lifeSteal=(h.lifeSteal||0)+0.05;}},
+  cooldown:{name:'冷卻縮減',icon:'⏱️',tier:2,desc:'技能冷卻 -20%',fn:h=>{h.cdMul=(h.cdMul||1)-0.2;}},
+  magnet:{name:'磁力場',icon:'🧲',tier:1,desc:'拾取範圍 +50%',fn:h=>{h.pickupRange=(h.pickupRange||60)*1.5;}},
+  bulletSpeed:{name:'彈速+',icon:'💨',tier:1,desc:'子彈速度 +30%',fn:h=>{h.bulletSpd=(h.bulletSpd||1)+0.3;}},
+  aoe:{name:'範圍強化',icon:'💥',tier:2,desc:'範圍傷害 +30%',fn:h=>{h.aoeMul=(h.aoeMul||1)+0.3;}},
+  dotBoost:{name:'持續傷害+',icon:'🔥',tier:2,desc:'DOT 傷害 +40%',fn:h=>{h.dotMul=(h.dotMul||1)+0.4;}},
+  overkill:{name:'過量殺傷',icon:'💀',tier:3,desc:'殺敵時溢出傷害爆炸',fn:h=>{h.overkill=true;}},
+};
+function getPassivesByTier(tier){return Object.keys(PASSIVES).filter(k=>PASSIVES[k].tier===tier);}
+</script>
+<script>/* ================= 聖物資料 (25+) ================= */
+const RELICS = {
+  /* 常見 */
+  nanoheal:{name:'奈米修復',icon:'💉',rarity:'common',desc:'每 5 秒回復 3% 生命',fn:h=>{h.regen=(h.regen||0)+0.006;}},
+  steelplate:{name:'鋼鐵甲板',icon:'🔩',rarity:'common',desc:'防禦 +3',fn:h=>{h.def+=3;}},
+  overclock:{name:'超頻核心',icon:'⚙️',rarity:'common',desc:'攻速 +20%',fn:h=>{h.atkSpd*=1.2;}},
+  lucky:{name:'幸運星',icon:'🍀',rarity:'common',desc:'暴擊率 +10%',fn:h=>{h.crit+=0.1;}},
+  thruster:{name:'推進器',icon:'🚀',rarity:'common',desc:'移速 +20%',fn:h=>{h.moveSpd*=1.2;}},
+  coinbag:{name:'金幣袋',icon:'👝',rarity:'common',desc:'金幣 +30%',fn:h=>{h.coinMul=(h.coinMul||1)+0.3;}},
+  /* 稀有 */
+  fireheart:{name:'熾熱之心',icon:'❤️‍🔥',rarity:'rare',desc:'攻擊力 +25%',fn:h=>{h.atk=Math.round(h.atk*1.25);}},
+  thornmail:{name:'荊棘鎧甲',icon:'🌵',rarity:'rare',desc:'反傷 20%',fn:h=>{h.thorns=(h.thorns||0)+0.2;}},
+  vampfang:{name:'吸血之牙',icon:'🧛',rarity:'rare',desc:'吸血 8%',fn:h=>{h.lifeSteal=(h.lifeSteal||0)+0.08;}},
+  shieldgen:{name:'護盾發生器',icon:'🔵',rarity:'rare',desc:'護盾每秒回復 2%',fn:h=>{h.shieldRegen=(h.shieldRegen||0)+0.02;}},
+  scope:{name:'強化瞄準鏡',icon:'🔭',rarity:'rare',desc:'射程 +25%',fn:h=>{h.rangeMul=(h.rangeMul||1)+0.25;}},
+  echo:{name:'迴聲核心',icon:'🔊',rarity:'rare',desc:'技能冷卻 -30%',fn:h=>{h.cdMul=(h.cdMul||1)-0.3;}},
+  /* 史詩 */
+  voidblade:{name:'虛空之刃',icon:'⚔️',rarity:'epic',desc:'攻擊力 +40%，但防禦 -2',fn:h=>{h.atk=Math.round(h.atk*1.4);h.def=Math.max(0,h.def-2);}},
+  dragonheart:{name:'龍心',icon:'🐉',rarity:'epic',desc:'最大生命 +50%',fn:h=>{const m=h.maxHp;h.maxHp=Math.round(m*1.5);h.hp+=h.maxHp-m;}},
+  stormcaller:{name:'風暴使者',icon:'⛈️',rarity:'epic',desc:'每次攻擊有 15% 機率連鎖閃電',fn:h=>{h.chainChance=(h.chainChance||0)+0.15;}},
+  timekeeper:{name:'時間守護者',icon:'⏳',rarity:'epic',desc:'技能冷卻 -40%，攻速 +15%',fn:h=>{h.cdMul=(h.cdMul||1)-0.4;h.atkSpd*=1.15;}},
+  ghostmaker:{name:'幽靈製造機',icon:'👻',rarity:'epic',desc:'閃避 +25%，閃避後反擊',fn:h=>{h.evade=(h.evade||0)+0.25;h.evadeCounter=true;}},
+  /* 傳說 */
+  cosmos:{name:'宇宙之心',icon:'🌌',rarity:'legendary',desc:'全屬性 +20%',fn:h=>{h.atk=Math.round(h.atk*1.2);h.def=Math.round(h.def*1.2);h.maxHp=Math.round(h.maxHp*1.2);h.hp=Math.min(h.hp,h.maxHp);h.atkSpd*=1.2;h.crit+=0.08;}},
+  infinity:{name:'無限寶石',icon:'💎',rarity:'legendary',desc:'每 30 秒全螢幕毀滅一次',fn:h=>{h.novaInterval=30;h.novaTimer=0;}},
+  phoenix:{name:'不死鳥之翼',icon:'🔥',rarity:'legendary',desc:'死亡時復活一次（50% HP）',fn:h=>{h.revive=1;}},
+};
+const RARITY_COLORS={common:'#8a96b0',rare:'#4fc3f7',epic:'#ab47bc',legendary:'#ffb74d'};
+function relicsByRarity(r){return Object.keys(RELICS).filter(k=>RELICS[k].rarity===r);}
+function randomRelic(){
+  const roll=Math.random();
+  let pool;
+  if(roll<0.05)pool=relicsByRarity('legendary');
+  else if(roll<0.2)pool=relicsByRarity('epic');
+  else if(roll<0.5)pool=relicsByRarity('rare');
+  else pool=relicsByRarity('common');
+  return pick(pool);
+}
+</script>
+<script>/* ================= 敵人資料 + BOSS ================= */
+const ENEMIES = {
+  /* --- 小怪 --- */
+  scout:{name:'偵察機',hp:25,atk:5,spd:2.5,exp:3,coin:2,color:'#78909c',size:12,ai:'chase',atkCd:1.0,desc:'基本敵機，直線追擊'},
+  drone:{name:'無人機',hp:18,atk:4,spd:4,exp:2,coin:1,color:'#90a4ae',size:10,ai:'strafe',atkCd:1.2,desc:'高速繞行，不易瞄準'},
+  tank:{name:'裝甲艦',hp:80,atk:8,spd:1.4,exp:6,coin:4,color:'#607d8b',size:18,ai:'chase',atkCd:1.8,desc:'厚重裝甲，行動緩慢'},
+  bomber:{name:'轟炸機',hp:35,atk:12,spd:1.8,exp:5,coin:3,color:'#ff8a65',size:14,ai:'kite',atkCd:2.0,desc:'遠程轟炸，保持距離'},
+  swarm:{name:'蜂群',hp:8,atk:2,spd:4.5,exp:1,coin:1,color:'#a5d6a7',size:7,ai:'swarm',atkCd:0.8,desc:'數量壓制，群體攻擊'},
+  healer:{name:'補給艦',hp:45,atk:4,spd:2.0,exp:8,coin:6,color:'#81c784',size:14,ai:'support',atkCd:2.5,desc:'治療周圍敵人，優先擊殺'},
+  shielder:{name:'護盾艦',hp:60,atk:6,spd:1.8,exp:7,coin:5,color:'#64b5f6',size:16,ai:'shield',atkCd:1.5,desc:'為友軍提供護盾'},
+  sniper:{name:'狙擊艦',hp:30,atk:18,spd:1.2,exp:6,coin:4,color:'#ef5350',size:13,ai:'snipe',atkCd:3.0,desc:'遠程精準射擊，高傷害'},
+  mine:{name:'水雷',hp:50,atk:20,spd:0.6,exp:4,coin:3,color:'#ffab91',size:11,ai:'drift',atkCd:0,desc:'漂流水雷，接觸爆炸'},
+  elite:{name:'精英艦',hp:120,atk:12,spd:2.2,exp:15,coin:10,color:'#ffd54f',size:20,ai:'elite',atkCd:1.2,desc:'強化型敵人，多種攻擊模式'},
+  /* --- BOSS --- */
+  boss_mine:{name:'礦場守衛',hp:250,atk:6,spd:1.2,exp:50,coin:40,color:'#ff7043',size:32,ai:'boss_a',atkCd:3.0,isBoss:true,desc:'第 1 星系 BOSS'},
+  boss_ice:{name:'冰霜女皇',hp:350,atk:10,spd:1.6,exp:80,coin:60,color:'#4fc3f7',size:34,ai:'boss_b',atkCd:2.5,isBoss:true,desc:'第 2 星系 BOSS'},
+  boss_fire:{name:'烈焰領主',hp:600,atk:15,spd:2.0,exp:120,coin:80,color:'#ff5722',size:36,ai:'boss_c',atkCd:1.5,isBoss:true,desc:'第 3 星系 BOSS'},
+  boss_storm:{name:'風暴之眼',hp:800,atk:18,spd:2.2,exp:180,coin:120,color:'#ab47bc',size:38,ai:'boss_d',atkCd:1.3,isBoss:true,desc:'第 4 星系 BOSS'},
+  boss_void:{name:'虛空吞噬者',hp:1200,atk:22,spd:2.5,exp:250,coin:180,color:'#7c4dff',size:42,ai:'boss_e',atkCd:1.0,isBoss:true,desc:'第 5 星系 BOSS'},
+  boss_final:{name:'星蝕皇帝',hp:2000,atk:30,spd:2.8,exp:500,coin:300,color:'#ffeb3b',size:48,ai:'boss_f',atkCd:0.8,isBoss:true,desc:'最終 BOSS'},
+};
+const BOSS_IDS=['boss_mine','boss_ice','boss_fire','boss_storm','boss_void','boss_final'];
+function getBossForFloor(floor){
+  const idx=Math.min(Math.floor((floor-1)/5),BOSS_IDS.length-1);
+  return BOSS_IDS[idx];
+}
+function spawnEnemy(id,floor,x,y){
+  const def=ENEMIES[id];if(!def)return null;
+  const hpMul=1+floor*0.25, atkMul=1+floor*0.15;
+  const e={
+    id,def,x,y,
+    hp:Math.round(def.hp*hpMul*(def.isBoss?1.5:1)),
+    maxHp:Math.round(def.hp*hpMul*(def.isBoss?1.5:1)),
+    atk:Math.round(def.atk*atkMul),
+    spd:def.spd*(0.9+Math.random()*0.2),
+    atkCd:def.atkCd,atkTimer:def.atkCd*0.5,
+    size:def.size*(def.isBoss?1.5:1),
+    color:def.color,state:'live',
+    shield:0,slow:0,poison:0,poisonDmg:0,
+    stun:0,vx:0,vy:0,
+    flashT:0,spawnT:0.3,
+  };
+  if(def.isBoss){
+    e.phase=0;e.patternT=0;e.specialCd=4;e.specialTimer=2;
+    e.shield=e.maxHp*0.2;
+    AudioSys.play('boss');
+    floatTxt(G.W/2,G.H/3,'⚠ '+def.name+' 出現！','#ff5722',26);
+  }
+  return e;
+}
+</script>
+<script>/* ================= 關卡資料 (6 星系 × 10 關 + Boss) ================= */
+const SYSTEMS = [
+  {id:'nebula',name:'星雲帶',color:'#4fc3f7',desc:'平靜的星雲，偵察機巡邏',boss:'boss_mine',
+   enemies:['scout','drone','swarm'],waves:[3,4,5,5,6,6,7,8,8,10]},
+  {id:'frost',name:'冰晶星域',color:'#81d4fa',desc:'極寒之地，裝甲艦出沒',boss:'boss_ice',
+   enemies:['scout','tank','drone','swarm'],waves:[4,5,5,6,7,7,8,9,10,12]},
+  {id:'inferno',name:'煉獄星雲',color:'#ff7043',desc:'火焰地獄，轟炸機橫行',boss:'boss_fire',
+   enemies:['bomber','tank','elite','mine'],waves:[4,5,6,7,7,8,9,10,11,13]},
+  {id:'storm',name:'雷暴星域',color:'#ab47bc',desc:'電閃雷鳴，狙擊手潛伏',boss:'boss_storm',
+   enemies:['sniper','shielder','healer','elite'],waves:[5,6,7,8,9,9,10,11,12,14]},
+  {id:'void',name:'虛空深淵',color:'#7c4dff',desc:'黑暗虛空，補給艦與精英',boss:'boss_void',
+   enemies:['healer','elite','shielder','mine','sniper'],waves:[5,7,8,9,10,11,12,13,14,16]},
+  {id:'final',name:'星蝕核心',color:'#ffeb3b',desc:'最終決戰，全部敵人出動',boss:'boss_final',
+   enemies:['scout','drone','tank','bomber','elite','healer','shielder','sniper','mine','swarm'],
+   waves:[6,8,9,10,11,12,13,14,15,18]},
+];
+const EVENTS = [
+  {id:'merchant',title:'🚀 商人出現',desc:'一位神秘商人 offering 交易：',choices:[
+    {text:'花 30 金回復 40% 生命',fn:p=>{if(G.stageCoins>=30){G.stageCoins-=30;p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.4);toast('❤️ 回復 40%');return true;}toast('金幣不足');return false;}},
+    {text:'花 50 金隨機強化',fn:p=>{if(G.stageCoins>=50){G.stageCoins-=50;Game.applyRandomPassive();toast('✦ 強化獲得！');return true;}toast('金幣不足');return false;}},
+    {text:'不交易',fn:()=>true},
+  ]},
+  {id:'treasure',title:'💎 寶箱',desc:'發現一個神秘寶箱！',choices:[
+    {text:'打開 (+80-150 金幣)',fn:()=>{const c=rngInt(80,150);G.stageCoins+=c;toast('💰 +'+c+' 金幣');return true;}},
+    {text:'不碰它',fn:()=>true},
+  ]},
+  {id:'repair',title:'🔧 維修站',desc:'可以修復戰艦：',choices:[
+    {text:'花 20 金修復 30%',fn:p=>{if(G.stageCoins>=20){G.stageCoins-=20;p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.3);toast('❤️ 修復 30%');return true;}toast('金幣不足');return false;}},
+    {text:'離開',fn:()=>true},
+  ]},
+  {id:'gamble',title:'🎲 賭博',desc:'神秘商人：「敢賭嗎？」',choices:[
+    {text:'花 40 金賭 (50% 得 100 金)',fn:()=>{if(G.stageCoins>=40){G.stageCoins-=40;if(Math.random()<0.5){G.stageCoins+=100;toast('🎉 贏了！+100');}else{toast('💸 輸了...');}return true;}toast('金幣不足');return false;}},
+    {text:'不賭',fn:()=>true},
+  ]},
+  {id:'upgrade',title:'⚙️ 升級站',desc:'可選擇一項永久升級（本局）：',choices:[
+    {text:'攻擊力 +20%',fn:p=>{p.atk=Math.round(p.atk*1.2);toast('⚔️ 攻擊力提升');return true;}},
+    {text:'最大生命 +30%',fn:p=>{const m=p.maxHp;p.maxHp=Math.round(m*1.3);p.hp+=p.maxHp-m;toast('❤️ 生命提升');return true;}},
+    {text:'跳過',fn:()=>true},
+  ]},
+];
+function getEvent(){
+  return pick(EVENTS);
+}
+function stageName(sysIdx,stageIdx){
+  return SYSTEMS[sysIdx].name+' - 第'+(stageIdx+1)+'關';
+}
+</script>
+<script>/* ================= 玩家系統 ================= */
+const Player = {
+  create(shipId){
+    const ship=SHIPS[shipId];
+    const metaUp=Meta.getUpgrades();
+    const p={
+      shipId,ship,
+      x:G.W/2,y:G.H*0.75,
+      /* stats */
+      maxHp:Math.round(ship.hp*(1+metaUp.hp*0.1)),
+      hp:0,atk:Math.round(ship.atk*(1+metaUp.atk*0.1)),
+      def:Math.round(ship.def*(1+metaUp.def*0.1)),
+      spd:ship.spd,moveSpd:ship.spd,
+      crit:ship.crit,critDmg:1.5,
+      atkSpd:1.0,atkTimer:0,
+      /* combat */
+      weapons:[],passiveList:[],
+      shield:0,maxShield:0,shieldRegen:0,
+      regen:0,evade:0,thorns:0,
+      lifeSteal:0,coinMul:1+metaUp.coin*0.1,xpMul:1+metaUp.xp*0.1,
+      pierce:0,extraProj:0,bulletSpd:1,rangeMul:1,
+      cdMul:1.0,aoeMul:1,dotMul:1,
+      pickupRange:60,chainChance:0,
+      poisonOnHit:false,overkill:false,evadeCounter:false,
+      revive:0,novaInterval:0,novaTimer:0,
+      /* skill */
+      skillCd:0,skillMaxCd:ship.skillCd,
+      /* animation */
+      facing:-Math.PI/2,flashT:0,invuln:0,
+      /* orbit weapons */
+      orbitAngle:0,
+    };
+    p.hp=p.maxHp;
+    if(metaUp.shield>0){p.shield=metaUp.shield*10;p.maxShield=metaUp.shield*10;}
+    /* apply ship passive */
+    if(ship.passiveFn)ship.passiveFn(p);
+    return p;
+  },
+  update(d){
+    const p=G.player;if(!p)return;
+    /* movement */
+    const a=axis();
+    p.x+=a.x*p.moveSpd*60*d;
+    p.y+=a.y*p.moveSpd*60*d;
+    p.x=clamp(p.x,20,G.W-20);
+    p.y=clamp(p.y,20,G.H-20);
+    if(Math.abs(a.x)>0.05||Math.abs(a.y)>0.05){
+      p.facing=Math.atan2(a.y,a.x);
+    }
+    /* regen */
+    if(p.regen>0){
+      p.hp=Math.min(p.maxHp,p.hp+p.maxHp*p.regen*d);
+    }
+    /* shield regen */
+    if(p.shieldRegen>0&&p.maxShield>0){
+      p.shield=Math.min(p.maxShield,p.shield+p.maxShield*p.shieldRegen*d);
+    }
+    /* auto attack */
+    p.atkTimer-=d;
+    if(p.atkTimer<=0&&G.enemies.length>0){
+      p.atkTimer=1/p.atkSpd;
+      this.heroAttack();
+    }
+    /* skill cooldown */
+    if(p.skillCd>0)p.skillCd-=d;
+    /* invuln */
+    if(p.invuln>0)p.invuln-=d;
+    if(p.flashT>0)p.flashT-=d;
+    /* nova relic */
+    if(p.novaInterval>0){
+      p.novaTimer+=d;
+      if(p.novaTimer>=p.novaInterval){
+        p.novaTimer=0;
+        this.novaBlast();
+      }
+    }
+    /* orbit weapons update */
+    p.orbitAngle+=d*3;
+  },
+  heroAttack(){
+    const p=G.player;
+    const target=nearestEnemy();
+    if(!target)return;
+    const ang=Math.atan2(target.y-p.y,target.x-p.x);
+    const dmg=this.calcDmg(1);
+    this.fireProjectile(ang,dmg,'hero_bullet',p.facing);
+    /* extra projectiles */
+    if(p.extraProj>0){
+      for(let i=0;i<p.extraProj;i++){
+        const spread=(i+1)*0.15*(i%2===0?1:-1);
+        this.fireProjectile(ang+spread,dmg,'hero_bullet',p.facing);
+      }
+    }
+  },
+  calcDmg(mul){
+    const p=G.player;
+    const isCrit=Math.random()<p.crit;
+    let dmg=p.atk*mul*(0.92+Math.random()*0.16);
+    if(isCrit)dmg*=p.critDmg;
+    return{dmg:Math.round(dmg),crit:isCrit};
+  },
+  fireProjectile(ang,dmgResult,type,facing){
+    const p=G.player;
+    const dmg=typeof dmgResult==='object'?dmgResult.dmg:dmgResult;
+    const isCrit=typeof dmgResult==='object'?dmgResult.crit:false;
+    const spd=8*p.bulletSpd;
+    G.projectiles.push({
+      x:p.x,y:p.y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,
+      dmg,type:'hero',dmgType:type,color:isCrit?'#ffd54f':'#4fc3f7',
+      size:isCrit?4:3,life:0,max:80,pierce:p.pierce,pierceCount:0,
+      hitList:new Set(),isCrit,
+    });
+    AudioSys.play('hit');
+  },
+  takeDamage(dmg){
+    const p=G.player;if(!p||p.invuln>0)return;
+    /* evade check */
+    if(Math.random()<(p.evade||0)){
+      AudioSys.play('evade');
+      floatTxt(p.x,p.y-20,'MISS','#81d4fa',14);
+      return;
+    }
+    const actual=Math.max(1,dmg-p.def);
+    p.hp-=actual;
+    p.invuln=0.35;p.flashT=0.2;
+    AudioSys.play('hurt');
+    damageFlash();
+    floatTxt(p.x,p.y-20,'-'+actual,'#ef5350');
+    G.shake=0.3;
+    if(p.hp<=0){
+      p.hp=0;
+      if(p.revive>0){
+        p.revive--;
+        p.hp=Math.round(p.maxHp*0.5);
+        p.invuln=2;
+        AudioSys.play('heal');
+        floatTxt(p.x,p.y-30,'🔥 復活！','#ff7043',22);
+        return;
+      }
+      this.die();
+    }
+  },
+  die(){
+    G.state='dead';
+    AudioSys.play('death');
+    puff(G.player.x,G.player.y,'#ef5350',30,2,5);
+    setTimeout(()=>Game.endRun(false),1500);
+  },
+  novaBlast(){
+    const p=G.player;
+    AudioSys.play('explode');
+    puff(G.player.x,G.player.y,'#ffeb3b',40,3,6);
+    for(const e of G.enemies){
+      if(e.state!=='live')continue;
+      const d=dist(p,e);
+      if(d<300){
+        const dmg=Math.round(p.atk*2);
+        e.hp-=dmg;
+        e.flashT=0.2;
+        floatTxt(e.x,e.y-10,dmg+'','#ffeb3b',16);
+        if(e.hp<=0){e.state='dying';e.dieT=0.3;}
+      }
+    }
+    G.shake=0.5;
+  },
+  applyRelic(relicId){
+    const r=RELICS[relicId];if(!r||!r.fn)return;
+    r.fn(G.player);
+  },
+  applyPassive(passiveId){
+    const ps=PASSIVES[passiveId];if(!ps||!ps.fn)return;
+    ps.fn(G.player);
+    G.player.passiveList.push(passiveId);
+  },
+};
+function nearestEnemy(){
+  const p=G.player;if(!p)return null;
+  let best=null,bd=1e9;
+  for(const e of G.enemies){
+    if(e.state!=='live')continue;
+    const d=dist(p,e);if(d<bd){bd=d;best=e;}
+  }
+  return best;
+}
+</script>
+<script>/* ================= 敵人 AI / 行為 ================= */
+const EnemyAI = {
+  update(d){
+    const p=G.player;if(!p)return;
+    for(const e of G.enemies){
+      if(e.state!=='live')continue;
+      if(e.spawnT>0){e.spawnT-=d;continue;}
+      if(e.stun>0){e.stun-=d;continue;}
+      if(e.slow>0){e.slow-=d;}
+      /* poison tick */
+      if(e.poison>0){
+        e.hp-=e.poisonDmg*d;
+        e.poison-=d;
+        if(e.hp<=0){e.state='dying';e.dieT=0.3;continue;}
+      }
+      if(e.flashT>0)e.flashT-=d;
+      /* movement AI */
+      const spd=e.spd*(e.slow>0?0.4:1);
+      this[e.def.ai]?.call(this,e,p,spd,d)||this.chase(e,p,spd,d);
+      /* attack */
+      if(e.def.atkCd>0){
+        e.atkTimer-=d;
+        if(e.atkTimer<=0){
+          e.atkTimer=e.def.atkCd;
+          this.attack(e,p);
+        }
+      }
+      /* clamp to screen */
+      e.x=clamp(e.x,e.size,G.W-e.size);
+      e.y=clamp(e.y,e.size,G.H-e.size);
+    }
+  },
+  chase(e,p,spd,d){
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    e.x+=Math.cos(ang)*spd*60*d;
+    e.y+=Math.sin(ang)*spd*60*d;
+  },
+  strafe(e,p,spd,d){
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    const perp=ang+Math.PI/2;
+    const t=G.t*2+e.x*0.1;
+    e.x+=Math.cos(ang)*spd*0.3*60*d+Math.cos(perp)*Math.sin(t)*spd*0.7*60*d;
+    e.y+=Math.sin(ang)*spd*0.3*60*d+Math.sin(perp)*Math.sin(t)*spd*0.7*60*d;
+  },
+  kite(e,p,spd,d){
+    const d2=dist(e,p);
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    if(d2<180){e.x-=Math.cos(ang)*spd*60*d;e.y-=Math.sin(ang)*spd*60*d;}
+    else if(d2>280){e.x+=Math.cos(ang)*spd*0.5*60*d;e.y+=Math.sin(ang)*spd*0.5*60*d;}
+    else{
+      const perp=ang+Math.PI/2;
+      e.x+=Math.cos(perp)*spd*0.5*60*d;
+      e.y+=Math.sin(perp)*spd*0.5*60*d;
+    }
+  },
+  swarm(e,p,spd,d){
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    const jitter=Math.sin(G.t*5+e.x)*0.3;
+    e.x+=Math.cos(ang+jitter)*spd*60*d;
+    e.y+=Math.sin(ang+jitter)*spd*60*d;
+  },
+  support(e,p,spd,d){
+    /* stay near other enemies, away from player */
+    const d2=dist(e,p);
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    if(d2<200){
+      e.x-=Math.cos(ang)*spd*0.5*60*d;
+      e.y-=Math.sin(ang)*spd*0.5*60*d;
+    }
+    /* heal nearby allies */
+    if(e.atkTimer<=0){
+      for(const o of G.enemies){
+        if(o===e||o.state!=='live')continue;
+        if(dist(e,o)<150&&o.hp<o.maxHp){
+          o.hp=Math.min(o.maxHp,o.hp+Math.round(o.maxHp*0.05));
+          spark(e.x,e.y,'#81c784',4);
+        }
+      }
+    }
+  },
+  shield(e,p,spd,d){
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    if(dist(e,p)>200){e.x+=Math.cos(ang)*spd*0.4*60*d;e.y+=Math.sin(ang)*spd*0.4*60*d;}
+    /* shield nearby allies */
+    for(const o of G.enemies){
+      if(o===e||o.state!=='live'||o.isBoss)continue;
+      if(dist(e,o)<120&&o.shield<o.maxHp*0.1){
+        o.shield+=2;
+      }
+    }
+  },
+  snipe(e,p,spd,d){
+    const d2=dist(e,p);
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    if(d2<250){e.x-=Math.cos(ang)*spd*0.6*60*d;e.y-=Math.sin(ang)*spd*0.6*60*d;}
+    else if(d2>400){e.x+=Math.cos(ang)*spd*0.3*60*d;e.y+=Math.sin(ang)*spd*0.3*60*d;}
+  },
+  drift(e,p,spd,d){
+    /* slow drift toward player */
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    e.x+=Math.cos(ang)*spd*60*d;
+    e.y+=Math.sin(ang)*spd*60*d;
+  },
+  elite(e,p,spd,d){
+    /* chase + periodic strafe */
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    const phase=Math.sin(G.t*1.5+e.x);
+    const perp=ang+Math.PI/2;
+    e.x+=Math.cos(ang)*spd*0.6*60*d+Math.cos(perp)*phase*spd*0.4*60*d;
+    e.y+=Math.sin(ang)*spd*0.6*60*d+Math.sin(perp)*phase*spd*0.4*60*d;
+  },
+  /* BOSS AIs */
+  boss_a(e,p,spd,d){
+    /* pattern: chase → circle → charge */
+    e.patternT+=d;
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    const phase=Math.floor(e.patternT/4)%3;
+    if(phase===0){/* chase */
+      e.x+=Math.cos(ang)*spd*60*d;e.y+=Math.sin(ang)*spd*60*d;
+    }else if(phase===1){/* circle */
+      const perp=ang+Math.PI/2;
+      e.x+=Math.cos(perp)*spd*1.2*60*d;e.y+=Math.sin(perp)*spd*1.2*60*d;
+    }else{/* charge */
+      e.x+=Math.cos(ang)*spd*2.5*60*d;e.y+=Math.sin(ang)*spd*2.5*60*d;
+    }
+  },
+  boss_b(e,p,spd,d){
+    e.patternT+=d;
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    /* zigzag approach */
+    const zigzag=Math.sin(e.patternT*3)*0.6;
+    const perp=ang+Math.PI/2;
+    e.x+=Math.cos(ang)*spd*0.5*60*d+Math.cos(perp)*zigzag*spd*60*d;
+    e.y+=Math.sin(ang)*spd*0.5*60*d+Math.sin(perp)*zigzag*spd*60*d;
+  },
+  boss_c(e,p,spd,d){
+    e.patternT+=d;
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    /* aggressive chase with periodic explosion */
+    e.x+=Math.cos(ang)*spd*1.5*60*d;e.y+=Math.sin(ang)*spd*1.5*60*d;
+  },
+  boss_d(e,p,spd,d){
+    e.patternT+=d;
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    /* teleport-like: rapid strafe */
+    const t2=e.patternT%6;
+    if(t2<2){e.x+=Math.cos(ang+Math.PI/2)*spd*2*60*d;e.y+=Math.sin(ang+Math.PI/2)*spd*2*60*d;}
+    else if(t2<4){e.x+=Math.cos(ang- Math.PI/2)*spd*2*60*d;e.y+=Math.sin(ang-Math.PI/2)*spd*2*60*d;}
+    else{e.x+=Math.cos(ang)*spd*1.8*60*d;e.y+=Math.sin(ang)*spd*1.8*60*d;}
+  },
+  boss_e(e,p,spd,d){
+    e.patternT+=d;
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    /* slow powerful approach */
+    e.x+=Math.cos(ang)*spd*0.8*60*d;e.y+=Math.sin(ang)*spd*0.8*60*d;
+  },
+  boss_f(e,p,spd,d){
+    e.patternT+=d;
+    const ang=Math.atan2(p.y-e.y,p.x-e.x);
+    const phase=Math.floor(e.patternT/3)%4;
+    if(phase===0){e.x+=Math.cos(ang)*spd*1.5*60*d;e.y+=Math.sin(ang)*spd*1.5*60*d;}
+    else if(phase===1){const perp=ang+Math.PI/2;e.x+=Math.cos(perp)*spd*2.5*60*d;e.y+=Math.sin(perp)*spd*2.5*60*d;}
+    else if(phase===2){e.x-=Math.cos(ang)*spd*60*d;e.y-=Math.sin(ang)*spd*60*d;}
+    else{e.x+=Math.cos(ang)*spd*2*60*d;e.y+=Math.sin(ang)*spd*2*60*d;}
+  },
+  attack(e,p){
+    const def=e.def;
+    if(def.isBoss){
+      this.bossAttack(e,p);
+    }else{
+      /* normal enemy melee/ranged attack */
+      const d2=dist(e,p);
+      if(d2<e.size+25){
+        Player.takeDamage(e.atk);
+      }
+    }
+  },
+  bossAttack(e,p){
+    const def=e.def;
+    e.specialTimer-=0.016;
+    if(e.specialTimer<=0){
+      e.specialTimer=e.specialCd;
+      /* boss special: fire projectiles - fewer, weaker bullets */
+      const nBullets=e.isBoss?5:3;
+      for(let i=0;i<nBullets;i++){
+        const ang=Math.atan2(p.y-e.y,p.x-e.x)+((i-nBullets/2)*0.35);
+        G.projectiles.push({
+          x:e.x,y:e.y,vx:Math.cos(ang)*4,vy:Math.sin(ang)*4,
+          dmg:Math.round(def.atk*0.6),type:'enemy',dmgType:'boss_bullet',
+          color:def.color,size:5,life:0,max:120,pierce:0,pierceCount:0,
+          hitList:new Set(),
+        });
+      }
+      spark(e.x,e.y,def.color,12);
+    }
+    /* also melee if close */
+    if(dist(e,p)<e.size+30){
+      Player.takeDamage(e.atk);
+    }
+  },
+};
+</script>
+<script>/* ================= 子彈引擎 / 碰撞 / 傷害計算 ================= */
+const Combat = {
+  updateProjectiles(d){
+    const p=G.player;
+    for(let i=G.projectiles.length-1;i>=0;i--){
+      const b=G.projectiles[i];
+      b.x+=b.vx*60*d;b.y+=b.vy*60*d;b.life+=d*60;
+      if(b.life>b.max||b.x<-50||b.x>G.W+50||b.y<-50||b.y>G.H+50){
+        G.projectiles.splice(i,1);continue;
+      }
+      if(b.type==='hero'){
+        this.heroHitEnemy(b,i);
+      }else if(b.type==='enemy'){
+        this.enemyHitPlayer(b,i);
+      }
+    }
+  },
+  heroHitEnemy(b,idx){
+    for(const e of G.enemies){
+      if(e.state!=='live')continue;
+      if(b.hitList.has(e))continue;
+      if(dist(b,e)<e.size+b.size){
+        b.hitList.add(e);
+        /* shield first */
+        if(e.shield>0){
+          const absorbed=Math.min(e.shield,b.dmg);
+          e.shield-=absorbed;const remaining=b.dmg-absorbed;
+          if(remaining>0)e.hp-=remaining;
+        }else{
+          e.hp-=b.dmg;
+        }
+        e.flashT=0.15;
+        /* life steal */
+        const p=G.player;
+        if(p.lifeSteal>0){
+          const heal=Math.round(b.dmg*p.lifeSteal);
+          p.hp=Math.min(p.maxHp,p.hp+heal);
+          if(heal>0)floatTxt(p.x,p.y-25,'+'+heal,'#66bb6a',12);
+        }
+        /* poison */
+        if(p.poisonOnHit){
+          e.poison=3;e.poisonDmg=Math.round(p.atk*0.15);
+        }
+        /* effects */
+        AudioSys.play(b.isCrit?'crit':'hit');
+        if(b.isCrit)floatTxt(e.x,e.y-10,'暴擊！','#ffd54f',16);
+        floatTxt(e.x,e.y-10,'-'+b.dmg,b.isCrit?'#ffd54f':'#ef5350');
+        spark(e.x,e.y,b.color,4);
+        /* chain lightning */
+        if(p.chainChance>0&&Math.random()<p.chainChance){
+          this.chainLightning(e,b.dmg);
+        }
+        /* thorns on hit (not here, thorns is when player is hit) */
+        /* pierce */
+        if(b.pierceCount<b.pierce){
+          b.pierceCount++;
+        }else{
+          G.projectiles.splice(idx,1);
+        }
+        /* check kill */
+        if(e.hp<=0){
+          this.killEnemy(e);
+        }
+        break;
+      }
+    }
+  },
+  enemyHitPlayer(b,idx){
+    const p=G.player;if(!p||p.invuln>0)return;
+    if(dist(b,p)<18){
+      Player.takeDamage(b.dmg);
+      G.projectiles.splice(idx,1);
+    }
+  },
+  chainLightning(source,dmg){
+    const p=G.player;
+    let last=source;let chains=2;
+    const hit=new Set([source]);
+    while(chains>0){
+      let closest=null,cd=200;
+      for(const e of G.enemies){
+        if(e.state!=='live'||hit.has(e))continue;
+        const d=dist(last,e);
+        if(d<cd){cd=d;closest=e;}
+      }
+      if(!closest)break;
+      hit.add(closest);
+      const chainDmg=Math.round(dmg*0.6);
+      closest.hp-=chainDmg;
+      closest.flashT=0.2;
+      floatTxt(closest.x,closest.y-10,'-'+chainDmg,'#ffd54f',14);
+      spark(closest.x,closest.y,'#ffd54f',3);
+      /* draw lightning line visually (via particle) */
+      G.particles.push({
+        x:last.x,y:last.y,vx:(closest.x-last.x)*0.05,vy:(closest.y-last.y)*0.05,
+        life:0,max:6,size:2,color:'#ffd54f',type:'spark',
+      });
+      if(closest.hp<=0)this.killEnemy(closest);
+      last=closest;chains--;
+    }
+  },
+  killEnemy(e){
+    e.state='dying';e.dieT=0.3;
+    const p=G.player;
+    /* rewards */
+    const coinGain=Math.round((e.def.coin||2)*p.coinMul);
+    G.stageCoins+=coinGain;
+    G.stageKills++;
+    G.totalKills++;
+    /* exp */
+    const expGain=Math.round((e.def.exp||3)*p.xpMul);
+    this.giveExp(expGain);
+    /* overkill explosion */
+    if(p.overkill&&e.def.isBoss){
+      puff(e.x,e.y,'#ff7043',20,2,4);
+    }
+    /* drops */
+    if(Math.random()<0.08){
+      G.drops.push({x:e.x,y:e.y,type:'hp',life:0,max:300,size:8});
+    }else if(Math.random()<0.05){
+      G.drops.push({x:e.x,y:e.y,type:'coin',life:0,max:300,size:6,amount:Math.round(coinGain*0.5)});
+    }
+    /* effects */
+    puff(e.x,e.y,e.color,8,1.5,3);
+    AudioSys.play('kill');
+    floatTxt(e.x,e.y-15,'+'+coinGain+'💰','#ffb74d',13);
+    /* boss check */
+    if(e.def.isBoss){
+      G.bossAlive=false;
+      AudioSys.play('explode');
+      puff(e.x,e.y,e.color,30,3,6);
+      G.shake=0.6;
+      floatTxt(G.W/2,G.H/3,'🎉 BOSS 擊敗！','#ffb74d',28);
+      /* check if stage cleared (after boss, wave done) */
+      const alive=G.enemies.filter(o=>o.state==='live').length;
+      if(alive<=0){
+        setTimeout(()=>Game.stageClear(),800);
+      }
+    }
+  },
+  giveExp(amount){
+    const p=G.player;
+    if(!p)return;
+    p._exp=(p._exp||0)+amount;
+    const need=p._expNeed||20;
+    if(p._exp>=need){
+      p._exp-=need;
+      p._expNeed=Math.round(need*1.18);
+      p._level=(p._level||1)+1;
+      AudioSys.play('lvup');
+      floatTxt(p.x,p.y-40,'⬆ Lv.'+p._level,'#66bb6a',22);
+      G.state='upgrade';
+      UI.showUpgrade();
+    }
+  },
+  updateDrops(d){
+    const p=G.player;if(!p)return;
+    for(let i=G.drops.length-1;i>=0;i--){
+      const dr=G.drops[i];
+      dr.life+=d*60;
+      if(dr.life>dr.max){G.drops.splice(i,1);continue;}
+      /* auto pickup when near */
+      if(dist(dr,p)<p.pickupRange){
+        if(dr.type==='hp'){
+          p.hp=Math.min(p.maxHp,p.hp+Math.round(p.maxHp*0.15));
+          floatTxt(dr.x,dr.y,'+❤️','#66bb6a',14);
+        }else if(dr.type==='coin'){
+          G.stageCoins+=dr.amount;
+          floatTxt(dr.x,dr.y,'+'+dr.amount+'💰','#ffb74d',14);
+        }
+        AudioSys.play('pickup');
+        G.drops.splice(i,1);
+      }
+    }
+  },
+  contactDamage(d){
+    const p=G.player;if(!p||p.invuln>0)return;
+    for(const e of G.enemies){
+      if(e.state!=='live'||e.spawnT>0)continue;
+      if(dist(e,p)<e.size+14){
+        Player.takeDamage(e.atk);
+        /* thorns */
+        if(p.thorns>0){
+          const thornDmg=Math.round(e.atk*p.thorns);
+          e.hp-=thornDmg;
+          e.flashT=0.15;
+          floatTxt(e.x,e.y-10,'-'+thornDmg,'#ab47bc',13);
+          if(e.hp<=0)this.killEnemy(e);
+        }
+      }
+    }
+  },
+  cleanupDead(){
+    for(let i=G.enemies.length-1;i>=0;i--){
+      const e=G.enemies[i];
+      if(e.state==='dying'){
+        e.dieT-=G.dt;
+        if(e.dieT<=0)G.enemies.splice(i,1);
+      }
+    }
+  },
+};
+</script>
+<script>/* ================= 關卡推進 / 波次生成 / 事件 ================= */
+const Stage = {
+  spawnTimer:0,
+  /* 當前星系/關卡索引 (flat: floor 1-60) */
+  sysIdx(){return Math.floor((G.floor-1)/10);},
+  stageIdx(){return (G.floor-1)%10;},
+  curSystem(){return SYSTEMS[this.sysIdx()]||SYSTEMS[0];},
+  curBoss(){return getBossForFloor(G.floor);},
+  startFloor(floor){
+    G.floor=floor;G.wave=0;
+    G.enemies=[];G.projectiles=[];G.drops=[];
+    G.waveTimer=0;G.waveDelay=1.5;
+    G.stageKills=0;G.stageCoins=0;
+    G.bossSpawned=false;G.bossAlive=false;
+    G.stageCleared=false;
+    this.spawnTimer=0;
+    const sys=this.curSystem();
+    G.waveMax=sys.waves[this.stageIdx()]||8;
+    G.waveDelay=2.5;
+    floatTxt(G.W/2,G.H*0.35,sys.name+' - 第'+(this.stageIdx()+1)+'關',sys.color,22);
+  },
+  update(d){
+    if(G.stageCleared)return;
+    const p=G.player;if(!p)return;
+    const sys=this.curSystem();
+    /* spawn waves */
+    if(!G.bossSpawned&&G.enemies.filter(e=>e.state==='live').length<6){
+      this.spawnTimer+=d;
+      if(this.spawnTimer>=G.waveDelay&&G.wave<G.waveMax){
+        this.spawnTimer=0;
+        G.wave++;
+        this.spawnWave(sys);
+        G.waveDelay=Math.max(0.8,2.0-G.wave*0.08);
+      }
+    }
+    /* boss wave */
+    if(G.wave>=G.waveMax&&!G.bossSpawned&&G.enemies.filter(e=>e.state==='live').length===0){
+      G.bossSpawned=true;
+      this.spawnBoss(sys);
+    }
+    /* check stage clear (boss killed + no live enemies) */
+    if(G.bossSpawned&&!G.bossAlive&&G.enemies.filter(e=>e.state==='live').length===0){
+      if(!G.stageCleared){
+        G.stageCleared=true;
+        setTimeout(()=>Game.stageClear(),500);
+      }
+    }
+    /* random event on certain waves */
+    if(G.wave>1&&G.wave<G.waveMax&&G.wave%3===0&&Math.random()<0.15&&!G._eventFired){
+      G._eventFired=true;
+      UI.showEvent(getEvent());
+    }
+    if(G.wave%3!==0)G._eventFired=false;
+  },
+  spawnWave(sys){
+    const enemies=sys.enemies;
+    const count=rngInt(2,4)+Math.floor(G.wave*0.3);
+    for(let i=0;i<count;i++){
+      const eid=pick(enemies);
+      const x=rng(40,G.W-40);
+      const y=rng(-60,-20);
+      const e=spawnEnemy(eid,G.floor,x,y);
+      if(e)G.enemies.push(e);
+    }
+  },
+  spawnBoss(sys){
+    const bossId=sys.boss;
+    const e=spawnEnemy(bossId,G.floor,G.W/2,-50);
+    if(e){
+      G.enemies.push(e);
+      G.bossAlive=true;
+    }
+  },
+  getRewards(count){
+    count=count||3;
+    const rewards=[];
+    /* weapon reward */
+    if(G.player.weapons.length<4){
+      const tier=G.floor<=10?1:G.floor<=30?2:3;
+      const pool=getWeaponsByTier(tier).filter(w=>!G.player.weapons.includes(w));
+      if(pool.length>0)rewards.push({type:'weapon',id:pick(pool)});
+    }
+    /* passive reward */
+    const pPool=getPassivesByTier(G.floor<=15?1:G.floor<=35?2:3)
+      .filter(k=>!G.player.passiveList.includes(k)&&(!PASSIVES[k].req||G.player.passiveList.includes(PASSIVES[k].req)));
+    if(pPool.length>0)rewards.push({type:'passive',id:pick(pPool)});
+    /* relic reward */
+    rewards.push({type:'relic',id:randomRelic()});
+    /* fill rest with passives */
+    while(rewards.length<count){
+      const pool=getPassivesByTier(rngInt(1,2)).filter(k=>!G.player.passiveList.includes(k));
+      if(pool.length>0)rewards.push({type:'passive',id:pick(pool)});
+      else rewards.push({type:'coin',amount:rngInt(20,60)+G.floor*5});
+    }
+    return shuffle(rewards).slice(0,count);
+  },
+  getBossRewards(){
+    const rewards=[];
+    rewards.push({type:'relic',id:randomRelic()});
+    rewards.push({type:'relic',id:randomRelic()});
+    /* weapon upgrade */
+    const tier=G.floor<=10?1:G.floor<=30?2:3;
+    const pool=getWeaponsByTier(tier).filter(w=>!G.player.weapons.includes(w));
+    if(pool.length>0)rewards.push({type:'weapon',id:pick(pool)});
+    else rewards.push({type:'coin',amount:50+G.floor*8});
+    return rewards;
+  },
+  /* apply weapon to player (additive, max 4 slots) */
+  giveWeapon(weaponId){
+    const p=G.player;
+    if(p.weapons.includes(weaponId)){
+      toast('已有 '+WPN_TYPES[weaponId].name);return;
+    }
+    if(p.weapons.length>=4){
+      /* replace weakest tier */
+      let weakest=0,lowestTier=9;
+      for(let i=0;i<p.weapons.length;i++){
+        const t=WPN_TYPES[p.weapons[i]]?.tier||1;
+        if(t<lowestTier){lowestTier=t;weakest=i;}
+      }
+      p.weapons[weakest]=weaponId;
+    }else{
+      p.weapons.push(weaponId);
+    }
+    if(!p._wcd)p._wcd={};
+    p._wcd[weaponId]=0;/* reset cooldown so it fires immediately */
+    toast('🔫 '+WPN_TYPES[weaponId].name);
+  },
+  /* weapon fire (called per frame) */
+  fireWeapons(d){
+    const p=G.player;if(!p)return;
+    for(const wid of p.weapons){
+      const def=WPN_TYPES[wid];if(!def)continue;
+      const cd=def.cd*(p.cdMul||1);
+      if(!p._wcd)p._wcd={};
+      if(!p._wcd[wid])p._wcd[wid]=0;
+      p._wcd[wid]-=d;
+      if(p._wcd[wid]<=0){
+        p._wcd[wid]=cd;
+        this.fireSingleWeapon(wid,def,p);
+      }
+    }
+  },
+  fireSingleWeapon(wid,def,p){
+    const target=nearestEnemy();
+    const ang=target?Math.atan2(target.y-p.y,target.x-p.x):-Math.PI/2;
+    const dmg=Math.round(p.atk*(def.dmg/10)*(0.92+Math.random()*0.16));
+    const spd=def.spd*p.bulletSpd;
+    const range=def.range*p.rangeMul;
+    switch(def.type){
+      case 'beam':
+        for(let i=0;i<(def.projN||1);i++){
+          const a=ang+(i-(def.projN||1-1)/2)*0.1;
+          G.projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,
+            dmg,type:'hero',dmgType:'weapon',color:def.color,size:3,life:0,max:range/spd,
+            pierce:p.pierce,pierceCount:0,hitList:new Set()});
+        }
+        AudioSys.play('hit');
+        break;
+      case 'homing':
+        for(let i=0;i<(def.projN||1);i++){
+          const a=ang+rng(-0.3,0.3);
+          G.projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,
+            dmg,type:'hero',dmgType:'weapon',color:def.color,size:4,life:0,max:range/spd,
+            pierce:0,pierceCount:0,hitList:new Set(),homing:true,homingStr:3});
+        }
+        AudioSys.play('missile');
+        break;
+      case 'scatter':
+        for(let i=0;i<(def.projN||5);i++){
+          const a=ang+((i-(def.projN||5)/2+0.5)*((def.spread||0.5)/(def.projN||5)));
+          G.projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,
+            dmg,type:'hero',dmgType:'weapon',color:def.color,size:2.5,life:0,max:range/spd,
+            pierce:0,pierceCount:0,hitList:new Set()});
+        }
+        AudioSys.play('hit');
+        break;
+      case 'chain':
+        if(target){
+          Combat.chainLightning(target,dmg);
+          AudioSys.play('skill');
+        }
+        break;
+      case 'shockwave':
+        for(let i=0;i<12;i++){
+          const a=(i/12)*Math.PI*2;
+          G.projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*spd*0.8,vy:Math.sin(a)*spd*0.8,
+            dmg,type:'hero',dmgType:'weapon',color:def.color,size:4,life:0,max:range/(spd*0.8),
+            pierce:99,pierceCount:0,hitList:new Set()});
+        }
+        AudioSys.play('explode');
+        break;
+      case 'flame':
+        for(let i=0;i<3;i++){
+          const a=ang+rng(-0.2,0.2);
+          G.projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*spd*2,vy:Math.sin(a)*spd*2,
+            dmg:Math.round(dmg*0.4),type:'hero',dmgType:'weapon',color:def.color,size:3,life:0,max:15,
+            pierce:99,pierceCount:0,hitList:new Set()});
+        }
+        break;
+      case 'frost':
+        G.projectiles.push({x:p.x,y:p.y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,
+          dmg,type:'hero',dmgType:'weapon',color:def.color,size:5,life:0,max:range/spd,
+          pierce:2,pierceCount:0,hitList:new Set(),slow:true,slowDur:1.5});
+        AudioSys.play('hit');
+        break;
+      case 'pulse':
+        G.projectiles.push({x:p.x,y:p.y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,
+          dmg:dmg*1.5,type:'hero',dmgType:'weapon',color:def.color,size:6,life:0,max:range/spd,
+          pierce:1,pierceCount:0,hitList:new Set()});
+        AudioSys.play('hit');
+        break;
+      default:
+        G.projectiles.push({x:p.x,y:p.y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,
+          dmg,type:'hero',dmgType:'weapon',color:def.color,size:3,life:0,max:range/spd,
+          pierce:p.pierce,pierceCount:0,hitList:new Set()});
+        AudioSys.play('hit');
+    }
+    /* homing post-process */
+    for(const b of G.projectiles){
+      if(b.homing){
+        const tgt=nearestEnemy();
+        if(tgt){
+          const a=Math.atan2(tgt.y-b.y,tgt.x-b.x);
+          b.vx=lerp(b.vx,Math.cos(a)*spd,b.homingStr*0.016);
+          b.vy=lerp(b.vy,Math.sin(a)*spd,b.homingStr*0.016);
+        }
+      }
+      if(b.slow&&b.hitList.size>0){
+        /* slow already handled in hit */
+      }
+    }
+    /* apply slow on hit for frost */
+    if(def.type==='frost'){
+      for(const e of G.enemies){
+        if(e.state==='live'&&dist(p,e)<range&&!e._frostHit){
+          e.slow=Math.max(e.slow,def.cd);
+          e._frostHit=true;
+          setTimeout(()=>{e._frostHit=false;},def.cd*1000);
+        }
+      }
+    }
+  },
+};
+</script>
+<script>/* ================= 存檔系統 ================= */
+const SAVE_KEY = 'starfall_odyssey_v1';
+const Save = {
+  d: null,
+  defaults(){
+    return {
+      v:1,
+      ship:'viper',          // last used ship
+      coins:0,               // meta currency
+      bestFloor:0,           // farthest floor reached
+      totalKills:0,
+      totalRuns:0,
+      bestRunFloor:0,
+      metaUpgrades:{},       // {upgradeId: level}
+      unlockedShips:['striker','guardian','viper'],
+      killedEnemies:{},      // {enemyId: count}
+      achievements:{},
+      currentRun:null,       // in-progress run or null
+    };
+  },
+  load(){
+    try{
+      const raw = localStorage.getItem(SAVE_KEY);
+      if(raw){
+        const d = JSON.parse(raw);
+        const def = this.defaults();
+        // merge with defaults (handle old saves)
+        this.d = Object.assign(def, d);
+        // ensure metaUpgrades exists
+        if(!this.d.metaUpgrades) this.d.metaUpgrades = {};
+        if(!this.d.unlockedShips) this.d.unlockedShips = ['viper'];
+        if(!this.d.killedEnemies) this.d.killedEnemies = {};
+        if(!this.d.achievements) this.d.achievements = {};
+      } else {
+        this.d = this.defaults();
+      }
+    }catch(e){
+      this.d = this.defaults();
+    }
+  },
+  save(){
+    try{
+      localStorage.setItem(SAVE_KEY, JSON.stringify(this.d));
+    }catch(e){}
+  },
+  reset(){
+    localStorage.removeItem(SAVE_KEY);
+    this.d = this.defaults();
+    this.save();
+  },
+  exportStr(){
+    return btoa(JSON.stringify(this.d));
+  },
+  importStr(s){
+    try{
+      this.d = JSON.parse(atob(s));
+      this.save();
+      return true;
+    }catch(e){
+      return false;
+    }
+  },
+  // current run persistence
+  saveRun(run){
+    this.d.currentRun = run;
+    this.save();
+  },
+  clearRun(){
+    this.d.currentRun = null;
+    this.save();
+  },
+  hasRun(){
+    return !!this.d.currentRun;
+  },
+  // meta
+  addCoins(n){ this.d.coins += n; this.save(); },
+  spendCoins(n){ if(this.d.coins >= n){ this.d.coins -= n; this.save(); return true; } return false; },
+  metaLv(id){ return this.d.metaUpgrades[id] || 0; },
+  addMeta(id){ this.d.metaUpgrades[id] = (this.d.metaUpgrades[id]||0) + 1; this.save(); },
+  unlockShip(id){ if(!this.d.unlockedShips.includes(id)) this.d.unlockedShips.push(id); this.save(); },
+  isShipUnlocked(id){ return this.d.unlockedShips.includes(id); },
+  recordKill(id){ this.d.killedEnemies[id] = (this.d.killedEnemies[id]||0) + 1; },
+};
+Save.load();
+</script>
+<script>/* ================= 元進度 / 永久升級商店 ================= */
+const Meta = {
+  upgrades: [
+    {id:'hp',name:'艦體強化',icon:'❤️',desc:'最大生命 +10%/級',max:10,baseCost:20,scaling:1.6},
+    {id:'atk',name:'武器強化',icon:'⚔️',desc:'攻擊力 +10%/級',max:10,baseCost:25,scaling:1.6},
+    {id:'def',name:'裝甲強化',icon:'🛡️',desc:'防禦 +10%/級',max:8,baseCost:20,scaling:1.5},
+    {id:'coin',name:'採礦效率',icon:'💰',desc:'金幣 +10%/級',max:8,baseCost:15,scaling:1.5},
+    {id:'xp',name:'經驗加成',icon:'📊',desc:'經驗 +10%/級',max:6,baseCost:30,scaling:1.7},
+    {id:'shield',name:'護盾系統',icon:'🔵',desc:'開局護盾 +10',max:5,baseCost:40,scaling:2.0},
+    {id:'heal',name:'維修協議',icon:'💚',desc:'回復效率 +8%/級',max:5,baseCost:35,scaling:1.8},
+  ],
+  init(){ /* nothing dynamic needed */ },
+  getUpgrades(){
+    const r={};
+    for(const u of this.upgrades){
+      r[u.id]=Save.metaLv(u.id);
+    }
+    return r;
+  },
+  cost(upId){
+    const u=this.upgrades.find(x=>x.id===upId);if(!u)return Infinity;
+    const lv=Save.metaLv(upId);
+    if(lv>=u.max)return Infinity;
+    return Math.round(u.baseCost*Math.pow(u.scaling,lv));
+  },
+  buy(upId){
+    const cost=this.cost(upId);
+    if(Save.spendCoins(cost)){
+      Save.addMeta(upId);
+      AudioSys.play('coin');
+      toast('✦ 升級完成！');
+      return true;
+    }
+    toast('金幣不足');
+    return false;
+  },
+  applyRunStartBonus(p){
+    const u=this.getUpgrades();
+    if(u.heal>0)p.regen=(p.regen||0)+u.heal*0.008;
+  },
+  /* check unlocks */
+  checkUnlocks(){
+    const totalKills=Save.d.totalKills||0;
+    const bestFloor=Save.d.bestFloor||0;
+    const unlocks=[
+      {ship:'striker',cond:true},
+      {ship:'phantom',cond:bestFloor>=10||totalKills>=100},
+      {ship:'artillery',cond:bestFloor>=20||totalKills>=300},
+      {ship:'oracle',cond:bestFloor>=40||totalKills>=800},
+      {ship:'viper',cond:true}, // always unlocked for demo
+      {ship:'titan',cond:bestFloor>=50||totalKills>=1500},
+    ];
+    for(const u of unlocks){
+      if(u.cond&&Save.isShipUnlocked(u.ship)){
+        /* already unlocked */
+      }else if(u.cond){
+        Save.unlockShip(u.ship);
+        toast('🚀 解鎖新戰艦: '+SHIPS[u.ship].name);
+      }
+    }
+  },
+};
+</script>
+<script>/* ================= Game 控制器 ================= */
+const Game = {
+  startRun(shipId){
+    G.player=Player.create(shipId);
+    G.player._exp=0;G.player._expNeed=20;G.player._level=1;
+    G.player.weapons=['laser1'];
+    G.player.passiveList=[];G.player._wcd={};
+    Meta.applyRunStartBonus(G.player);
+    G.t=0;G.totalKills=0;G.floor=1;
+    G.enemies=[];G.projectiles=[];G.particles=[];G.floaters=[];G.drops=[];
+    G.screenStack=['title','ship'];
+    UI.showGame();Stage.startFloor(1);
+    AudioSys.play('skill');toast('🚀 遠征開始！');
+  },
+  continueRun(){
+    const run=Save.d.currentRun;if(!run)return false;
+    G.player=Player.create(run.shipId);
+    G.player._exp=run.exp;G.player._expNeed=run.expNeed;G.player._level=run.level;
+    G.player.weapons=run.weapons||['laser1'];
+    G.player.passiveList=run.passives||[];G.player._wcd={};
+    G.player.hp=run.hp;G.player.maxHp=run.maxHp;
+    G.player.atk=run.atk;G.player.def=run.def;
+    G.stageCoins=run.coins||0;G.totalKills=0;G.t=0;
+    G.enemies=[];G.projectiles=[];G.particles=[];G.floaters=[];G.drops=[];
+    Meta.applyRunStartBonus(G.player);
+    UI.showGame();Stage.startFloor(run.floor);G.wave=run.wave||0;
+    toast('▶ 繼續遠征 第'+run.floor+'關');return true;
+  },
+  update(d){
+    const p=G.player;if(!p)return;
+    Player.update(d);
+    Stage.update(d);
+    EnemyAI.update(d);
+    Stage.fireWeapons(d);
+    Combat.updateProjectiles(d);
+    Combat.contactDamage(d);
+    Combat.updateDrops(d);
+    Combat.cleanupDead();
+    UI.updateHUD();
+    /* periodic autosave */
+    if(Math.floor(G.t)%15===0&&Math.floor(G.t)!==Math.floor(G.t-d)){
+      UI.autoSaveRun();
+    }
+  },
+  togglePause(){
+    if(G.state==='playing'){
+      G.state='paused';G.paused=true;
+      $('pause-overlay').classList.add('show');
+    }else if(G.state==='paused'){
+      G.state='playing';G.paused=false;
+      $('pause-overlay').classList.remove('show');
+      G.last=performance.now();
+    }
+  },
+  useSkill(idx){
+    if(G.state!=='playing'||!G.player)return;
+    const p=G.player;
+    if(p.skillCd>0)return;
+    p.skillCd=p.skillMaxCd*(p.cdMul||1);
+    AudioSys.play('skill');
+    switch(p.ship.skill){
+      case 'scatter':
+        for(let i=0;i<12;i++){
+          const a=(i/12)*Math.PI*2-Math.PI/2;
+          G.projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*7,vy:Math.sin(a)*7,
+            dmg:Math.round(p.atk*0.8),type:'hero',dmgType:'skill',color:'#4fc3f7',size:4,
+            life:0,max:50,pierce:1,pierceCount:0,hitList:new Set()});
+        }
+        puff(p.x,p.y,'#4fc3f7',12,2,4);break;
+      case 'railgun':
+        const tgt=nearestEnemy();
+        const ang=tgt?Math.atan2(tgt.y-p.y,tgt.x-p.x):-Math.PI/2;
+        for(let i=0;i<5;i++){
+          G.projectiles.push({x:p.x,y:p.y,vx:Math.cos(ang)*16,vy:Math.sin(ang)*16,
+            dmg:Math.round(p.atk*2.5),type:'hero',dmgType:'skill',color:'#ef5350',size:5,
+            life:0,max:60,pierce:99,pierceCount:0,hitList:new Set()});
+        }
+        puff(p.x,p.y,'#ef5350',8,3,3);break;
+      case 'barrier':
+        p.shield=Math.min(p.maxShield+50,p.shield+Math.round(p.maxHp*0.4));
+        p.maxShield=Math.max(p.maxShield,p.shield);
+        puff(p.x,p.y,'#66bb6a',10,1.5,3);AudioSys.play('shield');
+        floatTxt(p.x,p.y-30,'🛡️ 護盾','#66bb6a',18);break;
+      case 'blink':
+        const ba=ang||(-Math.PI/2);
+        p.x+=Math.cos(ba)*120;p.y+=Math.sin(ba)*120;
+        p.x=clamp(p.x,20,G.W-20);p.y=clamp(p.y,20,G.H-20);
+        p.invuln=1;puff(p.x,p.y,'#ab47bc',8,2,3);break;
+      case 'orbital':
+        for(let i=0;i<8;i++){
+          const rx=rng(50,G.W-50),ry=rng(50,G.H-50);
+          setTimeout(()=>{
+            if(G.state!=='playing')return;
+            puff(rx,ry,'#ff7043',6,2,3);
+            for(const e of G.enemies){
+              if(e.state!=='live')continue;
+              if(dist({x:rx,y:ry},e)<80){
+                const dmg=Math.round(p.atk*1.5);
+                e.hp-=dmg;e.flashT=0.2;
+                floatTxt(e.x,e.y-10,'-'+dmg,'#ff7043',14);
+                if(e.hp<=0)Combat.killEnemy(e);
+              }
+            }
+          },i*200);
+        }break;
+      case 'timewarp':
+        G.speed=2;setTimeout(()=>{G.speed=1;},5000);
+        floatTxt(G.W/2,G.H*0.3,'⏳ 時間扭曲！','#ffd54f',22);break;
+      case 'poisoncloud':
+        for(const e of G.enemies){
+          if(e.state!=='live')continue;
+          if(dist(p,e)<200){e.poison=5;e.poisonDmg=Math.round(p.atk*0.3);}
+        }
+        puff(p.x,p.y,'#69f0ae',15,2,4);
+        floatTxt(p.x,p.y-30,'☠️ 毒霧','#69f0ae',18);break;
+      case 'supernova':
+        for(const e of G.enemies){
+          if(e.state!=='live')continue;
+          const dmg=Math.round(p.atk*3);
+          e.hp-=dmg;e.flashT=0.3;
+          floatTxt(e.x,e.y-10,'-'+dmg,'#ffeb3b',18);
+          if(e.hp<=0)Combat.killEnemy(e);
+        }
+        puff(p.x,p.y,'#ffeb3b',30,4,5);G.shake=0.8;AudioSys.play('explode');break;
+    }
+  },
+  stageClear(){
+    if(G.state!=='playing')return;
+    G.stageCoins+=10+G.floor*3;
+    if(G.floor>Save.d.bestFloor)Save.d.bestFloor=G.floor;
+    Save.d.totalKills=(Save.d.totalKills||0)+G.totalKills;
+    Meta.checkUnlocks();
+    if(G.stageCleared&&G.floor>=60){this.endRun(true);return;}
+    const isBossWave=G.bossSpawned&&!G.bossAlive;
+    const rewards=isBossWave?Stage.getBossRewards():Stage.getRewards(3);
+    AudioSys.play('lvup');
+    floatTxt(G.W/2,G.H*0.35,'✅ 關卡完成！','#66bb6a',24);
+    setTimeout(()=>UI.showReward(rewards),600);
+  },
+  nextFloor(){
+    G.floor++;Stage.startFloor(G.floor);
+    G.state='playing';UI.showGame();UI.autoSaveRun();
+  },
+  endRun(win){
+    Save.d.totalRuns=(Save.d.totalRuns||0)+1;
+    if(G.floor>Save.d.bestRunFloor)Save.d.bestRunFloor=G.floor;
+    const bonus=Math.floor(G.floor*2+G.totalKills*0.1);
+    Save.addCoins(bonus);Save.clearRun();Save.save();
+    Meta.checkUnlocks();UI.showResult(win);
+  },
+  quitRun(){
+    G.state='title';G.paused=false;
+    ['pause-overlay','hud','skill-bar','btn-pause'].forEach(id=>$(id)?.classList.remove('show'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
+    $('title-screen').classList.add('show');
+    G.screenStack=['title'];UI.autoSaveRun();
+  },
+};
+/* hook continue button */
+window.addEventListener('DOMContentLoaded',()=>{
+  if(Save.hasRun()){
+    const btn=document.createElement('div');
+    btn.className='menu-btn gold';btn.textContent='▶ 繼續遠征';
+    btn.onclick=()=>{AudioSys.play('click');Game.continueRun();};
+    const startBtn=document.querySelector('#title-screen .menu-btn');
+    startBtn?.parentNode?.insertBefore(btn,startBtn);
+  }
+});
+</script>
+<script>/* ================= 渲染引擎 ================= */
+const Render = {
+  draw(){
+    const c=G.ctx;if(!c)return;
+    const W=G.W,H=G.H;
+    c.save();
+    /* viewport scaling */
+    const sx=G.cv.width/G.W,sy=G.cv.height/G.H;
+    c.scale(sx,sy);
+    /* shake */
+    if(G.shake>0){
+      const sx2=(Math.random()-0.5)*G.shake*8;
+      const sy2=(Math.random()-0.5)*G.shake*8;
+      c.translate(sx2,sy2);
+    }
+    /* background */
+    this.drawBG(c,W,H);
+    if(G.state==='title'||G.state==='result')return c.restore();
+    /* drops */
+    this.drawDrops(c);
+    /* projectiles */
+    this.drawProjectiles(c);
+    /* enemies */
+    this.drawEnemies(c);
+    /* player */
+    this.drawPlayer(c);
+    /* particles */
+    this.drawParticles(c);
+    /* floaters */
+    this.drawFloaters(c);
+    /* damage flash overlay */
+    if(G.flashT>0){
+      c.fillStyle=`rgba(255,50,50,${G.flashT*0.5})`;
+      c.fillRect(0,0,W,H);
+    }
+    c.restore();
+  },
+  drawBG(c,W,H){
+    /* gradient sky */
+    const grd=c.createLinearGradient(0,0,0,H);
+    grd.addColorStop(0,'#050518');grd.addColorStop(0.4,'#0a0a2e');
+    grd.addColorStop(0.7,'#0f0a28');grd.addColorStop(1,'#080816');
+    c.fillStyle=grd;c.fillRect(0,0,W,H);
+    /* stars */
+    for(const s of G.stars){
+      s.twinkle+=s.speed;
+      const bright=s.bright*(0.6+Math.sin(s.twinkle)*0.4);
+      c.globalAlpha=bright;
+      c.fillStyle='#c8d8ff';
+      c.beginPath();c.arc(s.x,s.y,s.size,0,Math.PI*2);c.fill();
+    }
+    c.globalAlpha=1;
+    /* nebulae */
+    for(const n of G.nebulae){
+      const grd2=c.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
+      grd2.addColorStop(0,n.color+(n.alpha)+')');
+      grd2.addColorStop(1,n.color+'0)');
+      c.fillStyle=grd2;c.fillRect(n.x-n.r,n.y-n.r,n.r*2,n.r*2);
+    }
+    /* ground grid (subtle) */
+    if(G.state==='playing'||G.state==='paused'){
+      c.strokeStyle='rgba(79,195,247,0.04)';c.lineWidth=0.5;
+      for(let x=0;x<W;x+=40){c.beginPath();c.moveTo(x,0);c.lineTo(x,H);c.stroke();}
+      for(let y=0;y<H;y+=40){c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke();}
+    }
+  },
+  drawPlayer(c){
+    const p=G.player;if(!p)return;
+    const flash=p.flashT>0;
+    c.save();
+    c.translate(p.x,p.y);
+    /* glow */
+    const grd=c.createRadialGradient(0,0,5,0,0,30);
+    grd.addColorStop(0,p.ship.color+'44');grd.addColorStop(1,p.ship.color+'00');
+    c.fillStyle=grd;c.fillRect(-30,-30,60,60);
+    /* body - spaceship shape */
+    if(flash){c.globalAlpha=0.5+Math.sin(G.t*30)*0.5;}
+    /* ship body */
+    c.fillStyle=p.ship.body;
+    c.beginPath();
+    c.moveTo(0,-18);/* nose */
+    c.lineTo(-14,12);c.lineTo(-10,16);/* left wing */
+    c.lineTo(10,16);c.lineTo(14,12);/* right wing */
+    c.closePath();c.fill();
+    /* cockpit */
+    c.fillStyle=p.ship.color;
+    c.beginPath();c.arc(0,-6,5,0,Math.PI*2);c.fill();
+    /* wing accents */
+    c.strokeStyle=p.ship.color;c.lineWidth=1.5;
+    c.beginPath();c.moveTo(-12,10);c.lineTo(-16,14);c.stroke();
+    c.beginPath();c.moveTo(12,10);c.lineTo(16,14);c.stroke();
+    /* engine glow */
+    c.fillStyle='#ff704388';
+    c.beginPath();c.ellipse(-6,16,3,5+Math.sin(G.t*12)*2,0,0,Math.PI*2);c.fill();
+    c.beginPath();c.ellipse(6,16,3,5+Math.sin(G.t*12+1)*2,0,0,Math.PI*2);c.fill();
+    c.globalAlpha=1;
+    /* shield visual */
+    if(p.shield>0){
+      const sa=p.shield/p.maxShield;
+      c.strokeStyle=`rgba(100,180,255,${sa*0.6})`;
+      c.lineWidth=2;
+      c.beginPath();c.arc(0,0,22+Math.sin(G.t*3)*2,0,Math.PI*2);c.stroke();
+      c.fillStyle=`rgba(100,180,255,${sa*0.1})`;
+      c.fill();
+    }
+    /* orbit weapons */
+    if(p.weapons.some(w=>WPN_TYPES[w]?.type==='orbit')){
+      for(let i=0;i<5;i++){
+        const a=p.orbitAngle+i*Math.PI*2/5;
+        const ox=Math.cos(a)*40,oy=Math.sin(a)*40;
+        c.fillStyle='#42a5f5';
+        c.beginPath();c.arc(ox,oy,4,0,Math.PI*2);c.fill();
+        c.fillStyle='#bbdefb';
+        c.beginPath();c.arc(ox,oy,2,0,Math.PI*2);c.fill();
+      }
+    }
+    c.restore();
+    /* HP bar under ship */
+    const bw=30,bh=4,bx=p.x-bw/2,by=p.y+20;
+    c.fillStyle='rgba(0,0,0,0.5)';c.fillRect(bx,by,bw,bh);
+    c.fillStyle='#ff7043';c.fillRect(bx,by,bw*(p.hp/p.maxHp),bh);
+    if(p.maxShield>0){
+      c.fillStyle='#42a5f5';c.fillRect(bx,by+bh+1,bw*(p.shield/p.maxShield),2);
+    }
+  },
+  drawEnemies(c){
+    for(const e of G.enemies){
+      if(e.state!=='live'&&e.state!=='dying')continue;
+      const alpha=e.state==='dying'?e.dieT/0.3:e.spawnT>0?(1-e.spawnT/0.3):1;
+      c.save();
+      c.globalAlpha=alpha;
+      c.translate(e.x,e.y);
+      /* glow background */
+      c.fillStyle='rgba(0,0,0,0.3)';
+      c.beginPath();c.arc(0,0,e.size*1.2,0,Math.PI*2);c.fill();
+      /* flash on hit */
+      if(e.flashT>0){
+        c.fillStyle='rgba(255,255,255,0.4)';
+        c.beginPath();c.arc(0,0,e.size+4,0,Math.PI*2);c.fill();
+      }
+      /* body */
+      if(e.def.isBoss){
+        this.drawBoss(c,e);
+      }else{
+        c.fillStyle=e.color;
+        c.beginPath();
+        /* enemy ship shape (inverted triangle) */
+        c.moveTo(0,e.size);
+        c.lineTo(-e.size*0.8,-e.size*0.6);
+        c.lineTo(0,-e.size*0.3);
+        c.lineTo(e.size*0.8,-e.size*0.6);
+        c.closePath();c.fill();
+        /* accent */
+        c.strokeStyle='rgba(255,255,255,0.3)';c.lineWidth=1;
+        c.stroke();
+      }
+      c.globalAlpha=1;
+      /* HP bar */
+      if(e.hp<e.maxHp){
+        const bw=e.size*2,bh=3,bx=-bw/2,by=-e.size-8;
+        c.fillStyle='rgba(0,0,0,0.5)';c.fillRect(bx,by,bw,bh);
+        c.fillStyle='#ef5350';c.fillRect(bx,by,bw*(e.hp/e.maxHp),bh);
+        /* shield bar */
+        if(e.shield>0){
+          c.fillStyle='#42a5f5';c.fillRect(bx,by+bh,bw*(e.shield/(e.maxHp*0.2)),2);
+        }
+      }
+      /* boss name */
+      if(e.def.isBoss){
+        c.fillStyle='#fff';c.font='bold 11px sans-serif';c.textAlign='center';
+        c.fillText(e.def.name,0,-e.size-14);
+      }
+      c.restore();
+    }
+  },
+  drawBoss(c,e){
+    const sz=e.size;
+    const phase=Math.sin(G.t*2)*0.1+1;
+    /* multi-layer boss */
+    c.fillStyle=e.color;
+    c.beginPath();
+    c.arc(0,0,sz*phase,0,Math.PI*2);c.fill();
+    /* inner ring */
+    c.strokeStyle='rgba(255,255,255,0.3)';c.lineWidth=2;
+    c.beginPath();c.arc(0,0,sz*0.6*phase,0,Math.PI*2);c.stroke();
+    /* core */
+    c.fillStyle='#fff';
+    c.beginPath();c.arc(0,0,sz*0.2,0,Math.PI*2);c.fill();
+    /* rotating arms */
+    for(let i=0;i<4;i++){
+      const a=G.t*1.5+i*Math.PI/2;
+      c.strokeStyle=e.color;c.lineWidth=3;
+      c.beginPath();
+      c.moveTo(Math.cos(a)*sz*0.4,Math.sin(a)*sz*0.4);
+      c.lineTo(Math.cos(a)*sz*1.1,Math.sin(a)*sz*1.1);
+      c.stroke();
+      /* arm tip */
+      c.fillStyle=e.color;
+      c.beginPath();
+      c.arc(Math.cos(a)*sz*1.1,Math.sin(a)*sz*1.1,4,0,Math.PI*2);c.fill();
+    }
+  },
+  drawProjectiles(c){
+    for(const b of G.projectiles){
+      c.save();
+      c.translate(b.x,b.y);
+      if(b.type==='hero'){
+        /* player bullets */
+        c.fillStyle=b.isCrit?'#ffd54f':b.color;
+        c.shadowColor=b.color;c.shadowBlur=b.isCrit?8:4;
+        c.beginPath();
+        if(b.dmgType==='weapon'){
+          /* weapon bullets are bigger */
+          c.ellipse(0,0,b.size+1,b.size*2,Math.atan2(b.vy,b.vx),0,Math.PI*2);
+        }else{
+          c.ellipse(0,0,2,b.size,Math.atan2(b.vy,b.vx),0,Math.PI*2);
+        }
+        c.fill();
+        c.shadowBlur=0;
+      }else{
+        /* enemy bullets */
+        c.fillStyle=b.color;
+        c.shadowColor=b.color;c.shadowBlur=6;
+        c.beginPath();c.arc(0,0,b.size,0,Math.PI*2);c.fill();
+        c.shadowBlur=0;
+      }
+      c.restore();
+    }
+  },
+  drawDrops(c){
+    for(const dr of G.drops){
+      const pulse=1+Math.sin(G.t*4)*0.2;
+      c.save();c.translate(dr.x,dr.y);c.scale(pulse,pulse);
+      if(dr.type==='hp'){
+        c.fillStyle='#66bb6a';
+        c.beginPath();c.arc(0,0,dr.size,0,Math.PI*2);c.fill();
+        c.fillStyle='#fff';c.font='bold 8px sans-serif';c.textAlign='center';
+        c.fillText('♥',0,3);
+      }else{
+        c.fillStyle='#ffb74d';
+        c.beginPath();c.arc(0,0,dr.size,0,Math.PI*2);c.fill();
+        c.fillStyle='#fff';c.font='bold 7px sans-serif';c.textAlign='center';
+        c.fillText('$',0,3);
+      }
+      c.restore();
+    }
+  },
+  drawParticles(c){
+    for(const p of G.particles){
+      const alpha=1-p.life/p.max;
+      c.globalAlpha=alpha;
+      if(p.type==='ring'){
+        c.strokeStyle=p.color;c.lineWidth=1.5;
+        c.beginPath();c.arc(p.x,p.y,p.size*(1+p.life/p.max*2),0,Math.PI*2);c.stroke();
+      }else if(p.type==='spark'){
+        c.strokeStyle=p.color;c.lineWidth=p.size;
+        c.beginPath();
+        c.moveTo(p.x-p.vx*2,p.y-p.vy*2);
+        c.lineTo(p.x+p.vx*2,p.y+p.vy*2);
+        c.stroke();
+      }else{
+        c.fillStyle=p.color;
+        c.beginPath();c.arc(p.x,p.y,p.size,0,Math.PI*2);c.fill();
+      }
+    }
+    c.globalAlpha=1;
+  },
+  drawFloaters(c){
+    for(const f of G.floaters){
+      const alpha=1-f.life/f.max;
+      c.globalAlpha=alpha;
+      c.fillStyle=f.color;
+      c.font=`bold ${f.sz}px sans-serif`;
+      c.textAlign='center';
+      c.fillText(f.txt,f.x,f.y);
+    }
+    c.globalAlpha=1;
+  },
+};
+</script>
+<script>/* ================= UI 系統 ================= */
+const UI = {
+  showScreen(name){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
+    const el=$(name+'-screen');
+    if(el)el.classList.add('show');
+    const isGame=(name==='ship'||name==='meta'||name==='bestiary'||name==='help');
+    if(!isGame&&name!=='title'){
+      /* game-related screen */
+    }
+    if(name==='ship')this.renderShipSelect();
+    if(name==='meta')this.renderMetaShop();
+    if(name==='bestiary')this.renderBestiary();
+    G.screenStack.push(name);
+  },
+  showGame(){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
+    $('hud').classList.add('show');
+    $('btn-pause').classList.add('show');
+    $('skill-bar').classList.add('show');
+    G.state='playing';
+  },
+  goBack(){
+    const stack=G.screenStack;
+    stack.pop();
+    const prev=stack[stack.length-1]||'title';
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
+    if(prev==='title'||prev==='ship'||prev==='meta'||prev==='bestiary'||prev==='help'){
+      const el=$(prev+'-screen');
+      if(el)el.classList.add('show');
+    }
+    if(prev==='title'){
+      $('hud').classList.remove('show');
+      $('btn-pause').classList.remove('show');
+      $('skill-bar').classList.remove('show');
+      G.state='title';
+    }
+  },
+  renderShipSelect(){
+    const grid=$('ship-grid');grid.innerHTML='';
+    for(const sid of SHIP_ORDER){
+      const ship=SHIPS[sid];
+      const unlocked=Save.isShipUnlocked(sid);
+      const card=document.createElement('div');
+      card.className='ship-card'+(unlocked?'':' locked');
+      card.innerHTML=`<span class="icon">${ship.icon}</span><div class="name">${ship.name}</div><div class="desc">${ship.desc}</div><div style="font-size:10px;color:${ship.color};margin-top:4px">HP:${ship.hp} ATK:${ship.atk} SPD:${ship.spd}</div>`;
+      if(unlocked){
+        card.onclick=()=>{
+          AudioSys.play('click');
+          Game.startRun(sid);
+        };
+      }
+      grid.appendChild(card);
+    }
+  },
+  renderMetaShop(){
+    $('meta-coins').textContent='💰 '+fmt(Save.d.coins);
+    const grid=$('meta-grid');grid.innerHTML='';
+    for(const u of Meta.upgrades){
+      const lv=Save.metaLv(u.id);
+      const cost=Meta.cost(u.id);
+      const maxed=lv>=u.max;
+      const item=document.createElement('div');
+      item.className='meta-item'+(maxed?' maxed':'');
+      item.innerHTML=`<div class="m-name">${u.icon} ${u.name} Lv.${lv}</div><div class="m-desc">${u.desc}</div><div class="m-cost">${maxed?'已滿級':'💰 '+fmt(cost)}</div>`;
+      if(!maxed){
+        item.onclick=()=>{Meta.buy(u.id);this.renderMetaShop();};
+      }
+      grid.appendChild(item);
+    }
+    /* export/import */
+    const expBtn=document.createElement('div');
+    expBtn.className='meta-item';
+    expBtn.innerHTML='<div class="m-name">📋 匯出存檔</div><div class="m-desc">複製 Base64 存檔碼</div>';
+    expBtn.onclick=()=>{
+      navigator.clipboard?.writeText(Save.exportStr());
+      toast('📋 存檔碼已複製');
+    };
+    grid.appendChild(expBtn);
+    const impBtn=document.createElement('div');
+    impBtn.className='meta-item';
+    impBtn.innerHTML='<div class="m-name">📥 匯入存檔</div><div class="m-desc">貼上 Base64 存檔碼</div>';
+    impBtn.onclick=()=>{
+      const s=prompt('貼上存檔碼:');
+      if(s&&Save.importStr(s)){toast('✅ 匯入成功');this.renderMetaShop();}
+      else if(s){toast('❌ 無效');}
+    };
+    grid.appendChild(impBtn);
+  },
+  renderBestiary(){
+    const grid=$('best-grid');grid.innerHTML='';
+    for(const [id,def] of Object.entries(ENEMIES)){
+      const kills=Save.d.killedEnemies[id]||0;
+      const unlocked=kills>0;
+      const card=document.createElement('div');
+      card.className='best-card'+(unlocked?'':' locked');
+      card.innerHTML=`<div class="b-icon">${unlocked?(def.isBoss?'👑':'👾'):'❓'}</div><div class="b-name">${unlocked?def.name:'???'}</div><div class="b-info">${unlocked?'擊殺: '+kills:def.desc}</div>`;
+      grid.appendChild(card);
+    }
+  },
+  showReward(rewards){
+    G._rewardPicked=false;
+    G.state='reward';
+    $('reward-overlay').classList.add('show');
+    const container=$('reward-cards');container.innerHTML='';
+    for(let i=0;i<rewards.length;i++){
+      const r=rewards[i];
+      const card=document.createElement('div');
+      card.className='reward-card';
+      let icon,name,desc,rarityColor;
+      if(r.type==='weapon'){
+        const w=WPN_TYPES[r.id];icon=w.icon;name=w.name;desc=w.desc;rarityColor='#4fc3f7';
+      }else if(r.type==='passive'){
+        const p=PASSIVES[r.id];icon=p.icon;name=p.name;desc=p.desc;rarityColor='#66bb6a';
+      }else if(r.type==='relic'){
+        const rl=RELICS[r.id];icon=rl.icon;name=rl.name;desc=rl.desc;rarityColor=RARITY_COLORS[rl.rarity];
+      }else{
+        icon='💰';name='金幣 +'+r.amount;desc='獲得金幣';rarityColor='#ffb74d';
+      }
+      card.style.borderColor=rarityColor+'66';
+      card.innerHTML=`<div class="r-icon">${icon}</div><div class="r-name" style="color:${rarityColor}">${name}</div><div class="r-desc">${desc}</div>`;
+      card.onclick=()=>{
+        if(G._rewardPicked)return;G._rewardPicked=true;
+        AudioSys.play('click');
+        if(r.type==='weapon')Stage.giveWeapon(r.id);
+        else if(r.type==='passive')Player.applyPassive(r.id);
+        else if(r.type==='relic')Player.applyRelic(r.id);
+        else if(r.type==='coin')G.stageCoins+=r.amount;
+        $('reward-overlay').classList.remove('show');
+        UI.autoSaveRun();
+        setTimeout(()=>Game.nextFloor(),300);
+      };
+      container.appendChild(card);
+    }
+  },
+  showUpgrade(){
+    G.state='upgrade';
+    $('upgrade-overlay').classList.add('show');
+    const container=$('upg-cards');container.innerHTML='';
+    const p=G.player;
+    const maxTier=G.floor<=15?1:G.floor<=35?2:3;
+    const pool=getPassivesByTier(rngInt(1,maxTier))
+      .filter(k=>!p.passiveList.includes(k)&&(!PASSIVES[k].req||p.passiveList.includes(PASSIVES[k].req)));
+    const choices=shuffle(pool).slice(0,3);
+    if(choices.length===0){
+      G.stageCoins+=20;
+      $('upgrade-overlay').classList.remove('show');
+      G.state='playing';
+      return;
+    }
+    for(const pid of choices){
+      const ps=PASSIVES[pid];
+      const card=document.createElement('div');
+      card.className='upg-card';
+      card.innerHTML=`<div class="r-icon">${ps.icon}</div><div class="r-name">${ps.name}</div><div class="r-desc">${ps.desc}</div>`;
+      card.onclick=()=>{
+        AudioSys.play('click');
+        Player.applyPassive(pid);
+        $('upgrade-overlay').classList.remove('show');
+        G.state='playing';
+      };
+      container.appendChild(card);
+    }
+  },
+  showEvent(ev){
+    G.state='event';
+    $('event-overlay').classList.add('show');
+    $('ev-title').textContent=ev.title;
+    $('ev-desc').textContent=ev.desc;
+    const container=$('ev-btns');container.innerHTML='';
+    for(const ch of ev.choices){
+      const btn=document.createElement('div');
+      btn.className='menu-btn';btn.style.width='100%';
+      btn.textContent=ch.text;
+      btn.onclick=()=>{
+        AudioSys.play('click');
+        ch.fn(G.player);
+        $('event-overlay').classList.remove('show');
+        G.state='playing';
+      };
+      container.appendChild(btn);
+    }
+  },
+  showResult(win){
+    G.state='result';
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
+    $('result-screen').classList.add('show');
+    $('hud').classList.remove('show');
+    $('btn-pause').classList.remove('show');
+    $('skill-bar').classList.remove('show');
+    ['reward-overlay','upgrade-overlay','event-overlay','pause-overlay'].forEach(id=>$(id).classList.remove('show'));
+    const p=G.player;
+    $('result-title').textContent=win?'🎉 遠征勝利！':'💀 戰艦損毀';
+    $('result-title').style.color=win?'#ffb74d':'#ef5350';
+    $('result-stats').innerHTML=`
+      達成樓層: <b>${G.floor}</b><br>
+      擊殺數: <b>${G.totalKills}</b><br>
+      獲得金幣: <b>${G.stageCoins}</b><br>
+      戰艦: <b>${p?.ship?.name||'-'}</b><br>
+      等級: <b>${p?._level||1}</b>
+    `;
+  },
+  updateHUD(){
+    const p=G.player;if(!p)return;
+    $('hud-hp-text').textContent='❤️ '+Math.ceil(p.hp)+'/'+p.maxHp;
+    $('hud-hp-bar').style.width=(p.hp/p.maxHp*100)+'%';
+    $('hud-shield-bar').style.width=p.maxShield>0?(p.shield/p.maxShield*100)+'%':'0%';
+    $('hud-coins').textContent='💰 '+fmt(G.stageCoins);
+    $('hud-xp').textContent='Lv.'+(p._level||1)+' '+((p._exp||0))+'/'+(p._expNeed||20);
+    $('hud-wave').textContent='波 '+G.wave+'/'+G.waveMax;
+    $('hud-floor').textContent='🏰 第 '+G.floor+' 關';
+    this.updateSkillBar(p);
+  },
+  updateSkillBar(p){
+    const bar=$('skill-bar');
+    if(bar.children.length===0){
+      const btn=document.createElement('div');
+      btn.className='skill-btn';btn.id='skill-0';
+      btn.innerHTML=`<span>${p.ship.icon}</span><div class="cd-mask"></div><div class="cd-text"></div>`;
+      btn.onclick=()=>Game.useSkill(0);
+      bar.appendChild(btn);
+    }
+    const btn=$('skill-0');
+    if(p.skillCd>0){
+      btn.classList.add('on-cd');
+      btn.querySelector('.cd-text').textContent=Math.ceil(p.skillCd);
+    }else{
+      btn.classList.remove('on-cd');
+      btn.querySelector('.cd-text').textContent='';
+    }
+  },
+  autoSaveRun(){
+    if(!G.player||G.state==='title'||G.state==='result')return;
+    Save.d.currentRun={
+      shipId:G.player.shipId,
+      floor:G.floor,wave:G.wave,
+      coins:G.stageCoins,
+      level:G.player._level||1,
+      exp:G.player._exp||0,expNeed:G.player._expNeed||20,
+      weapons:G.player.weapons,
+      passives:G.player.passiveList,
+      hp:G.player.hp,maxHp:G.player.maxHp,
+      atk:G.player.atk,def:G.player.def,
+    };
+    Save.save();
+  },
+};
+</script>
+</body>
+</html>
