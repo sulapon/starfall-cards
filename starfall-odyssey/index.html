@@ -51,7 +51,7 @@ canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;display:block;z-inde
 .skill-btn .cd-mask{position:absolute;inset:0;border-radius:10px;background:rgba(0,0,0,.6);display:none}
 .skill-btn.on-cd .cd-mask{display:block}
 .skill-btn .cd-text{position:absolute;font-size:11px;font-weight:700;color:#ff7043}
-#btn-pause{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:12px;z-index:35;width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);background:rgba(10,15,40,.7);color:#aab;font-size:16px;cursor:pointer;display:none;align-items:center;justify-content:center}
+#btn-pause{position:fixed;bottom:calc(70px + env(safe-area-inset-bottom,0px));right:12px;z-index:35;width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);background:rgba(10,15,40,.7);color:#aab;font-size:16px;cursor:pointer;display:none;align-items:center;justify-content:center}
 #btn-pause.show{display:flex}
 /* pause overlay */
 #pause-overlay{position:fixed;inset:0;z-index:50;background:rgba(5,5,16,.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px}
@@ -182,11 +182,11 @@ canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;display:block;z-inde
   </div>
   <div class="hud-right">
     <div class="hud-row"><span id="hud-coins" style="color:#ffb74d">💰 0</span></div>
-    <div class="hud-row" style="font-size:10px;color:#7a8aaa;gap:8px;flex-wrap:wrap">
-      <span id="hud-atk">⚔️0</span>
-      <span id="hud-crit">💥0%</span>
-      <span id="hud-def">🛡️0</span>
-      <span id="hud-spd">⚡1.0x</span>
+    <div class="hud-row" style="font-size:13px;color:#c0d0e0;gap:10px;flex-wrap:wrap;font-weight:600">
+      <span id="hud-atk" style="color:#ff8a65">⚔️0</span>
+      <span id="hud-crit" style="color:#ffd54f">💥0%</span>
+      <span id="hud-def" style="color:#64b5f6">🛡️0</span>
+      <span id="hud-spd" style="color:#ce93d8">⚡1.0x</span>
       <span id="hud-lifesteal" style="color:#69f0ae">💚0%</span>
     </div>
     <div class="hud-row"><span id="hud-xp" style="color:#66bb6a;font-size:11px"></span></div>
