@@ -772,8 +772,8 @@ const SYSTEMS = [
 ];
 const EVENTS = [
   {id:'merchant',title:'🚀 商人出現',desc:'一位神秘商人 offering 交易：',choices:[
-    {text:'花 30 金回復 40% 生命',fn:p=>{if(G.stageCoins>=30){G.stageCoins-=30;p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.4);toast('❤️ 回復 40%');return true;}toast('金幣不足');return false;}},
-    {text:'花 50 金隨機強化',fn:p=>{if(G.stageCoins>=50){G.stageCoins-=50;Game.applyRandomPassive();toast('✦ 強化獲得！');return true;}toast('金幣不足');return false;}},
+    {text:'花 30 金回復 40% 生命',fn:p=>{if(G.stageCoins>=30){G.stageCoins-=30;p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.4);toast('❤️ 回復 40% 生命');return true;}toast('❌ 金幣不足（需要30）');return false;}},
+    {text:'花 50 金隨機強化',fn:p=>{if(G.stageCoins>=50){G.stageCoins-=50;const ps=Game.applyRandomPassive();if(ps){toast('✦ 獲得：'+ps.name+' '+ps.icon+' '+ps.desc);}return true;}toast('❌ 金幣不足（需要50）');return false;}},
     {text:'不交易',fn:()=>true},
   ]},
   {id:'treasure',title:'💎 寶箱',desc:'發現一個神秘寶箱！',choices:[
@@ -1440,7 +1440,7 @@ const Stage = {
       }
     }
     /* random event on certain waves */
-    if(G.wave>1&&G.wave<G.waveMax&&G.wave%3===0&&Math.random()<0.15&&!G._eventFired){
+    if(G.wave>1&&G.wave<G.waveMax&&G.wave%3===0&&Math.random()<0.4&&!G._eventFired){
       G._eventFired=true;
       UI.showEvent(getEvent());
     }
@@ -1930,12 +1930,17 @@ const Game = {
     }
   },
   applyRandomPassive(){
-    const p=G.player;if(!p)return;
+    const p=G.player;if(!p)return null;
     const pool=Object.keys(PASSIVES).filter(k=>!p.passiveList.includes(k)&&(!PASSIVES[k].req||p.passiveList.includes(PASSIVES[k].req)));
-    if(pool.length===0){toast('已滿級！');return;}
+    if(pool.length===0){toast('已滿級！');return null;}
     const id=pick(pool);
     Player.applyPassive(id);
-    toast('✦ '+PASSIVES[id].name);
+    const ps=PASSIVES[id];
+    /* big visual feedback */
+    floatTxt(p.x,p.y-40,'✦ '+ps.name+' '+ps.icon,'#ffd54f',26);
+    puff(p.x,p.y,'#ffd54f',20,3,4);
+    AudioSys.play('lvup');
+    return ps;
   },
   stageClear(){
     if(G.state!=='playing')return;
@@ -2436,9 +2441,11 @@ const UI = {
       btn.textContent=ch.text;
       btn.onclick=()=>{
         AudioSys.play('click');
-        ch.fn(G.player);
-        $('event-overlay').classList.remove('show');
-        G.state='playing';
+        const ok=ch.fn(G.player);
+        if(ok){
+          $('event-overlay').classList.remove('show');
+          G.state='playing';
+        }
       };
       container.appendChild(btn);
     }
