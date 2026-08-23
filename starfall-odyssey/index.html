@@ -187,6 +187,7 @@ canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;display:block;z-inde
       <span id="hud-crit" style="color:#ffd54f">💥0%</span>
       <span id="hud-def" style="color:#64b5f6">🛡️0</span>
       <span id="hud-spd" style="color:#ce93d8">⚡1.0x</span>
+      <span id="hud-move" style="color:#4fc3f7">👟1.0</span>
       <span id="hud-lifesteal" style="color:#69f0ae">💚0%</span>
     </div>
     <div class="hud-row"><span id="hud-xp" style="color:#66bb6a;font-size:11px"></span></div>
@@ -1806,6 +1807,24 @@ const Game = {
     G.player.passiveList=run.passives||[];G.player._wcd={};
     G.player.hp=run.hp;G.player.maxHp=run.maxHp;
     G.player.atk=run.atk;G.player.def=run.def;
+    G.player.moveSpd=run.moveSpd||G.player.moveSpd;
+    G.player.crit=run.crit||G.player.crit;
+    G.player.critDmg=run.critDmg||1.5;
+    G.player.atkSpd=run.atkSpd||1.0;
+    G.player.evade=run.evade||0;
+    G.player.thorns=run.thorns||0;
+    G.player.lifesteal=run.lifesteal||0;
+    G.player.pierce=run.pierce||0;
+    G.player.extraProj=run.extraProj||0;
+    G.player.chainChance=run.chainChance||0;
+    G.player.bulletSpd=run.bulletSpd||1;
+    G.player.regen=run.regen||0;
+    G.player.shield=run.shield||0;G.player.maxShield=run.maxShield||0;
+    G.player.shieldRegen=run.shieldRegen||0;
+    /* reapply all passive stat bonuses */
+    for(const pid of G.player.passiveList){
+      const ps=PASSIVES[pid];if(ps&&ps.fn)ps.fn(G.player);
+    }
     G.stageCoins=run.coins||0;G.totalKills=0;G.t=0;
     G.enemies=[];G.projectiles=[];G.particles=[];G.floaters=[];G.drops=[];
     Meta.applyRunStartBonus(G.player);
@@ -2457,6 +2476,7 @@ const UI = {
     $('hud-crit').textContent='💥'+Math.round((p.crit||0)*100)+'%';
     $('hud-def').textContent='🛡️'+p.def;
     $('hud-spd').textContent='⚡'+(p.atkSpd||1).toFixed(1)+'x';
+    $('hud-move').textContent='👟'+(p.moveSpd||1).toFixed(1);
     $('hud-lifesteal').textContent='💚'+Math.round((p.lifesteal||0)*100)+'%';
     this.updateSkillBar(p);
   },
@@ -2480,16 +2500,22 @@ const UI = {
   },
   autoSaveRun(){
     if(!G.player||G.state==='title'||G.state==='result')return;
+    const p=G.player;
     Save.d.currentRun={
-      shipId:G.player.shipId,
+      shipId:p.shipId,
       floor:G.floor,wave:G.wave,
       coins:G.stageCoins,
-      level:G.player._level||1,
-      exp:G.player._exp||0,expNeed:G.player._expNeed||20,
-      weapons:G.player.weapons,
-      passives:G.player.passiveList,
-      hp:G.player.hp,maxHp:G.player.maxHp,
-      atk:G.player.atk,def:G.player.def,
+      level:p._level||1,
+      exp:p._exp||0,expNeed:p._expNeed||20,
+      weapons:p.weapons,
+      passives:p.passiveList,
+      hp:p.hp,maxHp:p.maxHp,
+      atk:p.atk,def:p.def,
+      moveSpd:p.moveSpd,crit:p.crit,critDmg:p.critDmg,
+      atkSpd:p.atkSpd,evade:p.evade,thorns:p.thorns,
+      lifesteal:p.lifesteal,pierce:p.pierce,extraProj:p.extraProj,
+      chainChance:p.chainChance,bulletSpd:p.bulletSpd,regen:p.regen,
+      shield:p.shield,maxShield:p.maxShield,shieldRegen:p.shieldRegen,
     };
     Save.save();
   },
