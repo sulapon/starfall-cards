@@ -144,11 +144,12 @@ th{color:var(--mut);font-size:12px}
 <div id="dayModal" class="modal" style="display:none" onclick="if(event.target===this)closeDay()"><div class="sheet"><div id="dayBody"></div></div></div>
 <script>
 const HOL_BASE='https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/';
+const GAS_DEFAULT=''; // ← 共用資料庫網址寫死在這，全員免設定
 const LS_GAS='att_gas_url', LS_DEMO_EMP='att_demo_emp', LS_DEMO_REC='att_demo_rec';
 let employees=[], records=[], holidays={}, curY, curM;
 try{curY=new Date().getFullYear();curM=new Date().getMonth();}catch(e){curY=2026;curM=8;}
 
-const gas=()=> (localStorage.getItem(LS_GAS)||'').trim();
+const gas=()=> (localStorage.getItem(LS_GAS)||'').trim()||GAS_DEFAULT;
 const isCloud=()=> !!gas();
 function setConn(){const b=document.getElementById('connBadge');if(isCloud()){b.textContent='● 已連接共用資料庫';b.className='conn on';}else{b.textContent='● 本機試用模式';b.className='conn off';}}
 function toggleSetup(){const s=document.getElementById('setupBox');s.style.display=s.style.display==='none'?'block':'none';document.getElementById('gasUrl').value=gas();}
