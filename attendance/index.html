@@ -226,12 +226,24 @@ const tr=document.createElement('tr');tr.innerHTML='<td>'+escapeHtml(e.name)+'</
 
 // ---- actions ----
 const uid=()=> 'r'+Date.now().toString(36)+Math.floor(Math.random()*999);
+const EXCL=['事假','病假','公差','休假','特休','補休'];
+function conflict(name,from,to,type){
+if(!EXCL.includes(type||''))return null;
+const ds=new Set(eachDate(from,to));
+for(const r of records){
+if(r.name!==name||!EXCL.includes(r.type))continue;
+if(eachDate(r.from,r.to).some(d=>ds.has(d)))return r;
+}
+return null;
+}
 async function addRecord(){
 const name=document.getElementById('nEmp').value,type=document.getElementById('nType').value;
 const from=document.getElementById('nFrom').value,to=document.getElementById('nTo').value||from;
 const trip=document.getElementById('nTrip').value.trim(),note=document.getElementById('nNote').value.trim();
 if(!name)return alert('選員工');if(!from)return alert('選日期');
 if(type==='公差'&&!trip)return alert('公差必須填寫出差地點');
+const hit2=conflict(name,from,to,type);
+if(hit2)return alert(name+' 在 '+hit2.from+(hit2.to&&hit2.to!==hit2.from?'～'+hit2.to:'')+' 已有【'+hit2.type+'】，同一天只能一種假別，先刪除舊單再送新單');
 const hm=holidays[curY]||{};const hit=eachDate(from,to).filter(d=>hm[d]);
 if(hit.length&&!confirm('日期含國定假日（'+hit.join('、')+'），仍要送出嗎？'))return;
 const rec={id:uid(),name,type,from,to,trip:trip||'',note:note||''};
@@ -291,6 +303,8 @@ async function quickAdd(){
 const name=(document.getElementById('dEmp')||{}).value,type=(document.getElementById('dType')||{}).value||'病假';
 const trip=(document.getElementById('dTrip')||{}).value.trim(),note=(document.getElementById('dNote')||{}).value.trim();
 if(!name)return alert('選員工');if(type==='公差'&&!trip)return alert('公差必須填寫出差地點');
+const hit3=conflict(name,daySel,daySel,type);
+if(hit3)return alert(name+' 在 '+daySel+' 已有【'+hit3.type+'】，同一天只能一種假別');
 const rec={id:uid(),name,type,from:daySel,to:daySel,trip:trip||'',note:note||''};
 try{if(isCloud())await api('add',{table:'records',row:rec});else{records.push(rec);saveDemo();}await loadAll();openDay(daySel);}catch(e){alert('送出失敗：'+e.message);}
 }
