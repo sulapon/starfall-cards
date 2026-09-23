@@ -30,9 +30,22 @@ input,select,textarea{width:100%}
 .cal .day.has{background:#0c2a3a}
 .cal .day .tag{display:block;font-size:11px;border-radius:6px;padding:1px 4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .t-病假{background:#7c2d12}.t-休假,.t-特休{background:#14532d}.t-公差{background:#1e3a8a}.t-事假{background:#713f12}.t-補休{background:#3b0764}.t-國定假日{background:#7f1d1d}.t-加班{background:#0e7490}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:50}
-.modal .sheet{background:var(--card);border:1px solid var(--line);border-radius:16px 16px 0 0;width:min(640px,100%);max-height:85vh;overflow:auto;padding:16px}
-.modal .sheet h3{margin-bottom:8px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:stretch;justify-content:center;z-index:50}
+.modal .sheet{background:var(--bg);width:min(640px,100%);max-height:100vh;overflow:auto;padding:16px}
+.dayHead{display:flex;justify-content:space-between;align-items:center;position:sticky;top:-16px;background:var(--bg);padding:10px 0;z-index:2}
+.dayDate{font-size:22px;font-weight:800;letter-spacing:1px}
+.dayWeek{color:var(--mut);font-size:13px;margin-top:2px}
+.sec{margin:10px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+.secHead{padding:9px 12px;font-weight:800;font-size:15px}
+.prow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;border-top:1px solid var(--line)}
+.pnote{font-size:12px;color:var(--mut);margin-top:2px}
+button.sm{padding:6px 10px;font-size:13px;flex:none}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{flex:1 1 60px;background:#0b1220;border:1px solid var(--line);color:var(--txt);border-radius:20px;padding:9px 0;font-size:14px;font-weight:400}
+.chip.sel{background:var(--acc);border-color:var(--acc);color:#082f49;font-weight:800}
+.pcard{margin-top:10px;border-color:var(--acc)}
+.pchips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.pchip{background:#0b1220;border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
 th{color:var(--mut);font-size:12px}
@@ -83,6 +96,7 @@ th{color:var(--mut);font-size:12px}
 <select id="fType" onchange="render()"><option value="">全部假別</option><option>病假</option><option>休假</option><option>公差</option><option>事假</option><option>特休</option><option>補休</option><option>加班</option><option>國定假日</option></select>
 </div>
 <div class="cal" id="calGrid"></div>
+<div id="personCard" class="card pcard" style="display:none"></div>
 <p class="hint" id="holInfo" style="margin-top:8px"></p>
 </div>
 
@@ -196,7 +210,24 @@ cell.innerHTML=html;cell.onclick=(function(ds){return function(){openDay(ds);};}
 }
 const holCount=Object.keys(hm).filter(k=>k.startsWith(curY+'-'+String(curM+1).padStart(2,'0'))).length;
 document.getElementById('holInfo').textContent='🇹🇼 本月國定假日 '+holCount+' 天（來源：行政院人事行政總處辦公日曆，年切自動更新）';
-renderList();renderStat();
+renderPerson(fe);renderList();renderStat();
+}
+function renderPerson(name){
+const pc=document.getElementById('personCard');
+if(!name){pc.style.display='none';pc.innerHTML='';return;}
+const pre=curY+'-'+String(curM+1).padStart(2,'0');
+const mine=records.filter(r=>r.name===name&&eachDate(r.from,r.to).some(d=>d.startsWith(pre)));
+const cnt={};mine.forEach(r=>{const ds=eachDate(r.from,r.to).filter(d=>d.startsWith(pre)).length;cnt[r.type]=(cnt[r.type]||0)+ds;});
+const tot=Object.values(cnt).reduce((a,b)=>a+b,0);
+const ORDER=['病假','休假','特休','事假','公差','補休','加班'];
+let html='<h3>👤 '+escapeHtml(name)+'・'+(curM+1)+'月共 '+tot+' 天</h3><div class="pchips">';
+ORDER.forEach(t=>{if(cnt[t])html+='<span class="pchip t-'+t+'">'+t+' '+cnt[t]+'天</span>';});
+if(!tot)html+='<span class="hint">本月無紀錄</span>';
+html+='</div>';
+if(mine.length){html+='<div style="overflow-x:auto"><table><tbody>';
+[...mine].sort((a,b)=>(a.from||'').localeCompare(b.from||'')).forEach(r=>{html+='<tr><td>'+escapeHtml(r.from)+(r.to&&r.to!==r.from?'～'+escapeHtml(r.to.slice(5)):'')+'</td><td><span class="pill t-'+escapeHtml(r.type)+'">'+escapeHtml(r.type)+'</span></td><td>'+escapeHtml((r.trip?('📍'+r.trip+' '):'')+(r.note||''))+'</td><td><button class="danger sm" onclick="delRecord(\''+r.id+'\')">刪</button></td></tr>';});
+html+='</tbody></table></div>';}
+pc.innerHTML=html;pc.style.display='block';
 }
 function renderList(){
 const tb=document.getElementById('recRows');tb.innerHTML='';
@@ -277,35 +308,46 @@ const csv='﻿'+rows.map(r=>r.join(',')).join('\n');
 const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='差勤_'+curY+'-'+(curM+1)+'.csv';a.click();
 }
 function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-// ---- day detail modal ----
-let daySel='';
+// ---- day detail view ----
+let daySel='', dayType='病假';
+const DAY_ORDER=['病假','休假','事假','公差','特休','補休','加班'];
 function openDay(ds){
-daySel=ds;
-const hm=holidays[curY]||holidays[parseInt(ds.slice(0,4))]||{};
+daySel=ds;dayType='病假';
+const y=parseInt(ds.slice(0,4));
+const hm=holidays[y]||{};
 const list=records.filter(r=>eachDate(r.from,r.to).includes(ds));
-const byType={};
-list.forEach(r=>{byType[r.type]=byType[r.type]||[];byType[r.type].push(r);});
-let html='<h3>📅 '+escapeHtml(ds)+'（'+'日一二三四五六'[new Date(ds+'T00:00:00').getDay()]+'）</h3>';
-if(hm[ds])html+='<p><span class="pill t-國定假日">國定假日・'+escapeHtml(hm[ds])+'</span></p>';
-if(!list.length)html+='<p class="hint" style="margin:8px 0">當天無假單。可用下方快捷新增（病假/休假/公差/加班）。</p>';
-else{html+='<div style="overflow-x:auto;margin:8px 0"><table><thead><tr><th>員工</th><th>假別</th><th>地點/備註</th><th></th></tr></thead><tbody>';
-list.forEach(r=>{html+='<tr><td>'+escapeHtml(r.name)+'</td><td><span class="pill t-'+escapeHtml(r.type)+'">'+escapeHtml(r.type)+'</span></td><td>'+escapeHtml((r.trip?('📍'+r.trip+' '):'')+(r.note||''))+'</td><td><button class="danger" onclick="delRecord(\''+r.id+'\');openDay(\''+ds+'\')">刪</button></td></tr>';});
-html+='</tbody></table></div>';
-const sum=Object.keys(byType).map(k=>k+'×'+byType[k].length).join('　');
-html+='<p class="hint">當天小計：'+escapeHtml(sum)+'</p>';}
-html+='<label>快捷新增（日期自動帶入 '+escapeHtml(ds)+'）</label><div class="row"><select id="dEmp"></select><select id="dType"><option>病假</option><option>休假</option><option>特休</option><option>事假</option><option>公差</option><option>補休</option><option>加班</option></select></div><div class="row" style="margin-top:8px"><input id="dTrip" placeholder="出差地點（公差必填）"><input id="dNote" placeholder="備註"></div><div class="row" style="margin-top:8px"><button onclick="quickAdd()">＋ 新增到這天</button><button class="ghost" onclick="closeDay()">關閉</button></div>';
+const groups={};list.forEach(r=>{(groups[r.type]=groups[r.type]||[]).push(r);});
+const wd='星期'+'日一二三四五六'[new Date(ds+'T00:00:00').getDay()];
+let html='<div class="dayHead"><div><div class="dayDate">'+escapeHtml(ds)+'</div><div class="dayWeek">'+wd+(hm[ds]?' ・ <span class="pill t-國定假日">'+escapeHtml(hm[ds])+'</span>':'')+'・共 '+list.length+' 人次</div></div><button class="ghost sm" onclick="closeDay()">✕ 關閉</button></div>';
+if(!list.length)html+='<div class="sec"><div class="secHead">當天無假單，直接下方新增</div></div>';
+DAY_ORDER.forEach(t=>{
+let g=groups[t]||[];
+if(t==='休假')g=g.concat(groups['特休']||[]);
+if(t==='特休')return;
+if(!g.length)return;
+html+='<div class="sec"><div class="secHead t-'+t+'">'+t+'・'+g.length+'人</div>';
+g.forEach(r=>{html+='<div class="prow"><div><b>'+escapeHtml(r.name)+'</b>'+(r.type==='特休'?'<span class="hint">（特休）</span>':'')+(r.type==='公差'&&r.trip?'<div class="pnote">📍'+escapeHtml(r.trip)+'</div>':'')+(r.note?'<div class="pnote">'+escapeHtml(r.note)+'</div>':'')+'</div><button class="danger sm" onclick="delRecord(\''+r.id+'\');openDay(\''+ds+'\')">刪除</button></div>';});
+html+='</div>';
+});
+Object.keys(groups).forEach(t=>{if(DAY_ORDER.includes(t))return;
+html+='<div class="sec"><div class="secHead">'+escapeHtml(t)+'・'+groups[t].length+'人</div>';
+groups[t].forEach(r=>{html+='<div class="prow"><div><b>'+escapeHtml(r.name)+'</b>'+(r.note?'<div class="pnote">'+escapeHtml(r.note)+'</div>':'')+'</div><button class="danger sm" onclick="delRecord(\''+r.id+'\');openDay(\''+ds+'\')">刪除</button></div>';});
+html+='</div>';});
+html+='<div class="sec"><div class="secHead">＋ 新增到 '+escapeHtml(ds)+'</div><div style="padding:10px 12px"><select id="dEmp"></select><div class="chips" id="dChips">'+DAY_ORDER.map(t=>'<button class="chip'+(t===dayType?' sel':'')+'" data-t="'+t+'" onclick="pickType(\''+t+'\')">'+t+'</button>').join('')+'</div><div class="row" style="margin-top:8px"><input id="dTrip" placeholder="出差地點（公差必填）" style="display:none"><input id="dNote" placeholder="備註"></div><div class="row" style="margin-top:8px"><button onclick="quickAdd()">送出</button></div></div></div>';
 document.getElementById('dayBody').innerHTML=html;
 const de=document.getElementById('dEmp');employees.forEach(e=>{const o=document.createElement('option');o.value=o.textContent=e.name;de.appendChild(o);});
 document.getElementById('dayModal').style.display='flex';
+document.querySelector('.modal .sheet').scrollTop=0;
 }
+function pickType(t){dayType=t;document.querySelectorAll('#dChips .chip').forEach(c=>c.classList.toggle('sel',c.dataset.t===t));document.getElementById('dTrip').style.display=t==='公差'?'block':'none';}
 function closeDay(){document.getElementById('dayModal').style.display='none';}
 async function quickAdd(){
-const name=(document.getElementById('dEmp')||{}).value,type=(document.getElementById('dType')||{}).value||'病假';
-const trip=(document.getElementById('dTrip')||{}).value.trim(),note=(document.getElementById('dNote')||{}).value.trim();
-if(!name)return alert('選員工');if(type==='公差'&&!trip)return alert('公差必須填寫出差地點');
+const name=(document.getElementById('dEmp')||{}).value,type=dayType||'病假';
+const tripEl=document.getElementById('dTrip'),trip=(tripEl||{}).value||'',note=(document.getElementById('dNote')||{}).value||'';
+if(!name)return alert('選員工');if(type==='公差'&&!trip.trim())return alert('公差必須填寫出差地點');
 const hit3=conflict(name,daySel,daySel,type);
 if(hit3)return alert(name+' 在 '+daySel+' 已有【'+hit3.type+'】，同一天只能一種假別');
-const rec={id:uid(),name,type,from:daySel,to:daySel,trip:trip||'',note:note||''};
+const rec={id:uid(),name,type,from:daySel,to:daySel,trip:(trip||'').trim(),note:(note||'').trim()};
 try{if(isCloud())await api('add',{table:'records',row:rec});else{records.push(rec);saveDemo();}await loadAll();openDay(daySel);}catch(e){alert('送出失敗：'+e.message);}
 }
 ['nFrom','nTo'].forEach(id=>document.getElementById(id).addEventListener('change',renderList));
