@@ -29,7 +29,7 @@ function out(o) {
 }
 
 function sheetOf(table) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById('1eumw5hQDIa1ghK9usM_zwReJ8Ad5RGfGK4I5rH00m6w'); // 員工差勤DB（獨立專案無綁定試算表，改用 ID 開啟）
   var name = table === 'employees' ? 'employees' : 'records';
   var sh = ss.getSheetByName(name);
   if (!sh) {
