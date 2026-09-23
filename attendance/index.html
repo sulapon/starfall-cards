@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>員工差勤表</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0f172a;--card:#1e293b;--line:#334155;--txt:#e2e8f0;--mut:#94a3b8;--acc:#38bdf8;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171}
+body{background:var(--bg);color:var(--txt);font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh;padding:16px;max-width:960px;margin:0 auto}
+h1{font-size:22px;letter-spacing:2px;margin:8px 0 4px}
+.sub{color:var(--mut);font-size:13px;margin-bottom:14px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+button,input,select,textarea{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:15px}
+button{cursor:pointer;background:#0369a1;border-color:#0369a1;font-weight:700}
+button.ghost{background:var(--card);border-color:var(--line);font-weight:400}
+button.danger{background:#7f1d1d;border-color:#7f1d1d}
+button:disabled{opacity:.5}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>*{flex:1 1 140px}
+label{font-size:13px;color:var(--mut);display:block;margin:8px 0 4px}
+input,select,textarea{width:100%}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.cal .dow{color:var(--mut);font-size:12px;text-align:center;padding:4px}
+.cal .day{background:#0b1220;border:1px solid var(--line);border-radius:8px;min-height:64px;padding:4px;font-size:12px;overflow:hidden;cursor:pointer}
+.cal .day:active{border-color:var(--acc)}
+.cal .day .dt{font-weight:700;margin-bottom:2px}
+.cal .day.hol{border-color:var(--bad);background:#2a1215}
+.cal .day.has{background:#0c2a3a}
+.cal .day .tag{display:block;font-size:11px;border-radius:6px;padding:1px 4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-病假{background:#7c2d12}.t-休假,.t-特休{background:#14532d}.t-公差{background:#1e3a8a}.t-事假{background:#713f12}.t-補休{background:#3b0764}.t-國定假日{background:#7f1d1d}.t-加班{background:#0e7490}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.modal .sheet{background:var(--card);border:1px solid var(--line);border-radius:16px 16px 0 0;width:min(640px,100%);max-height:85vh;overflow:auto;padding:16px}
+.modal .sheet h3{margin-bottom:8px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+th{color:var(--mut);font-size:12px}
+.pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.conn{font-size:13px;padding:6px 12px;border-radius:20px;border:1px solid var(--line);color:var(--mut)}
+.conn.on{color:var(--ok);border-color:var(--ok)}
+.conn.off{color:var(--warn);border-color:var(--warn)}
+.hint{font-size:12px;color:var(--mut);line-height:1.7}
+#tripWrap{display:none}
+.tabs{display:flex;gap:8px;margin:12px 0}
+.tabs button{flex:1}
+.tabs button.cur{background:var(--acc);border-color:var(--acc);color:#082f49}
+</style>
+</head>
+<body>
+<h1>📋 員工差勤表</h1>
+<div class="sub">GitHub Pages 前端 ＋ Google 試算表共用資料庫・台灣國定假日自動更新</div>
+
+<div class="card">
+<div class="row" style="align-items:center">
+<span id="connBadge" class="conn">● 本機試用模式</span>
+<button class="ghost" onclick="toggleSetup()">⚙️ 連線設定</button>
+<button class="ghost" onclick="exportCSV()">⬇ 匯出 CSV</button>
+</div>
+<div id="setupBox" style="display:none;margin-top:10px">
+<label>Apps Script Web App 網址（多人共用必填，本機試用可留空）</label>
+<input id="gasUrl" placeholder="https://script.google.com/macros/s/XXXX/exec">
+<div class="row" style="margin-top:8px"><button onclick="saveGas()">儲存連線</button><button class="ghost" onclick="testConn()">測試連線</button></div>
+<p class="hint" style="margin-top:8px">設定步驟見 repo 內 <b>SETUP.md</b>：新增 Google 試算表 → 貼上 Code.gs → 部署為網路應用程式 → 網址貼到這裡。換年份假日自動抓，無需手動維護。</p>
+</div>
+</div>
+
+<div class="tabs">
+<button id="tabCal" class="cur" onclick="showTab('cal')">📅 月曆</button>
+<button id="tabList" onclick="showTab('list')">📝 明細</button>
+<button id="tabStat" onclick="showTab('stat')">📊 統計</button>
+<button id="tabEmp" onclick="showTab('emp')">👥 員工</button>
+</div>
+
+<div id="viewCal" class="card">
+<div class="row" style="align-items:center;flex-wrap:nowrap">
+<button class="ghost" onclick="moveMonth(-1)">‹</button>
+<b id="calTitle" style="flex:2;text-align:center"></b>
+<button class="ghost" onclick="moveMonth(1)">›</button>
+</div>
+<div class="row" style="margin-top:8px">
+<select id="fEmp" onchange="render()"><option value="">全部員工</option></select>
+<select id="fType" onchange="render()"><option value="">全部假別</option><option>病假</option><option>休假</option><option>公差</option><option>事假</option><option>特休</option><option>補休</option><option>加班</option><option>國定假日</option></select>
+</div>
+<div class="cal" id="calGrid"></div>
+<p class="hint" id="holInfo" style="margin-top:8px"></p>
+</div>
+
+<div id="viewList" class="card" style="display:none">
+<h3>新增差勤</h3>
+<label>員工</label><select id="nEmp"></select>
+<label>假別</label>
+<select id="nType" onchange="document.getElementById('tripWrap').style.display=this.value==='公差'?'block':'none'">
+<option>病假</option><option>休假</option><option>特休</option><option>事假</option><option>公差</option><option>補休</option><option>加班</option>
+</select>
+<div id="tripWrap"><label>出差地點（公差必填）</label><input id="nTrip" placeholder="例：台北南港展覽館"></div>
+<div class="row"><div><label>開始</label><input type="date" id="nFrom"></div><div><label>結束</label><input type="date" id="nTo"></div></div>
+<label>事由 / 備註</label><input id="nNote" placeholder="例：感冒就醫、家庭旅遊">
+<div class="row" style="margin-top:10px"><button id="addBtn" onclick="addRecord()">＋ 送出</button></div>
+<p class="hint" id="holWarn"></p>
+<hr style="border-color:var(--line);margin:12px 0">
+<h3>紀錄明細</h3>
+<div style="overflow-x:auto"><table><thead><tr><th>日期</th><th>員工</th><th>假別</th><th>地點/備註</th><th></th></tr></thead><tbody id="recRows"></tbody></table></div>
+</div>
+
+<div id="viewStat" class="card" style="display:none">
+<h3>本月統計（天數）</h3>
+<div style="overflow-x:auto"><table><thead><tr><th>員工</th><th>病假</th><th>休假+特休</th><th>公差</th><th>事假</th><th>補休</th><th>加班</th><th>合計</th></tr></thead><tbody id="statRows"></tbody></table></div>
+</div>
+
+<div id="viewEmp" class="card" style="display:none">
+<h3>員工管理</h3>
+<div class="row"><input id="eName" placeholder="姓名"><input id="eDept" placeholder="部門（選填）"><button onclick="addEmp()">＋ 新增</button></div>
+<div style="overflow-x:auto;margin-top:10px"><table><thead><tr><th>姓名</th><th>部門</th><th></th></tr></thead><tbody id="empRows"></tbody></table></div>
+</div>
+
+<div id="dayModal" class="modal" style="display:none" onclick="if(event.target===this)closeDay()"><div class="sheet"><div id="dayBody"></div></div></div>
+<script>
+const HOL_BASE='https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/';
+const LS_GAS='att_gas_url', LS_DEMO_EMP='att_demo_emp', LS_DEMO_REC='att_demo_rec';
+let employees=[], records=[], holidays={}, curY, curM;
+try{curY=new Date().getFullYear();curM=new Date().getMonth();}catch(e){curY=2026;curM=8;}
+
+const gas=()=> (localStorage.getItem(LS_GAS)||'').trim();
+const isCloud=()=> !!gas();
+function setConn(){const b=document.getElementById('connBadge');if(isCloud()){b.textContent='● 已連接共用資料庫';b.className='conn on';}else{b.textContent='● 本機試用模式';b.className='conn off';}}
+function toggleSetup(){const s=document.getElementById('setupBox');s.style.display=s.style.display==='none'?'block':'none';document.getElementById('gasUrl').value=gas();}
+function saveGas(){localStorage.setItem(LS_GAS,document.getElementById('gasUrl').value.trim());setConn();loadAll();alert(isCloud()?'已切換為共用模式':'已切換為本機試用模式');}
+async function testConn(){if(!isCloud())return alert('先貼上 Web App 網址');try{const r=await api('ping');alert('連線成功：'+JSON.stringify(r));}catch(e){alert('連線失敗：'+e.message);}}
+async function api(action,data){data=data||{};data.action=action;
+const res=await fetch(gas(),{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)});
+if(!res.ok)throw new Error('HTTP '+res.status);return res.json();}
+
+// ---- holidays ----
+async function loadHolidays(year){
+if(holidays[year])return holidays[year];
+try{const r=await fetch(HOL_BASE+year+'.json');if(!r.ok)throw 0;const j=await r.json();
+const m={};j.forEach(x=>{const d=x.date.slice(0,4)+'-'+x.date.slice(4,6)+'-'+x.date.slice(6,8);if(x.isHoliday)m[d]=x.description||'放假';});
+holidays[year]=m;return m;}catch(e){holidays[year]=holidays[year]||{};return holidays[year];}
+}
+
+// ---- data ----
+async function loadAll(){
+setConn();
+if(isCloud()){
+try{
+const [e,r]=await Promise.all([api('list',{table:'employees'}),api('list',{table:'records'})]);
+employees=e.rows||[];records=r.rows||[];
+}catch(err){alert('讀取共用庫失敗，暫用本機資料：'+err.message);loadDemo();}
+}else loadDemo();
+await loadHolidays(curY);if(curM===11)await loadHolidays(curY+1);
+fillEmpSelects();render();
+}
+function loadDemo(){
+try{employees=JSON.parse(localStorage.getItem(LS_DEMO_EMP)||'[{"name":"王小明","dept":"業務"},{"name":"陳小美","dept":"行政"}]');}catch(e){employees=[];}
+try{records=JSON.parse(localStorage.getItem(LS_DEMO_REC)||'[]');}catch(e){records=[];}
+}
+function saveDemo(){if(!isCloud()){localStorage.setItem(LS_DEMO_EMP,JSON.stringify(employees));localStorage.setItem(LS_DEMO_REC,JSON.stringify(records));}}
+
+function fillEmpSelects(){
+const f=document.getElementById('fEmp'),n=document.getElementById('nEmp');
+f.innerHTML='<option value="">全部員工</option>';n.innerHTML='';
+employees.forEach(e=>{const o=document.createElement('option');o.value=o.textContent=e.name;f.appendChild(o);
+const o2=document.createElement('option');o2.value=o2.textContent=e.name;n.appendChild(o2);});
+}
+
+// ---- tabs ----
+function showTab(t){['cal','list','stat','emp'].forEach(x=>{document.getElementById('view'+x[0].toUpperCase()+x.slice(1)).style.display=x===t?'block':'none';
+document.getElementById('tab'+x[0].toUpperCase()+x.slice(1)).className=x===t?'cur':'';});if(t!=='cal')render();}
+function moveMonth(d){curM+=d;if(curM<0){curM=11;curY--;}if(curM>11){curM=0;curY++;}loadHolidays(curY).then(render);if(curM===11)loadHolidays(curY+1);}
+
+// ---- date helpers ----
+function eachDate(a,b){const out=[];let d=new Date(a+'T00:00:00'),e=new Date(b+'T00:00:00');if(e<d){const t=d;d=e;e=t;}for(;d<=e;d.setDate(d.getDate()+1))out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));return out;}
+function days(a,b){return eachDate(a,b).length;}
+
+// ---- render ----
+function render(){
+const fe=document.getElementById('fEmp').value,ft=document.getElementById('fType').value;
+const title=document.getElementById('calTitle');title.textContent=curY+' 年 '+(curM+1)+' 月';
+const grid=document.getElementById('calGrid');grid.innerHTML='';
+['日','一','二','三','四','五','六'].forEach(w=>{const d=document.createElement('div');d.className='dow';d.textContent=w;grid.appendChild(d);});
+const first=new Date(curY,curM,1).getDay(),dim=new Date(curY,curM+1,0).getDate();
+for(let i=0;i<first;i++){grid.appendChild(document.createElement('div'));}
+const hm=holidays[curY]||{};
+for(let d=1;d<=dim;d++){
+const ds=curY+'-'+String(curM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+const cell=document.createElement('div');cell.className='day';
+const hol=hm[ds];
+const recs=records.filter(r=>{if(fe&&r.name!==fe)return false;if(ft&&!(ft==='休假'?(r.type==='休假'||r.type==='特休'):r.type===ft))return false;return eachDate(r.from,r.to).includes(ds);});
+if(hol)cell.classList.add('hol');if(recs.length)cell.classList.add('has');
+let html='<div class="dt">'+d+'</div>';
+if(hol)html+='<span class="tag t-國定假日">'+escapeHtml(hol)+'</span>';
+recs.slice(0,3).forEach(r=>{html+='<span class="tag t-'+escapeHtml(r.type)+'">'+escapeHtml(r.name)+'·'+escapeHtml(r.type)+(r.type==='公差'&&r.trip?'·'+escapeHtml(r.trip):'')+'</span>';});
+if(recs.length>3)html+='<span class="tag">+'+(recs.length-3)+'…</span>';
+cell.innerHTML=html;cell.onclick=(function(ds){return function(){openDay(ds);};})(ds);grid.appendChild(cell);
+}
+const holCount=Object.keys(hm).filter(k=>k.startsWith(curY+'-'+String(curM+1).padStart(2,'0'))).length;
+document.getElementById('holInfo').textContent='🇹🇼 本月國定假日 '+holCount+' 天（來源：行政院人事行政總處辦公日曆，年切自動更新）';
+renderList();renderStat();
+}
+function renderList(){
+const tb=document.getElementById('recRows');tb.innerHTML='';
+const rows=[...records].sort((a,b)=>(b.from||'').localeCompare(a.from||''));
+rows.slice(0,200).forEach(r=>{
+const tr=document.createElement('tr');
+tr.innerHTML='<td>'+escapeHtml(r.from)+(r.to&&r.to!==r.from?'<br>～'+escapeHtml(r.to):'')+'</td><td>'+escapeHtml(r.name)+'</td><td><span class="pill t-'+escapeHtml(r.type)+'">'+escapeHtml(r.type)+'</span></td><td>'+escapeHtml((r.trip?('📍'+r.trip+' '):'')+(r.note||''))+'</td>';
+const td=document.createElement('td');const b=document.createElement('button');b.className='danger';b.textContent='刪';b.onclick=()=>delRecord(r.id);td.appendChild(b);tr.appendChild(td);tb.appendChild(tr);
+});
+const hm=holidays[curY]||{},nf=document.getElementById('nFrom').value,nt=document.getElementById('nTo').value||nf;
+if(nf){const hit=eachDate(nf,nt).filter(d=>hm[d]);document.getElementById('holWarn').textContent=hit.length?('⚠️ 選取日期含國定假日：'+hit.map(d=>d+'('+hm[d]+')').join('、')):'';}
+const et=document.getElementById('empRows');et.innerHTML='';
+employees.forEach(e=>{const tr=document.createElement('tr');tr.innerHTML='<td>'+escapeHtml(e.name)+'</td><td>'+escapeHtml(e.dept||'')+'</td>';
+const td=document.createElement('td');const b=document.createElement('button');b.className='danger';b.textContent='刪';b.onclick=()=>delEmp(e.name);td.appendChild(b);tr.appendChild(td);et.appendChild(tr);});
+}
+function renderStat(){
+const tb=document.getElementById('statRows');tb.innerHTML='';
+const pre=curY+'-'+String(curM+1).padStart(2,'0');
+employees.forEach(e=>{
+let sick=0,off=0,biz=0,priv=0,comp=0,ot=0;
+records.forEach(r=>{if(r.name!==e.name)return;const ds=eachDate(r.from,r.to).filter(d=>d.startsWith(pre));const n=ds.length;if(!n)return;
+if(r.type==='病假')sick+=n;else if(r.type==='休假'||r.type==='特休')off+=n;else if(r.type==='公差')biz+=n;else if(r.type==='事假')priv+=n;else if(r.type==='補休')comp+=n;else if(r.type==='加班')ot+=n;});
+const tot=sick+off+biz+priv+comp+ot;
+const tr=document.createElement('tr');tr.innerHTML='<td>'+escapeHtml(e.name)+'</td><td>'+sick+'</td><td>'+off+'</td><td>'+biz+'</td><td>'+priv+'</td><td>'+comp+'</td><td>'+ot+'</td><td><b>'+tot+'</b></td>';tb.appendChild(tr);
+});
+}
+
+// ---- actions ----
+const uid=()=> 'r'+Date.now().toString(36)+Math.floor(Math.random()*999);
+async function addRecord(){
+const name=document.getElementById('nEmp').value,type=document.getElementById('nType').value;
+const from=document.getElementById('nFrom').value,to=document.getElementById('nTo').value||from;
+const trip=document.getElementById('nTrip').value.trim(),note=document.getElementById('nNote').value.trim();
+if(!name)return alert('選員工');if(!from)return alert('選日期');
+if(type==='公差'&&!trip)return alert('公差必須填寫出差地點');
+const hm=holidays[curY]||{};const hit=eachDate(from,to).filter(d=>hm[d]);
+if(hit.length&&!confirm('日期含國定假日（'+hit.join('、')+'），仍要送出嗎？'))return;
+const rec={id:uid(),name,type,from,to,trip:trip||'',note:note||''};
+document.getElementById('addBtn').disabled=true;
+try{
+if(isCloud())await api('add',{table:'records',row:rec});else{records.push(rec);saveDemo();}
+document.getElementById('nTrip').value='';document.getElementById('nNote').value='';
+await loadAll();
+}catch(e){alert('送出失敗：'+e.message);}finally{document.getElementById('addBtn').disabled=false;}
+}
+async function delRecord(id){
+if(!confirm('刪除這筆？'))return;
+if(isCloud()){try{await api('del',{table:'records',id});}catch(e){return alert('刪除失敗：'+e.message);}}else{records=records.filter(r=>r.id!==id);saveDemo();}
+loadAll();
+}
+async function addEmp(){
+const name=document.getElementById('eName').value.trim(),dept=document.getElementById('eDept').value.trim();
+if(!name)return alert('填姓名');if(employees.some(e=>e.name===name))return alert('已存在');
+if(isCloud()){try{await api('add',{table:'employees',row:{name,dept}});}catch(e){return alert('新增失敗：'+e.message);}}else{employees.push({name,dept});saveDemo();}
+document.getElementById('eName').value='';document.getElementById('eDept').value='';loadAll();
+}
+async function delEmp(name){
+if(!confirm('刪除 '+name+'？其紀錄保留'))return;
+if(isCloud()){try{await api('del',{table:'employees',id:name});}catch(e){return alert('刪除失敗：'+e.message);}}else{employees=employees.filter(e=>e.name!==name);saveDemo();}
+loadAll();
+}
+function exportCSV(){
+const rows=[['from','to','days','name','type','trip','note']];
+records.forEach(r=>rows.push([r.from,r.to||r.from,days(r.from,r.to||r.from),r.name,r.type,r.trip||'',(r.note||'').replace(/,/g,'，')]));
+const csv='﻿'+rows.map(r=>r.join(',')).join('\n');
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='差勤_'+curY+'-'+(curM+1)+'.csv';a.click();
+}
+function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+// ---- day detail modal ----
+let daySel='';
+function openDay(ds){
+daySel=ds;
+const hm=holidays[curY]||holidays[parseInt(ds.slice(0,4))]||{};
+const list=records.filter(r=>eachDate(r.from,r.to).includes(ds));
+const byType={};
+list.forEach(r=>{byType[r.type]=byType[r.type]||[];byType[r.type].push(r);});
+let html='<h3>📅 '+escapeHtml(ds)+'（'+'日一二三四五六'[new Date(ds+'T00:00:00').getDay()]+'）</h3>';
+if(hm[ds])html+='<p><span class="pill t-國定假日">國定假日・'+escapeHtml(hm[ds])+'</span></p>';
+if(!list.length)html+='<p class="hint" style="margin:8px 0">當天無假單。可用下方快捷新增（病假/休假/公差/加班）。</p>';
+else{html+='<div style="overflow-x:auto;margin:8px 0"><table><thead><tr><th>員工</th><th>假別</th><th>地點/備註</th><th></th></tr></thead><tbody>';
+list.forEach(r=>{html+='<tr><td>'+escapeHtml(r.name)+'</td><td><span class="pill t-'+escapeHtml(r.type)+'">'+escapeHtml(r.type)+'</span></td><td>'+escapeHtml((r.trip?('📍'+r.trip+' '):'')+(r.note||''))+'</td><td><button class="danger" onclick="delRecord(\''+r.id+'\');openDay(\''+ds+'\')">刪</button></td></tr>';});
+html+='</tbody></table></div>';
+const sum=Object.keys(byType).map(k=>k+'×'+byType[k].length).join('　');
+html+='<p class="hint">當天小計：'+escapeHtml(sum)+'</p>';}
+html+='<label>快捷新增（日期自動帶入 '+escapeHtml(ds)+'）</label><div class="row"><select id="dEmp"></select><select id="dType"><option>病假</option><option>休假</option><option>特休</option><option>事假</option><option>公差</option><option>補休</option><option>加班</option></select></div><div class="row" style="margin-top:8px"><input id="dTrip" placeholder="出差地點（公差必填）"><input id="dNote" placeholder="備註"></div><div class="row" style="margin-top:8px"><button onclick="quickAdd()">＋ 新增到這天</button><button class="ghost" onclick="closeDay()">關閉</button></div>';
+document.getElementById('dayBody').innerHTML=html;
+const de=document.getElementById('dEmp');employees.forEach(e=>{const o=document.createElement('option');o.value=o.textContent=e.name;de.appendChild(o);});
+document.getElementById('dayModal').style.display='flex';
+}
+function closeDay(){document.getElementById('dayModal').style.display='none';}
+async function quickAdd(){
+const name=(document.getElementById('dEmp')||{}).value,type=(document.getElementById('dType')||{}).value||'病假';
+const trip=(document.getElementById('dTrip')||{}).value.trim(),note=(document.getElementById('dNote')||{}).value.trim();
+if(!name)return alert('選員工');if(type==='公差'&&!trip)return alert('公差必須填寫出差地點');
+const rec={id:uid(),name,type,from:daySel,to:daySel,trip:trip||'',note:note||''};
+try{if(isCloud())await api('add',{table:'records',row:rec});else{records.push(rec);saveDemo();}await loadAll();openDay(daySel);}catch(e){alert('送出失敗：'+e.message);}
+}
+['nFrom','nTo'].forEach(id=>document.getElementById(id).addEventListener('change',renderList));
+document.getElementById('gasUrl').value=gas();
+loadAll();
+</script>
+</body>
+</html>
