@@ -54,6 +54,9 @@ button.sm{padding:6px 10px;font-size:13px;flex:none}
 .wtable td.hol{background:#2a1215}
 .wtable .who{text-align:left;font-weight:700;white-space:nowrap;cursor:default;position:sticky;left:0;background:var(--card)}
 .mini{display:block;font-size:11px;border-radius:6px;padding:2px 4px;margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dchips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px}
+.dchip{font-size:13px;border-radius:16px;padding:5px 10px;border:1px solid var(--line);color:var(--txt)}
+.dchip.off{color:var(--mut);background:#0b1220}
 .att{color:var(--ok);font-size:12px}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
@@ -215,20 +218,18 @@ function renderWeek(fe,ft,title){
 const ds=weekDays();title.textContent=fmtD(ds[0])+' ～ '+fmtD(ds[6]);
 const grid=document.getElementById('calGrid');
 const list=fe?employees.filter(e=>e.name===fe):employees;
-let h='<div style="overflow-x:auto"><table class="wtable"><thead><tr><th class="who">員工</th>';
-ds.forEach(d=>{const y=parseInt(d.slice(0,4)),hol=(holidays[y]||{})[d];h+='<th class="'+(hol?'hol':'')+'">'+fmtD(d)+'<br>'+'日一二三四五六'[new Date(d+'T00:00:00').getDay()]+(hol?'<br>'+escapeHtml(hol):'')+'</th>';});
-h+='</tr></thead><tbody>';
-if(!list.length)h+='<tr><td colspan="8" class="hint">先到「員工」分頁新增人員</td></tr>';
+let h='';
+if(!list.length)h+='<div class="sec"><div class="secHead">先到「員工」分頁新增人員</div></div>';
+ds.forEach(d=>{
+const y=parseInt(d.slice(0,4)),hol=(holidays[y]||{})[d];
+h+='<div class="sec" onclick="openDay(\''+d+'\')"><div class="secHead'+(hol?' t-國定假日':'')+'">'+fmtD(d)+' '+'日一二三四五六'[new Date(d+'T00:00:00').getDay()]+(hol?'・'+escapeHtml(hol):'')+(d===anchorD?'・今天':'')+'</div><div class="dchips">';
 list.forEach(e=>{
-h+='<tr><td class="who">'+escapeHtml(e.name)+'</td>';
-ds.forEach(d=>{const y=parseInt(d.slice(0,4)),hol=(holidays[y]||{})[d];
 const rs=recsOn(d,e.name,ft);
-h+='<td class="'+(hol?'hol':'')+'" onclick="openDay(\''+d+'\')">';
-if(!rs.length)h+='<span class="att">出勤</span>';
-rs.forEach(r=>{h+='<span class="mini t-'+escapeHtml(r.type)+'">'+escapeHtml(r.type)+(r.type==='公差'&&r.trip?'·'+escapeHtml(r.trip):'')+'</span>';});
-h+='</td>';});
-h+='</tr>';});
-grid.innerHTML=h+'</tbody></table></div><p class="hint" style="margin-top:6px">點任一格進當天畫面管理</p>';
+if(!rs.length)h+='<span class="dchip off">'+escapeHtml(e.name)+'・出勤</span>';
+rs.forEach(r=>{h+='<span class="dchip t-'+escapeHtml(r.type)+'">'+escapeHtml(e.name)+'・'+escapeHtml(r.type)+(r.type==='公差'&&r.trip?'・'+escapeHtml(r.trip):'')+'</span>';});
+});
+h+='</div></div>';});
+grid.innerHTML=h+'<p class="hint" style="margin-top:6px">點任一天進當天畫面管理</p>';
 }
 function renderDay(fe,ft,title){
 const d=anchorD,y=parseInt(d.slice(0,4)),hol=(holidays[y]||{})[d];
