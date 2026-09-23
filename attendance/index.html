@@ -46,6 +46,15 @@ button.sm{padding:6px 10px;font-size:13px;flex:none}
 .pcard{margin-top:10px;border-color:var(--acc)}
 .pchips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .pchip{background:#0b1220;border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px}
+.wtable{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.wtable th,.wtable td{border:1px solid var(--line);padding:6px 4px;text-align:center}
+.wtable th{background:#0b1220;font-size:12px;white-space:nowrap}
+.wtable th.hol{background:#2a1215;color:var(--bad)}
+.wtable td{min-width:66px;cursor:pointer;vertical-align:top}
+.wtable td.hol{background:#2a1215}
+.wtable .who{text-align:left;font-weight:700;white-space:nowrap;cursor:default;position:sticky;left:0;background:var(--card)}
+.mini{display:block;font-size:11px;border-radius:6px;padding:2px 4px;margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.att{color:var(--ok);font-size:12px}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
 th{color:var(--mut);font-size:12px}
@@ -87,10 +96,11 @@ th{color:var(--mut);font-size:12px}
 
 <div id="viewCal" class="card">
 <div class="row" style="align-items:center;flex-wrap:nowrap">
-<button class="ghost" onclick="moveMonth(-1)">‹</button>
+<button class="ghost" onclick="moveNav(-1)">‹</button>
 <b id="calTitle" style="flex:2;text-align:center"></b>
-<button class="ghost" onclick="moveMonth(1)">›</button>
+<button class="ghost" onclick="moveNav(1)">›</button>
 </div>
+<div class="chips" id="modeChips" style="margin-top:8px"><button class="chip sel" data-m="month" onclick="setMode('month')">月</button><button class="chip" data-m="week" onclick="setMode('week')">週</button><button class="chip" data-m="day" onclick="setMode('day')">日</button></div>
 <div class="row" style="margin-top:8px">
 <select id="fEmp" onchange="render()"><option value="">全部員工</option></select>
 <select id="fType" onchange="render()"><option value="">全部假別</option><option>病假</option><option>休假</option><option>公差</option><option>事假</option><option>特休</option><option>補休</option><option>加班</option><option>國定假日</option></select>
@@ -181,7 +191,60 @@ const o2=document.createElement('option');o2.value=o2.textContent=e.name;n.appen
 // ---- tabs ----
 function showTab(t){['cal','list','stat','emp'].forEach(x=>{document.getElementById('view'+x[0].toUpperCase()+x.slice(1)).style.display=x===t?'block':'none';
 document.getElementById('tab'+x[0].toUpperCase()+x.slice(1)).className=x===t?'cur':'';});if(t!=='cal')render();}
-function moveMonth(d){curM+=d;if(curM<0){curM=11;curY--;}if(curM>11){curM=0;curY++;}loadHolidays(curY).then(render);if(curM===11)loadHolidays(curY+1);}
+function moveMonth(d){curM+=d;if(curM<0){curM=11;curY--;}if(curM>11){curM=0;curY++;}syncAnchor();loadHolidays(curY).then(render);if(curM===11)loadHolidays(curY+1);}
+// ---- month/week/day modes ----
+let viewMode='month', anchorD=(function(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');})();
+function syncAnchor(){anchorD=curY+'-'+String(curM+1).padStart(2,'0')+'-15';}
+function setMode(m){viewMode=m;render();}
+function shiftD(d){const t=new Date(anchorD+'T00:00:00');t.setDate(t.getDate()+d);anchorD=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');curY=t.getFullYear();curM=t.getMonth();fillEmpSelectsKeep();}
+function fillEmpSelectsKeep(){const f=document.getElementById('fEmp').value,t=document.getElementById('fType').value;fillEmpSelects();document.getElementById('fEmp').value=f;document.getElementById('fType').value=t;}
+function moveNav(d){
+if(viewMode==='month'){moveMonth(d);return;}
+shiftD(d*(viewMode==='week'?7:1));
+const y=parseInt(anchorD.slice(0,4));
+loadHolidays(y).then(()=>loadHolidays(y+1)).then(render);
+}
+function matchType(r,ft){if(!ft)return true;if(ft==='休假')return r.type==='休假'||r.type==='特休';return r.type===ft;}
+function fmtD(ds){return parseInt(ds.slice(5,7))+'/'+parseInt(ds.slice(8,10));}
+function weekDays(){const t=new Date(anchorD+'T00:00:00');t.setDate(t.getDate()-t.getDay());const out=[];for(let i=0;i<7;i++){const d=new Date(t);d.setDate(t.getDate()+i);out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));}return out;}
+function recsOn(ds,fe,ft){return records.filter(r=>{if(fe&&r.name!==fe)return false;if(!matchType(r,ft))return false;return eachDate(r.from,r.to).includes(ds);});}
+function renderAlt(fe,ft,title){
+if(viewMode==='week')renderWeek(fe,ft,title);else renderDay(fe,ft,title);
+}
+function renderWeek(fe,ft,title){
+const ds=weekDays();title.textContent=fmtD(ds[0])+' ～ '+fmtD(ds[6]);
+const grid=document.getElementById('calGrid');
+const list=fe?employees.filter(e=>e.name===fe):employees;
+let h='<div style="overflow-x:auto"><table class="wtable"><thead><tr><th class="who">員工</th>';
+ds.forEach(d=>{const y=parseInt(d.slice(0,4)),hol=(holidays[y]||{})[d];h+='<th class="'+(hol?'hol':'')+'">'+fmtD(d)+'<br>'+'日一二三四五六'[new Date(d+'T00:00:00').getDay()]+(hol?'<br>'+escapeHtml(hol):'')+'</th>';});
+h+='</tr></thead><tbody>';
+if(!list.length)h+='<tr><td colspan="8" class="hint">先到「員工」分頁新增人員</td></tr>';
+list.forEach(e=>{
+h+='<tr><td class="who">'+escapeHtml(e.name)+'</td>';
+ds.forEach(d=>{const y=parseInt(d.slice(0,4)),hol=(holidays[y]||{})[d];
+const rs=recsOn(d,e.name,ft);
+h+='<td class="'+(hol?'hol':'')+'" onclick="openDay(\''+d+'\')">';
+if(!rs.length)h+='<span class="att">出勤</span>';
+rs.forEach(r=>{h+='<span class="mini t-'+escapeHtml(r.type)+'">'+escapeHtml(r.type)+(r.type==='公差'&&r.trip?'·'+escapeHtml(r.trip):'')+'</span>';});
+h+='</td>';});
+h+='</tr>';});
+grid.innerHTML=h+'</tbody></table></div><p class="hint" style="margin-top:6px">點任一格進當天畫面管理</p>';
+}
+function renderDay(fe,ft,title){
+const d=anchorD,y=parseInt(d.slice(0,4)),hol=(holidays[y]||{})[d];
+title.textContent=d+' '+'日一二三四五六'[new Date(d+'T00:00:00').getDay()];
+const grid=document.getElementById('calGrid');
+const list=fe?employees.filter(e=>e.name===fe):employees;
+let h='<div class="sec"><div class="secHead'+(hol?' t-國定假日':'')+'">'+escapeHtml(d)+(hol?'・'+escapeHtml(hol):'・平日')+'</div>';
+if(!list.length)h+='<div class="prow"><span class="hint">先到「員工」分頁新增人員</span></div>';
+list.forEach(e=>{
+const rs=recsOn(d,e.name,ft);
+h+='<div class="prow"><div><b>'+escapeHtml(e.name)+'</b>';
+if(!rs.length)h+='<div class="pnote att">✓ 出勤</div>';
+rs.forEach(r=>{h+='<div class="pnote"><span class="pill t-'+escapeHtml(r.type)+'">'+escapeHtml(r.type)+'</span> '+escapeHtml((r.trip?('📍'+r.trip+' '):'')+(r.note||''))+' <a href="#" onclick="delRecord(\''+r.id+'\');return false;" style="color:var(--bad)">刪</a></div>';});
+h+='</div></div>';});
+grid.innerHTML=h+'</div><div class="row" style="margin-top:8px"><button onclick="openDay(\''+d+'\')">＋ 管理這天（新增/刪除）</button></div>';
+}
 
 // ---- date helpers ----
 function eachDate(a,b){const out=[];let d=new Date(a+'T00:00:00'),e=new Date(b+'T00:00:00');if(e<d){const t=d;d=e;e=t;}for(;d<=e;d.setDate(d.getDate()+1))out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));return out;}
@@ -190,7 +253,10 @@ function days(a,b){return eachDate(a,b).length;}
 // ---- render ----
 function render(){
 const fe=document.getElementById('fEmp').value,ft=document.getElementById('fType').value;
-const title=document.getElementById('calTitle');title.textContent=curY+' 年 '+(curM+1)+' 月';
+const title=document.getElementById('calTitle');
+document.querySelectorAll('#modeChips .chip').forEach(c=>c.classList.toggle('sel',c.dataset.m===viewMode));
+if(viewMode!=='month'){renderAlt(fe,ft,title);}
+else{title.textContent=curY+' 年 '+(curM+1)+' 月';
 const grid=document.getElementById('calGrid');grid.innerHTML='';
 ['日','一','二','三','四','五','六'].forEach(w=>{const d=document.createElement('div');d.className='dow';d.textContent=w;grid.appendChild(d);});
 const first=new Date(curY,curM,1).getDay(),dim=new Date(curY,curM+1,0).getDate();
@@ -207,6 +273,7 @@ if(hol)html+='<span class="tag t-國定假日">'+escapeHtml(hol)+'</span>';
 recs.slice(0,3).forEach(r=>{html+='<span class="tag t-'+escapeHtml(r.type)+'">'+escapeHtml(r.name)+'·'+escapeHtml(r.type)+(r.type==='公差'&&r.trip?'·'+escapeHtml(r.trip):'')+'</span>';});
 if(recs.length>3)html+='<span class="tag">+'+(recs.length-3)+'…</span>';
 cell.innerHTML=html;cell.onclick=(function(ds){return function(){openDay(ds);};})(ds);grid.appendChild(cell);
+}
 }
 const holCount=Object.keys(hm).filter(k=>k.startsWith(curY+'-'+String(curM+1).padStart(2,'0'))).length;
 document.getElementById('holInfo').textContent='🇹🇼 本月國定假日 '+holCount+' 天（來源：行政院人事行政總處辦公日曆，年切自動更新）';
