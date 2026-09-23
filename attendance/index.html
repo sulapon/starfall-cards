@@ -279,7 +279,7 @@ if(recs.length>3)html+='<span class="tag">+'+(recs.length-3)+'…</span>';
 cell.innerHTML=html;cell.onclick=(function(ds){return function(){openDay(ds);};})(ds);grid.appendChild(cell);
 }
 }
-const holCount=Object.keys(hm).filter(k=>k.startsWith(curY+'-'+String(curM+1).padStart(2,'0'))).length;
+const holCount=Object.keys(holidays[curY]||{}).filter(k=>k.startsWith(curY+'-'+String(curM+1).padStart(2,'0'))).length;
 document.getElementById('holInfo').textContent='🇹🇼 本月國定假日 '+holCount+' 天（來源：行政院人事行政總處辦公日曆，年切自動更新）';
 renderPerson(fe);renderList();renderStat();
 }
