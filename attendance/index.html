@@ -165,7 +165,7 @@ holidays[year]=m;return m;}catch(e){holidays[year]=holidays[year]||{};return hol
 
 // ---- data ----
 async function loadAll(){
-setConn();
+setConn();startPoll();
 if(isCloud()){
 try{
 const [e,r]=await Promise.all([api('list',{table:'employees'}),api('list',{table:'records'})]);
@@ -416,6 +416,15 @@ const hit3=conflict(name,daySel,daySel,type);
 if(hit3)return alert(name+' 在 '+daySel+' 已有【'+hit3.type+'】，同一天只能一種假別');
 const rec={id:uid(),name,type,from:daySel,to:daySel,trip:(trip||'').trim(),note:(note||'').trim()};
 try{if(isCloud())await api('add',{table:'records',row:rec});else{records.push(rec);saveDemo();}await loadAll();openDay(daySel);}catch(e){alert('送出失敗：'+e.message);}
+}
+let pollTimer=null;
+function startPoll(){if(pollTimer)clearInterval(pollTimer);if(isCloud())pollTimer=setInterval(refreshCloud,30000);}
+async function refreshCloud(){
+if(!isCloud()||document.hidden)return;
+if(document.getElementById('dayModal').style.display!=='none')return;
+try{const [e,r]=await Promise.all([api('list',{table:'employees'}),api('list',{table:'records'})]);
+const es=JSON.stringify(e.rows||[]),rs=JSON.stringify(r.rows||[]);
+if(es!==JSON.stringify(employees)||rs!==JSON.stringify(records)){employees=JSON.parse(es);records=JSON.parse(rs);fillEmpSelectsKeep();render();}}catch(_){}
 }
 ['nFrom','nTo'].forEach(id=>document.getElementById(id).addEventListener('change',renderList));
 document.getElementById('gasUrl').value=gas();
