@@ -47,7 +47,11 @@ function listRows(table) {
   var rows = [];
   for (var i = 1; i < vals.length; i++) {
     var o = {};
-    for (var j = 0; j < head.length; j++) o[head[j]] = String(vals[i][j] == null ? '' : vals[i][j]);
+    for (var j = 0; j < head.length; j++) {
+      var v = vals[i][j];
+      if (Object.prototype.toString.call(v) === '[object Date]') v = Utilities.formatDate(v, 'Asia/Taipei', 'yyyy-MM-dd');
+      o[head[j]] = String(v == null ? '' : v);
+    }
     if (table === 'employees' && !o.name) continue;
     if (table === 'records' && !o.id) continue;
     rows.push(o);
