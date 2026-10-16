@@ -1,0 +1,2826 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>SUPER MARIO BROS. — 還原版</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{width:100%;height:100%;overflow:hidden;background:#000;
+    font-family:ui-monospace,"DejaVu Sans Mono",Menlo,monospace;color:#fff;
+    touch-action:none;user-select:none;-webkit-user-select:none}
+  #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #cv{image-rendering:pixelated;image-rendering:crisp-edges;display:block;background:#5c94fc}
+  #pad{position:fixed;inset:0;pointer-events:none;z-index:20}
+  .btn{position:absolute;pointer-events:auto;display:flex;align-items:center;justify-content:center;
+    border-radius:50%;border:3px solid rgba(255,255,255,.55);
+    background:rgba(255,255,255,.14);backdrop-filter:blur(2px);
+    color:rgba(255,255,255,.92);font-weight:bold;text-shadow:0 2px 0 rgba(0,0,0,.5);line-height:1}
+  .btn:active,.btn.on{background:rgba(255,255,255,.42);transform:scale(.94)}
+  .btn small{position:absolute;bottom:2px;font-size:9px;opacity:.75;font-weight:normal}
+  #b-left{left:3vw;bottom:calc(3vh + env(safe-area-inset-bottom));width:19vw;height:19vw;max-width:96px;max-height:96px;font-size:7vw}
+  #b-right{left:calc(3vw + 21vw);bottom:calc(3vh + env(safe-area-inset-bottom));width:19vw;height:19vw;max-width:96px;max-height:96px;font-size:7vw}
+  #b-b{right:3vw;bottom:calc(3vh + env(safe-area-inset-bottom));width:22vw;height:22vw;max-width:112px;max-height:112px;font-size:6vw}
+  #b-a{right:calc(3vw + 24vw);bottom:calc(3vh + env(safe-area-inset-bottom));width:22vw;height:22vw;max-width:112px;max-height:112px;font-size:6vw}
+  #b-pause{right:2vw;top:calc(1.5vh + env(safe-area-inset-top));width:11vw;height:11vw;max-width:52px;max-height:52px;font-size:3.6vw;border-radius:12px}
+  #b-mute{left:2vw;top:calc(1.5vh + env(safe-area-inset-top));width:11vw;height:11vw;max-width:52px;max-height:52px;font-size:3.4vw;border-radius:12px}
+  #b-fs{right:calc(2vw + 13vw);top:calc(1.5vh + env(safe-area-inset-top));width:11vw;height:11vw;max-width:52px;max-height:52px;font-size:3.2vw;border-radius:12px}
+  .row{position:fixed;left:0;right:0;display:flex;justify-content:center;gap:2vw;z-index:30;pointer-events:none}
+  .chip{pointer-events:auto;padding:1.2vh 3.4vw;border:2px solid rgba(255,255,255,.5);border-radius:999px;
+    background:rgba(0,0,0,.6);font-size:min(3.4vw,15px);font-weight:bold;letter-spacing:.5px}
+  .chip:active{background:rgba(255,255,255,.3)}
+  #hud-top{position:fixed;top:0;left:0;right:0;z-index:10;pointer-events:none;display:flex;
+    justify-content:space-between;padding:calc(.8vh + env(safe-area-inset-top)) 2vw 0;gap:1vw}
+  .hchip{background:rgba(0,0,0,.55);border:2px solid rgba(255,255,255,.28);border-radius:10px;
+    padding:.8vh 1.6vw;font-size:min(3.1vw,14px);font-weight:bold;white-space:nowrap;letter-spacing:.5px}
+  .hchip i{font-style:normal;color:#ffd83d}
+  .hide{display:none!important}
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="cv" width="256" height="240"></canvas></div>
+<div id="hud-top" class="hide">
+  <div class="hchip">Lv <i id="h-lv">1-1</i></div>
+  <div class="hchip">💰 <i id="h-coin">×00</i></div>
+  <div class="hchip">★ <i id="h-score">0000000</i></div>
+</div>
+<div id="pad">
+  <div class="btn" id="b-left">◀</div>
+  <div class="btn" id="b-right">▶</div>
+  <div class="btn" id="b-b">B<small>跑</small></div>
+  <div class="btn" id="b-a">A<small>跳</small></div>
+  <div class="btn" id="b-pause">❚❚</div>
+  <div class="btn" id="b-mute">🔊</div>
+  <div class="btn" id="b-fs">⛶</div>
+</div>
+<div class="row" style="bottom:calc(3vh + env(safe-area-inset-bottom))" id="row-bot"></div>
+<script>/* ==== c1_core.js ==== */
+'use strict';
+/* ===== SMB core: constants, canvas scale, input, audio, fixed-step loop ===== */
+var TS = 16;                 // tile size
+var VW = 256, VH = 240;      // NES screen
+var GRAV = 0.45;             // px/frame^2
+var GRAV_HOLD = 0.19;        // lighter while rising & A held (variable jump)
+var VY_MIN = -4.6;           // jump impulse
+var VY_MAX = 5.2;            // terminal fall
+var WALK_MAX = 1.45, RUN_MAX = 2.45;
+var ACC_GROUND = 0.075, ACC_AIR = 0.055;
+var DEC_REL = 0.10, DEC_SKID = 0.19;
+var STOMP_V = -3.4, STOMP_VHOLD = -4.3;
+var TILE_META = {};          // tile -> {solid, break, coin, power, used}
+
+var cv = document.getElementById('cv');
+var cx = cv.getContext('2d');
+cx.imageSmoothingEnabled = false;
+
+function fitCanvas() {
+  var availW = window.innerWidth, availH = window.innerHeight;
+  // leave room for the touch pad at the bottom on phones
+  var pad = (availW < 900 || ('ontouchstart' in window)) ? Math.min(availH * 0.22, 170) : 0;
+  var h = availH - pad;
+  var s = Math.min(availW / VW, h / VH);
+  if (s < 1) s = Math.max(s, 0.4);
+  cv.style.width = (VW * s) + 'px';
+  cv.style.height = (VH * s) + 'px';
+}
+window.addEventListener('resize', fitCanvas);
+window.addEventListener('orientationchange', function () { setTimeout(fitCanvas, 250); });
+
+/* ---------------- input ---------------- */
+var IN = { left: 0, right: 0, up: 0, down: 0, A: 0, B: 0, start: 0, sel: 0 };
+var INP = { left: 0, right: 0, up: 0, down: 0, A: 0, B: 0, start: 0, sel: 0 }; // prev-frame
+function pressed(k) { return IN[k] && !INP[k]; }
+
+var KEYMAP = {
+  ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right',
+  ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
+  KeyX: 'A', KeyK: 'A', Space: 'A', KeyZ: 'B', KeyJ: 'B',
+  Enter: 'start', KeyP: 'start', Escape: 'start'
+};
+window.addEventListener('keydown', function (e) {
+  var k = KEYMAP[e.code];
+  if (k) { IN[k] = 1; e.preventDefault(); }
+});
+window.addEventListener('keyup', function (e) {
+  var k = KEYMAP[e.code];
+  if (k) { IN[k] = 0; e.preventDefault(); }
+});
+
+function bindBtn(id, key) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var on = function (e) { IN[key] = 1; el.classList.add('on'); e.preventDefault(); };
+  var off = function (e) { IN[key] = 0; el.classList.remove('on'); if (e) e.preventDefault(); };
+  el.addEventListener('touchstart', on, { passive: false });
+  el.addEventListener('touchend', off, { passive: false });
+  el.addEventListener('touchcancel', off, { passive: false });
+  el.addEventListener('mousedown', on);
+  window.addEventListener('mouseup', off);
+  el.addEventListener('mouseleave', off);
+  el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+}
+bindBtn('b-left', 'left'); bindBtn('b-right', 'right');
+bindBtn('b-a', 'A'); bindBtn('b-b', 'B');
+
+/* ---------------- audio: NES-ish square synth, no assets ---------------- */
+var AU = { on: true, ctx: null, master: null };
+function audioInit() {
+  if (AU.ctx) return;
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    AU.ctx = new AC();
+    AU.master = AU.ctx.createGain();
+    AU.master.gain.value = 0.16;
+    AU.master.connect(AU.ctx.destination);
+  } catch (e) { AU.ctx = null; }
+}
+document.addEventListener('touchstart', function () { audioInit(); if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume(); }, { passive: true });
+window.addEventListener('keydown', function () { audioInit(); if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume(); });
+
+function tone(freq, dur, type, vol, slideTo) {
+  if (!AU.on || !AU.ctx) return;
+  var t = AU.ctx.currentTime;
+  var o = AU.ctx.createOscillator(), g = AU.ctx.createGain();
+  o.type = type || 'square';
+  o.frequency.setValueAtTime(freq, t);
+  if (slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(20, slideTo), t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol == null ? 0.5 : vol, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(AU.master);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+var SFX = {
+  jump: function () { tone(380, 0.16, 'square', 0.5, 780); },
+  bigjump: function () { tone(300, 0.20, 'square', 0.5, 900); },
+  coin: function () { tone(988, 0.07, 'square', 0.42); setTimeout(function () { tone(1319, 0.32, 'square', 0.42); }, 70); },
+  stomp: function () { tone(240, 0.09, 'square', 0.5, 90); },
+  bump: function () { tone(160, 0.07, 'square', 0.45, 110); },
+  breakblk: function () { tone(600, 0.10, 'square', 0.4, 140); },
+  power: function () { [392, 523, 659, 784].forEach(function (f, i) { setTimeout(function () { tone(f, 0.12, 'square', 0.4); }, i * 60); }); },
+  grow: function () { [262, 330, 392, 523, 659].forEach(function (f, i) { setTimeout(function () { tone(f, 0.10, 'square', 0.38); }, i * 55); }); },
+  shrink: function () { [660, 520, 392, 262].forEach(function (f, i) { setTimeout(function () { tone(f, 0.11, 'square', 0.4); }, i * 55); }); },
+  die: function () { tone(660, 0.14, 'square', 0.45); setTimeout(function () { tone(440, 0.18, 'square', 0.45); }, 150); setTimeout(function () { tone(220, 0.5, 'square', 0.45, 110); }, 330); },
+  clear: function () { [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { setTimeout(function () { tone(f, 0.16, 'square', 0.4); }, i * 110); }); },
+  kick: function () { tone(900, 0.09, 'square', 0.45, 300); },
+  fire: function () { tone(700, 0.08, 'square', 0.35, 220); },
+  flag: function () { [392, 523, 659, 880, 1047].forEach(function (f, i) { setTimeout(function () { tone(f, 0.13, 'square', 0.42); }, i * 70); }); }
+};
+
+/* ---------------- main loop ---------------- */
+var FPS = 60, STEP = 1 / FPS, acc = 0, last = 0, running = false;
+var tickHook = null, drawHook = null;
+function loop(ts) {
+  if (!running) return;
+  requestAnimationFrame(loop);
+  if (!last) last = ts;
+  var dt = (ts - last) / 1000; last = ts;
+  if (dt > 0.25) dt = 0.25;
+  acc += dt;
+  var n = 0;
+  while (acc >= STEP && n < 5) {
+    var k = {};
+    for (var key in IN) k[key] = IN[key];
+    INP = k;
+    if (tickHook) tickHook(STEP);
+    acc -= STEP; n++;
+  }
+  if (drawHook) drawHook();
+}
+function startLoop() { if (running) return; running = true; last = 0; acc = 0; requestAnimationFrame(loop); }
+function stopLoop() { running = false; }
+</script>
+<script>/* ==== c2_art_mario.js ==== */
+'use strict';
+/* ===== ART 1: pixel-art helpers, palette, Mario frames =====
+   Sprites are authored as 16x16 color-index grids, then baked once into
+   offscreen canvases. Palette: classic SMB NES colors.
+*/
+var PAL = {
+  '.': null,
+  K: '#000000', W: '#fcffff', w: '#a4e4fc', G: '#00a800', g: '#58d854',
+  R: '#e45c10', r: '#fca044', Y: '#f8b800', y: '#f8d878',
+  B: '#0058f8', b: '#3cbcfc', C: '#b8f818', c: '#d8f878',
+  M: '#f87858', m: '#f0a0a0', O: '#a44000', S: '#503000', P: '#000000'
+};
+function bake(rows, scale) {
+  var h = rows.length, w = rows[0].length;
+  var c = document.createElement('canvas');
+  c.width = w * (scale || 1); c.height = h * (scale || 1);
+  var g = c.getContext('2d');
+  for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+    var ch = rows[y][x];
+    if (ch === '.' || !PAL[ch]) continue;
+    g.fillStyle = PAL[ch];
+    g.fillRect(x * (scale || 1), y * (scale || 1), scale || 1, scale || 1);
+  }
+  return c;
+}
+
+/* ---------- palette-swap a baked sprite (for fire Mario variants) ---------- */
+function swap(src, map) {
+  var c = document.createElement('canvas');
+  c.width = src.width; c.height = src.height;
+  var g = c.getContext('2d');
+  g.drawImage(src, 0, 0);
+  var d = g.getImageData(0, 0, c.width, c.height), p = d.data;
+  var from = [], to = [];
+  for (var key in map) {
+    var a = hex(map[key]), b = hex(PAL[key] || '#000000');
+    from.push(a); to.push(b);
+  }
+  for (var i = 0; i < p.length; i += 4) {
+    if (p[i + 3] === 0) continue;
+    var cnum = (p[i] << 16) | (p[i + 1] << 8) | p[i + 2];
+    for (var f = 0; f < from.length; f++) if (cnum === from[f]) { cnum = to[f]; break; }
+    p[i] = (cnum >> 16) & 255; p[i + 1] = (cnum >> 8) & 255; p[i + 2] = cnum & 255;
+  }
+  g.putImageData(d, 0, 0);
+  return c;
+}
+function hex(h) { return parseInt(h.slice(1), 16); }
+
+/* ---------- Mario (small) : 16x16 grids ---------- */
+/* standing */
+var M_STAND = [
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '....KR.R..R.K...',
+  '....KK.K..K.K...',
+  '......SSSS......',
+  '.....SS..SS.....',
+  '......SS.SS.....'
+];
+/* walk frame A */
+var M_WALK1 = [
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '......KNNK......',
+  '....KKRRRRRK....',
+  '...KRRRRRRRRK...',
+  '...KRR.K..RRK...',
+  '...KKK.K..KK....',
+  '....SS..KKS.....',
+  '...SSS...SS.....',
+  '...SS....SS.....'
+];
+/* walk frame B */
+var M_WALK2 = [
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '......KNNK......',
+  '...K..KRRK..K...',
+  '..KRRKRRRRKRRK..',
+  '..KRRRKRRRKRRK..',
+  '..KKK.KKKK.KKK..',
+  '.....SS..SSS....',
+  '.....SS...SS....',
+  '.....SSS..SSS...'
+];
+/* jump (small) */
+var M_JUMP = [
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '....K.KNNNNK....',
+  '..KRRK.KRRK.K...',
+  '..KRRRRKRRRK....',
+  '..KKKK.KKK.....',
+  '.....K.SS.......',
+  '....SS.SS.S.....',
+  '....SS.SS.SS....',
+  '.....SSSSS......'
+];
+/* skid */
+var M_SKID = [
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '.....KNNK.K.....',
+  '....KRRRKKK.....',
+  '...KRRRRRRK.....',
+  '...KR..RRK......',
+  '...KK..KKK......',
+  '.....SSSS.......',
+  '....SS..SS......',
+  '....SS..SS......'
+];
+/* crouch */
+var M_CROUCH = [
+  '................',
+  '................',
+  '................',
+  '................',
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '.....KKKKKK.....',
+  '................'
+];
+/* died */
+var M_DIE = [
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '.....KKKKKK.....',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '.....KRRRRK.....',
+  '......KKKK......',
+  '.....SS..SS.....',
+  '....SS....SS....',
+  '....SS....SS....'
+];
+</script>
+<script>/* ==== c2b_art_big.js ==== */
+'use strict';
+/* Big (Super) Mario 16x24 grids — taller sprite, same palette. */
+var B_STAND = [
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '...KRRRRRRRRK...',
+  '...KRRKRRKRRK...',
+  '...KK.KKKK.KK...',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRK....',
+  '....KR.KK.RK....',
+  '....KK.KK.KK....',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '........SS......'
+];
+var B_WALK1 = [
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '...KRRRRRRRRK...',
+  '..KRRKRRRRKRRK..',
+  '..KRRK.KKKK.RRK..',
+  '..KKK..SS..KKK..',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '...KRRRRRRRRK...',
+  '...KRKKSSKRRK...',
+  '...KKK.SS.KKK...',
+  '......KNNK......',
+  '....KRRRRRRK....',
+  '...KSS......SSK..'
+];
+var B_WALK2 = [
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '...KRRRRRRRRK...',
+  '..KRRKRRRRKRRK..',
+  '..KRRKKKKKKRRK..',
+  '..KKK...SS..KK..',
+  '.......KNNK.....',
+  '......KRRRRK....',
+  '.....KRRRRRRK...',
+  '....KRRRRRRRK...',
+  '...KRRKKSSKKK...',
+  '...KKK..SS..K...',
+  '......KNNK......',
+  '....KRRRRRRK....',
+  '..KSS........SK.'
+];
+var B_JUMP = [
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '..KRRKRRRRKRRK..',
+  '..KRRRRRRRRRRK..',
+  '..KKKK...KKKKK..',
+  '.........SS.....',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '....KR.KK.RK....',
+  '....KK.KK.KK....',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '........SS......'
+];
+var B_SKID = [
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '...KRRRRRRRRK...',
+  '...KRKRRKRRK....',
+  '...KK.KKKK.KK...',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '.....KRRRRRK....',
+  '.....KRKKRK.....',
+  '.....KKKKKK.....',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '........SS......'
+];
+var B_CROUCH = [
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '...KRRRRRRRRK...',
+  '...KRRKRRKRRK...',
+  '...KK.KKKK.KK...',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '....KR.KK.RK....',
+  '....KK.KK.KK....',
+  '................'
+];
+var B_DIE = [
+  '.....KKKKKK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRRK...',
+  '....KKRRRRKKK...',
+  '.....KRRRRK.....',
+  '.....KNNNNK.....',
+  '....KNKNNKKN....',
+  '....KKNNNNKK....',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRK....',
+  '....KRRRRRRK....',
+  '....KRRRRRRK....',
+  '.....KKKKKK.....',
+  '.....KNNNNK.....',
+  '......KNNK......',
+  '......KNNK......',
+  '.....KRRRRK.....',
+  '.....KRRRRK.....',
+  '....KRRRRRRK....',
+  '....KRRRRRRK....',
+  '....KRRRRRRK....',
+  '................'
+];
+
+/* ---------- enemies ---------- */
+/* Goomba 16x16 */
+var G_WALK1 = [
+  '.....KKKKKK.....',
+  '....KMMMMMMK....',
+  '...KMMMMMMMMK...',
+  '..KMMKKMMMMKMM..',
+  '..KMMKKMMMMKMM..',
+  '..KMMMMMMMMMMK..',
+  '...KMMMMMMMMK...',
+  '....KMMMMMMK....',
+  '...KKKKKKKKKK...',
+  '..KMMMMMMMMMMK..',
+  '.KMMMMMMMMMMMMK.',
+  '.KMOOOOOOOOOOOMK.',
+  '.KMOOOOOOOOOOOMK.',
+  '..KOOOOOOOOOOK..',
+  '...KKKKKKKKKK...',
+  '..KKK......KKK..'
+];
+var G_WALK2 = [
+  '.....KKKKKK.....',
+  '....KMMMMMMK....',
+  '...KMMMMMMMMK...',
+  '..KMMKKMMMMKMM..',
+  '..KMMKKMMMMKMM..',
+  '..KMMMMMMMMMMK..',
+  '...KMMMMMMMMK...',
+  '....KMMMMMMK....',
+  '...KKKKKKKKKK...',
+  '..KMMMMMMMMMMK..',
+  '.KMMMMMMMMMMMMK.',
+  '.KMOOOOOOOOOOOMK.',
+  '.KMOOOOOOOOOOOMK.',
+  '..KOOOOOOOOOOK..',
+  '...KKKKKKKKKK...',
+  '.KKK........KKK.'
+];
+var G_FLAT = [
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '.....KKKKKK.....',
+  '....KMMMMMMK....',
+  '..KKMMMMMMMMKK..',
+  '.KMMMMMMMMMMMMK.',
+  '.KOOOOMMOOOOOOK.',
+  '..KKKKKKKKKKKK..',
+  '................'
+];
+/* Koopa Troopa 16x24 (green) */
+var K_WALK1 = [
+  '......KKKK......',
+  '.....KCCCCK.....',
+  '....KCCCCCCK....',
+  '....KKCCCCKK....',
+  '....KCCCCCCK....',
+  '.....KCCCCK.....',
+  '.....KCCCCK.....',
+  '....KKCCCCKK....',
+  '...KCCCCCCCCK...',
+  '..KCCCGGGGCCCK..',
+  '..KCCGGGGGGCCK..',
+  '..KCCKGGGGKCCK..',
+  '..KCCCGGGGCCCK..',
+  '...KCCCCCCCCK...',
+  '....KCCCCCCK....',
+  '....KCCCCCCK....',
+  '....KCCCCCCK....',
+  '....KCCCCCCK....',
+  '....KCKKCCKK....',
+  '...KCCK..KCCK...',
+  '..KCCCK..KCCCK..',
+  '..KKKK....KKKK..',
+  '..............SS',
+  '.............SSS'
+];
+var K_WALK2 = [
+  '......KKKK......',
+  '.....KCCCCK.....',
+  '....KCCCCCCK....',
+  '....KKCCCCKK....',
+  '....KCCCCCCK....',
+  '.....KCCCCK.....',
+  '.....KCCCCK.....',
+  '....KKCCCCKK....',
+  '...KCCCCCCCCK...',
+  '..KCCCGGGGCCCK..',
+  '..KCCGGGGGGCCK..',
+  '..KCCKGGGGKCCK..',
+  '..KCCCGGGGCCCK..',
+  '...KCCCCCCCCK...',
+  '....KCCCCCCK....',
+  '....KCCCCCCK....',
+  '....KCCCCCCK....',
+  '....KCCCCCCK....',
+  '....KCKKCCKK....',
+  '...KCCK..KCCK...',
+  '..KCCCK..KCCCK..',
+  '...KKK....KKK...',
+  '..............SS',
+  '.............SSS'
+];
+var K_SHELL = [
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '.....KKKKKK.....',
+  '...KKCCCCCCKK...',
+  '..KCCCGGGGCCCK..',
+  '.KCCGGGGGGGGCCK.',
+  '.KCGGGGGGGGGGCK.',
+  '.KCGGGGGGGGGGCK.',
+  '.KCGGGGGGGGGGCK.',
+  '..KCGGGGGGGGGK..',
+  '..KCCGGGGGGCCK..',
+  '...KKCCCCCCKK...',
+  '.....KKKKKK.....',
+  '................',
+  '................',
+  '................'
+];
+/* proper 16x16 shell used for the kicked/still shell state */
+var K_SHELL16 = [
+  '.....KKKKKK.....',
+  '...KKCCCCCCKK...',
+  '..KCCCGGGGCCCK..',
+  '.KCCGGGGGGGGCCK.',
+  '.KCGGGGGGGGGGCK.',
+  '.KCGGGGGGGGGGCK.',
+  '.KCGGGGGGGGGGCK.',
+  '..KCGGGGGGGGGK..',
+  '..KCCGGGGGGCCK..',
+  '.KCCCGGGGGGCCCK.',
+  '.KCCGGGGGGGGCCK.',
+  '..KCGGGGGGGGGK..',
+  '..KCCGGGGGGCCK..',
+  '...KKCCCCCCKK...',
+  '.....KKKKKK.....',
+  '................'
+];
+</script>
+<script>/* ==== c3_art_tiles.js ==== */
+'use strict';
+/* ===== ART 2: tiles, blocks, items, background, and the baked SPRITES registry ===== */
+var SPR = {};
+
+/* ---- tile drawing helpers (procedural, matches SMB palette) ---- */
+function drawGroundTile(g, x, y, kind) {
+  // brick-ish ground with dark mortar
+  g.fillStyle = PAL.R; g.fillRect(x, y, 16, 16);
+  g.fillStyle = PAL.K;
+  g.fillRect(x, y, 16, 1); g.fillRect(x, y + 7, 16, 1); g.fillRect(x, y + 15, 16, 1);
+  g.fillRect(x, y, 1, 8); g.fillRect(x + 8, y, 1, 8);
+  g.fillRect(x, y + 8, 1, 8); g.fillRect(x + 7, y + 8, 1, 8); g.fillRect(x + 15, y + 8, 1, 8);
+  g.fillStyle = PAL.r; g.fillRect(x + 2, y + 2, 5, 4); g.fillRect(x + 9, y + 2, 5, 4);
+  g.fillRect(x + 2, y + 10, 4, 4); g.fillRect(x + 8, y + 10, 6, 4);
+}
+function drawSolidBlock(g, x, y, o) {
+  o = o || {};
+  g.fillStyle = o.c || PAL.C; g.fillRect(x, y, 16, 16);
+  g.fillStyle = PAL.K; g.fillRect(x, y, 16, 1); g.fillRect(x, y + 15, 16, 1);
+  g.fillRect(x, y, 1, 16); g.fillRect(x + 15, y, 1, 16);
+  g.fillStyle = PAL.c; g.fillRect(x + 2, y + 2, 5, 4); g.fillRect(x + 9, y + 2, 5, 4);
+  g.fillRect(x + 2, y + 10, 5, 4); g.fillRect(x + 9, y + 10, 5, 4);
+  if (o.txt) {
+    g.fillStyle = PAL.K;
+    g.font = 'bold 10px monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(o.txt, x + 8, y + 9);
+  }
+}
+function drawBrick(g, x, y, o) {
+  o = o || {};
+  g.fillStyle = PAL.r; g.fillRect(x, y, 16, 16);
+  g.fillStyle = PAL.K;
+  g.fillRect(x, y, 16, 1); g.fillRect(x, y + 7, 16, 2); g.fillRect(x, y + 15, 16, 1);
+  g.fillRect(x, y, 1, 8); g.fillRect(x + 7, y, 2, 8);
+  g.fillRect(x, y + 9, 1, 7); g.fillRect(x + 15, y + 9, 1, 7);
+}
+function drawQBlock(g, x, y) {
+  g.fillStyle = PAL.Y; g.fillRect(x, y, 16, 16);
+  g.fillStyle = PAL.K;
+  g.fillRect(x, y, 16, 1); g.fillRect(x, y + 15, 16, 1);
+  g.fillRect(x, y, 1, 16); g.fillRect(x + 15, y, 1, 16);
+  g.fillRect(x + 3, y + 3, 1, 1); g.fillRect(x + 12, y + 3, 1, 1);
+  g.fillRect(x + 3, y + 12, 1, 1); g.fillRect(x + 12, y + 12, 1, 1);
+  g.fillStyle = PAL.y;
+  g.fillRect(x + 4, y + 4, 2, 2); g.fillRect(x + 10, y + 4, 2, 2);
+  g.fillRect(x + 4, y + 10, 2, 2); g.fillRect(x + 10, y + 10, 2, 2);
+}
+function drawUsedBlock(g, x, y) {
+  g.fillStyle = '#c86000'; g.fillRect(x, y, 16, 16);
+  g.fillStyle = PAL.K;
+  g.fillRect(x, y, 16, 1); g.fillRect(x, y + 15, 16, 1);
+  g.fillRect(x, y, 1, 16); g.fillRect(x + 15, y, 1, 16);
+  g.fillStyle = '#e08840';
+  g.fillRect(x + 3, y + 4, 10, 1); g.fillRect(x + 3, y + 11, 10, 1);
+}
+function drawPipe(g, x, y, w, h, head) {
+  var body = PAL.g, light = '#90e090', dark = PAL.G;
+  if (head) {
+    g.fillStyle = dark; g.fillRect(x, y, w, 8);
+    g.fillStyle = PAL.K; g.fillRect(x, y, w, 1); g.fillRect(x, y + 7, w, 1);
+    g.fillRect(x, y, 1, 8); g.fillRect(x + w - 1, y, 1, 8);
+    g.fillStyle = light; g.fillRect(x + 2, y + 2, 2, 4); g.fillRect(x + w - 4, y + 2, 2, 4);
+    g.fillStyle = body; g.fillRect(x + 1, y + 1, w - 2, 6);
+    g.fillStyle = body; g.fillRect(x + 2, y + 8, w - 4, h - 8);
+    g.fillStyle = PAL.K; g.fillRect(x + 2, y + 8, 1, h - 8); g.fillRect(x + w - 3, y + 8, 1, h - 8);
+    g.fillRect(x + 2, y + h - 1, w - 4, 1);
+    g.fillStyle = light; g.fillRect(x + 4, y + 10, 2, h - 14);
+    g.fillStyle = dark; g.fillRect(x + w - 7, y + 9, 3, h - 12);
+  } else {
+    g.fillStyle = body; g.fillRect(x + 2, y, w - 4, h);
+    g.fillStyle = PAL.K; g.fillRect(x + 2, y, 1, h); g.fillRect(x + w - 3, y, 1, h);
+    g.fillStyle = light; g.fillRect(x + 4, y, 2, h);
+    g.fillStyle = dark; g.fillRect(x + w - 7, y, 3, h);
+  }
+}
+function drawCoin(g, x, y, f) {
+  var w = [8, 5, 2, 5][f & 3];
+  g.fillStyle = PAL.K;
+  g.fillRect(x + 8 - w / 2 - 1, y + 2, w + 2, 12);
+  g.fillRect(x + 8 - w / 2 - 1, y + 2, w + 2, 1);
+  g.fillStyle = PAL.Y; g.fillRect(x + 8 - w / 2, y + 3, w, 10);
+  g.fillStyle = PAL.y; g.fillRect(x + 8 - w / 2 + 1, y + 4, 1, 8);
+}
+
+/* ---------- items ---------- */
+var I_MUSH = [
+  '................',
+  '....KKKKKKKK....',
+  '..KKMMMMMMMMKK..',
+  '.KMMWWMMMMWWMMK.',
+  '.KMWWMMMMMMWWMK.',
+  'KMMWWMMMMMMWWMMK',
+  'KMWWMMMMMMMWWMMK',
+  'KMMMWWMMMMWWMMMK',
+  'KMMMMMMMMMMMMMMK',
+  'KMMMMMMMMMMMMMMK',
+  '.KMMMMMMMMMMMMK.',
+  '.KMMMMKKKKMMMMK.',
+  '..KMMK....KMMK..',
+  '..KWWK....KWWK..',
+  '...KK......KK...',
+  '................'
+];
+var I_1UP = [
+  '................',
+  '....KKKKKKKK....',
+  '..KKGGGGGGGGKK..',
+  '.KGWWGGGGGGWWGK.',
+  '.KWWWGGGGGGWWWK.',
+  'KGGWWGGGGGGWWGGK',
+  'KGWWGGGGGGGGWWGK',
+  'KG GGGGGGGGGGGGK',
+  'KGGGGGGGGGGGGGGK',
+  'KGGGGGGGGGGGGGGK',
+  '.KGGGGGGGGGGGGK.',
+  '.KGGGGKKKKGGGGK.',
+  '..KGGK....KGGK..',
+  '..KWWK....KWWK..',
+  '...KK......KK...',
+  '................'
+];
+var I_FIRE = [
+  '................',
+  '................',
+  '....KKKKKKKK....',
+  '..KKMMMMMMMMKK..',
+  '.KMMWWMMMMWWMMK.',
+  '.KMWWMMMMMMWWMK.',
+  'KMMWWMMMMMMWWMMK',
+  'KMWWMMMMMMMWWMMK',
+  'KMMMMMMMMMMMMMMK',
+  'KMMMMMMMMMMMMMMK',
+  '.KMMMMMMMMMMMMK.',
+  '.KMMMMKKKKMMMMK.',
+  '..KMMK....KMMK..',
+  '..KWWK....KWWK..',
+  '...KK......KK...',
+  '................'
+];
+var I_STAR = [
+  '................',
+  '.....KKKKKK.....',
+  '....KYYYYYYK....',
+  '...KYYWWWWYYK...',
+  '..KYYWKKKKWYYK..',
+  '..KYYK.KK.KYYK..',
+  '.KYYYKK..KKYYYK.',
+  '.KYYYK....KYYYK.',
+  '.KYYYK....KYYYK.',
+  'KYYYYKKKKKKYYYYK',
+  'KYYYK......KYYYK',
+  'KYYYK......KYYYK',
+  '.KYYK......KYYK.',
+  '.KKK........KKK.',
+  '................',
+  '................'
+];
+
+/* ---------- background scenery ---------- */
+function drawCloud(g, x, y, kind) {
+  g.fillStyle = PAL.W;
+  if (kind === 0) {
+    g.fillRect(x + 4, y + 6, 8, 6); g.fillRect(x + 2, y + 8, 20, 4);
+    g.fillRect(x, y + 10, 28, 5); g.fillRect(x + 6, y + 4, 10, 3);
+  } else if (kind === 1) {
+    g.fillRect(x + 6, y + 4, 10, 8); g.fillRect(x + 2, y + 8, 24, 6); g.fillRect(x, y + 11, 30, 4);
+  } else {
+    g.fillRect(x + 8, y + 8, 8, 8); g.fillRect(x + 4, y + 11, 20, 5); g.fillRect(x, y + 13, 28, 3);
+  }
+}
+function drawBush(g, x, y, kind) {
+  g.fillStyle = PAL.G;
+  if (kind === 0) { g.fillRect(x + 4, y + 8, 8, 8); g.fillRect(x, y + 12, 24, 4); g.fillRect(x + 8, y + 4, 8, 5); }
+  else if (kind === 1) { g.fillRect(x, y + 10, 32, 6); g.fillRect(x + 6, y + 6, 8, 5); g.fillRect(x + 18, y + 7, 8, 4); }
+  else { g.fillRect(x + 2, y + 9, 6, 7); g.fillRect(x + 10, y + 6, 10, 10); g.fillRect(x + 22, y + 9, 6, 7); g.fillRect(x, y + 13, 32, 3); }
+}
+function drawHill(g, x, y, w, h) {
+  g.fillStyle = PAL.G;
+  for (var i = 0; i < h; i++) {
+    var ww = Math.round(w * (i + 1) / h);
+    g.fillRect(x + Math.floor((w - ww) / 2), y + h - i - 1, ww, 1);
+  }
+  g.fillStyle = PAL.K;
+  for (var j = 0; j < h; j += 4) {
+    var ww2 = Math.round(w * (j + 1) / h);
+    g.fillRect(x + Math.floor((w - ww2) / 2) + Math.floor(ww2 * 0.35), y + h - j - 1, 1, 1);
+    g.fillRect(x + Math.floor((w - ww2) / 2) + Math.floor(ww2 * 0.6), y + h - j - 1, 1, 1);
+  }
+}
+function drawCastle(x, y, w, h, small) {
+  var c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  var g = c.getContext('2d');
+  g.fillStyle = '#c86000';
+  var bh = Math.floor(h * 0.42);
+  // main block
+  g.fillRect(0, h - bh, w, bh);
+  // towers
+  var tw = small ? 10 : 16;
+  g.fillRect(0, 0, tw, h); g.fillRect(w - tw, 0, tw, h);
+  g.fillRect(Math.floor(w / 2) - tw / 2, 4, tw, h - 4);
+  // battlements
+  g.fillStyle = '#000000';
+  var merlons = function (bx, by, bw) {
+    g.fillRect(bx, by, bw, 5);
+  };
+  g.fillStyle = '#c86000';
+  for (var i = 0; i < w; i += 8) { g.fillRect(i, 0, 4, 5); g.fillRect(i, h - bh, 4, 4); }
+  g.fillRect(0, 0, tw, 5); g.fillRect(w - tw, 0, tw, 5);
+  g.fillRect(0, h - bh, tw, 4); g.fillRect(w - tw, h - bh, tw, 4);
+  g.fillStyle = '#000000';
+  g.fillRect(Math.floor(w / 2) - 4, h - bh - 2, 8, bh + 2);   // door
+  g.fillRect(Math.floor(w / 2) - 3, h - bh + 4, 2, 2);          // door knob
+  g.fillRect(Math.floor(w / 2) + 1, h - bh + 4, 2, 2);
+  g.fillRect(Math.floor(w / 2) - 2, h - bh + 6, 1, 1);          // windows
+  g.fillRect(Math.floor(w / 2) + 1, h - bh + 6, 1, 1);
+  // arch bricks on door
+  g.fillStyle = '#a44000';
+  for (var k = 0; k < 3; k++) g.fillRect(Math.floor(w / 2) - 4 + k, h - bh - 2 - k, 1, 1);
+  return c;
+}
+
+/* ---------- bake everything ---------- */
+function buildSprites() {
+  SPR.bg = bake([['.']], 1); // placeholder
+  SPR.mario = {
+    stand: bake(M_STAND), walk1: bake(M_WALK1), walk2: bake(M_WALK2),
+    jump: bake(M_JUMP), skid: bake(M_SKID), crouch: bake(M_CROUCH), die: bake(M_DIE)
+  };
+  SPR.big = {
+    stand: bake(B_STAND), walk1: bake(B_WALK1), walk2: bake(B_WALK2),
+    jump: bake(B_JUMP), skid: bake(B_SKID), crouch: bake(B_CROUCH), die: bake(B_DIE)
+  };
+  // fire mario = big with R->W, N->R
+  SPR.fire = {
+    stand: swap(SPR.big.stand, { R: 'W', N: 'R' }),
+    walk1: swap(SPR.big.walk1, { R: 'W', N: 'R' }),
+    walk2: swap(SPR.big.walk2, { R: 'W', N: 'R' }),
+    jump: swap(SPR.big.jump, { R: 'W', N: 'R' }),
+    skid: swap(SPR.big.skid, { R: 'W', N: 'R' }),
+    crouch: swap(SPR.big.crouch, { R: 'W', N: 'R' })
+  };
+  SPR.goomba = { walk1: bake(G_WALK1), walk2: bake(G_WALK2), flat: bake(G_FLAT) };
+  SPR.koopa = { walk1: bake(K_WALK1), walk2: bake(K_WALK2), shell: bake(K_SHELL), shell16: bake(K_SHELL16) };
+  SPR.item = { mushroom: bake(I_MUSH), oneup: bake(I_1UP), fire: bake(I_FIRE), star: bake(I_STAR) };
+
+  // tiles
+  var mk = function (fn) {
+    var c = document.createElement('canvas'); c.width = 16; c.height = 16;
+    var g = c.getContext('2d'); fn(g, 0, 0); return c;
+  };
+  SPR.t_ground = mk(drawGroundTile);
+  SPR.t_solid = mk(function (g, x, y) { drawSolidBlock(g, x, y); });
+  SPR.t_solid_b = mk(function (g, x, y) { drawSolidBlock(g, x, y, { c: '#3cbcfc' }); });
+  SPR.t_solid_y = mk(function (g, x, y) { drawSolidBlock(g, x, y, { c: '#f8b800' }); });
+  SPR.t_brick = mk(drawBrick);
+  SPR.t_q = mk(drawQBlock);
+  SPR.t_used = mk(drawUsedBlock);
+  SPR.t_coin = mk(function (g, x, y) { drawCoin(g, x, y, 0); });
+
+  // pipes: 4 sizes
+  SPR.pipe = {};
+  for (var ph = 0; ph < 4; ph++) {
+    var hpx = [32, 48, 64, 80][ph];
+    var head = document.createElement('canvas'); head.width = 32; head.height = 16;
+    drawPipe(head.getContext('2d'), 0, 0, 32, 16, true);
+    var body = document.createElement('canvas'); body.width = 32; body.height = hpx - 8;
+    drawPipe(body.getContext('2d'), 0, 0, 32, hpx - 8, false);
+    SPR.pipe[ph] = { head: head, body: body, h: hpx };
+  }
+  // scenery
+  SPR.cloud = [0, 1, 2].map(function (k) {
+    var c = document.createElement('canvas'); c.width = 32; c.height = 20;
+    drawCloud(c.getContext('2d'), 0, 0, k); return c;
+  });
+  SPR.bush = [0, 1, 2].map(function (k) {
+    var c = document.createElement('canvas'); c.width = 32; c.height = 16;
+    drawBush(c.getContext('2d'), 0, 0, k); return c;
+  });
+  var hh = document.createElement('canvas'); hh.width = 80; hh.height = 40;
+  drawHill(hh.getContext('2d'), 0, 0, 80, 40); SPR.hillBig = hh;
+  var hs = document.createElement('canvas'); hs.width = 48; hs.height = 24;
+  drawHill(hs.getContext('2d'), 0, 0, 48, 24); SPR.hillSmall = hs;
+  SPR.castleBig = drawCastle(80, 80, false);
+  SPR.castleSmall = drawCastle(48, 48, true);
+
+  // flag
+  var fc = document.createElement('canvas'); fc.width = 16; fc.height = 16;
+  var fg = fc.getContext('2d');
+  fg.fillStyle = PAL.G; fg.fillRect(6, 12, 3, 4); fg.fillRect(5, 14, 6, 2);
+  fg.fillStyle = '#d0d0d0'; fg.fillRect(8, 2, 2, 12);
+  fg.fillStyle = PAL.C; fg.beginPath(); fg.moveTo(8, 2); fg.lineTo(16, 6); fg.lineTo(8, 10); fg.fill();
+  fg.fillStyle = PAL.K; fg.beginPath(); fg.arc(9, 2, 1.5, 0, 7); fg.fill();
+  SPR.flag = fc;
+  // fireball
+  var fb = document.createElement('canvas'); fb.width = 8; fb.height = 8;
+  var bg2 = fb.getContext('2d');
+  bg2.fillStyle = PAL.R; bg2.beginPath(); bg2.arc(4, 4, 3.4, 0, 7); bg2.fill();
+  bg2.fillStyle = PAL.Y; bg2.beginPath(); bg2.arc(4, 4, 1.8, 0, 7); bg2.fill();
+  SPR.fireball = fb;
+  // explosion puff
+  SPR.puff = null;
+  var pc = document.createElement('canvas'); pc.width = 16; pc.height = 16;
+  var pg = pc.getContext('2d');
+  pg.fillStyle = PAL.W; pg.fillRect(2, 6, 12, 4); pg.fillRect(4, 4, 8, 8); pg.fillRect(6, 2, 4, 12);
+  pg.fillStyle = PAL.y; pg.fillRect(5, 5, 6, 6);
+  SPR.puff = pc;
+
+  // coin tile used for animated background coins? (world coins are drawn directly)
+  SPR.splash = null;
+}
+
+/* ==== c4_level_builder.js ==== */
+'use strict';
+/* ===== LEVEL BUILDER =====
+   Levels are built procedurally from SMB's real object coordinates, which is
+   far less error-prone than hand-typed 128-column ASCII rows.
+   Screen is 16 tiles wide (256px), 15 tiles tall (240px).
+   Ground surface occupies rows 15-16 (y=240..272); row 13 is the first
+   free-standing row above ground in SMB.
+*/
+var GRID_H = 15;   // visible + 2 rows of ground below
+
+function Level(w, opt) {
+  opt = opt || {};
+  this.w = w; this.h = GRID_H;
+  this.sky = opt.sky || '#5c94fc';
+  this.under = opt.under || '#000000';
+  this.g = [];
+  for (var y = 0; y < GRID_H; y++) {
+    var row = [];
+    for (var x = 0; x < w; x++) row.push(' ');
+    this.g.push(row);
+  }
+  this.decor = [];
+  this.enemies = [];
+  this.items = [];       // free-standing items {type,x,y}
+  this.pipes = [];       // {x,h,enter:bool}
+  this.startX = opt.startX || 2;
+  this.startY = opt.startY || 13;
+  this.flagX = opt.flagX != null ? opt.flagX : w - 7;
+  this.castleX = opt.castleX != null ? opt.castleX : w - 5;
+  this.time = opt.time || 400;
+  this.underground = !!opt.underground;
+  this.noFlag = !!opt.noFlag;
+  this.name = opt.name || '';
+  this.exitPipe = opt.exitPipe || null; // {x} pipe that leads to next level
+  this.gapEnd = null;
+}
+Level.prototype.set = function (x, y, ch) {
+  if (x < 0 || y < 0 || y >= this.h || x >= this.w) return this;
+  this.g[y][x] = ch; return this;
+};
+Level.prototype.get = function (x, y) {
+  if (x < 0 || x >= this.w || y < 0 || y >= this.h) return ' ';
+  return this.g[y][x];
+};
+Level.prototype.row = function (y, x0, x1, ch) {
+  for (var x = x0; x <= x1; x++) this.set(x, y, ch);
+  return this;
+};
+Level.prototype.col = function (x, y0, y1, ch) {
+  for (var y = y0; y <= y1; y++) this.set(x, y, ch);
+  return this;
+};
+/* ground with gaps: list of [x0,x1] inclusive ranges that are HOLES */
+Level.prototype.ground = function (holes) {
+  holes = holes || [];
+  this.row(GRID_H - 2, 0, this.w - 1, 'X');
+  this.row(GRID_H - 1, 0, this.w - 1, 'X');
+  for (var i = 0; i < holes.length; i++)
+    for (var x = holes[i][0]; x <= holes[i][1]; x++) {
+      if (x < 0 || x >= this.w) continue;
+      this.set(x, GRID_H - 2, ' '); this.set(x, GRID_H - 1, ' ');
+    }
+  return this;
+};
+Level.prototype.pipe = function (tx, hTiles) {
+  // tx = left tile, hTiles = total height in tiles (head+body)
+  var topY = GRID_H - 2 - hTiles;
+  this.set(tx, topY, 'P'); this.set(tx + 1, topY, 'p');
+  for (var y = topY + 1; y <= GRID_H - 3; y++) { this.set(tx, y, 'L'); this.set(tx + 1, y, 'R'); }
+  this.pipes.push({ tx: tx, top: topY, h: hTiles, enter: hTiles === 2 });
+  return this;
+};
+Level.prototype.brickRow = function (y, x0, x1) { return this.row(y, x0, x1, 'B'); };
+Level.prototype.stair = function (x, yBottom, height, dir, ch) {
+  ch = ch || 'S';
+  for (var i = 0; i < height; i++) {
+    var cx = dir > 0 ? x + i : x - i;
+    for (var y = yBottom - i; y <= GRID_H - 3; y++) this.set(cx, y, ch);
+  }
+  return this;
+};
+Level.prototype.cloud = function (x, y, k) { this.decor.push({ t: 'cloud', x: x, y: y, k: k }); return this; };
+Level.prototype.bush = function (x, y, k) { this.decor.push({ t: 'bush', x: x, y: y, k: k }); return this; };
+Level.prototype.hill = function (x, y, big) { this.decor.push({ t: big ? 'hillB' : 'hillS', x: x, y: y }); return this; };
+Level.prototype.castle = function (x, small) { this.castleX = x; this.castleSmall = !!small; return this; };
+Level.prototype.gob = function (x, y) { this.enemies.push({ type: 'goomba', x: x, y: y }); return this; };
+Level.prototype.gobPair = function (x, y) { this.gob(x, y); this.gob(x + 1, y); return this; };
+Level.prototype.koopa = function (x, y) { this.enemies.push({ type: 'koopa', x: x, y: y }); return this; };
+Level.prototype.item = function (type, x, y) { this.items.push({ type: type, x: x, y: y }); return this; };
+
+/* ==== c5_levels_w1.js ==== */
+'use strict';
+/* ===== WORLD 1-1 (SMB layout) =====
+   Tile coords: ground top = row 13 (y=208). Rows 0..12 free-standing.
+   SMB 1-1 key positions (approx, tile units):
+   - first ? block col 16 row 9
+   - brick/coin stair cols 20..24 row 9
+   - pipe2 at 28 (h2), pipe3 at 38 (h3), pipe4 at 46 (h4), pipe4b at 57 (h4)
+   - big brick wall ~cols 64..88
+   - the 10-coin stair, then the pit with 1-up
+*/
+function buildW11() {
+  var L = new Level(212, { name: 'WORLD 1-1', time: 400, startX: 2, startY: 12, flagX: 198, castleX: 200 });
+  L.ground([]);
+  // scenery
+  var cs = [[8, 2, 0], [24, 3, 1], [40, 1, 2], [58, 2, 0], [72, 3, 1], [88, 1, 0], [104, 2, 2], [120, 1, 1], [136, 3, 0], [152, 2, 1], [168, 1, 2], [184, 3, 0]];
+  for (var i = 0; i < cs.length; i++) L.cloud(cs[i][0], cs[i][1], cs[i][2]);
+  L.hill(0, 11, true); L.hill(16, 11, true); L.hill(48, 12, false); L.hill(96, 12, false);
+  L.hill(112, 11, true); L.hill(144, 12, false); L.hill(192, 12, false);
+  L.bush(24, 12, 0); L.bush(56, 12, 1); L.bush(88, 12, 2); L.bush(136, 12, 0); L.bush(168, 12, 1);
+  // --- first ? block + brick above ---
+  L.set(16, 9, 'M');                    // mushroom
+  // --- brick + ? stair with coins (cols 20-24) ---
+  for (var x = 20; x <= 24; x++) { L.set(x, 9, 'B'); L.set(x, 8, 'o'); }
+  L.set(22, 7, '?');
+  // --- pipe row ---
+  L.pipe(28, 2); L.pipe(38, 3); L.pipe(46, 4); L.pipe(57, 4);
+  // --- brick wall after pipes ---
+  for (var bx = 64; bx <= 88; bx += 4) {
+    L.set(bx, 9, 'M'); L.set(bx + 1, 9, 'B'); L.set(bx + 2, 9, 'B'); L.set(bx + 3, 9, 'B');
+    if (bx >= 68 && bx <= 84) L.set(bx + 2, 5, 'o');
+  }
+  // --- 10-coin stair (the famous stair before the pit) ---
+  for (var s = 0; s < 4; s++) for (var y = 13 - s; y <= 12; y++) L.set(134 + s, y, 'S');
+  for (var s2 = 0; s2 < 4; s2++) for (var y2 = 13 - (3 - s2); y2 <= 12; y2++) L.set(138 + s2, y2, 'S');
+  for (var s3 = 0; s3 < 4; s3++) for (var y3 = 13 - (3 - s3); y3 <= 12; y3++) L.set(142 + s3, y3, 'S');
+  L.set(146, 9, 'U');                   // multi-coin block
+  // --- pit (the gap with the hidden 1-up) ---
+  L.ground([[89, 90]]);
+  L.set(87, 9, 'T');                    // hidden 1-up block
+  // --- two high bricks + coin arch ---
+  L.set(154, 5, 'B'); L.set(156, 5, 'B'); L.set(155, 5, 'o');
+  L.set(154, 9, 'B'); L.set(156, 9, 'B');
+  // --- final staircase down to flag ---
+  L.stair(168, 12, 4, -1, 'S');         // ascending left-to-right stairs at col 168..171
+  L.stair(181, 12, 4, 1, 'S');          // descending stairs
+  L.castle(200, false);
+  // --- enemies ---
+  L.gob(22, 12); L.gobPair(40, 12); L.gobPair(53, 12);
+  L.gobPair(82, 12); L.gob(97, 12); L.gobPair(100, 12);
+  L.gob(115, 12); L.koopa(106, 12);
+  L.gob(127, 12); L.gobPair(153, 12); L.gob(165, 12); L.gobPair(176, 12);
+  return L;
+}
+
+/* ================= WORLD 1-2 ================= */
+function buildW12() {
+  var L = new Level(232, { name: 'WORLD 1-2', time: 400, startX: 2, startY: 12, flagX: 218, castleX: 220 });
+  L.ground([[46, 47], [58, 59], [86, 87]]);
+  var cs = [[6, 2, 0], [22, 3, 1], [38, 1, 2], [64, 2, 0], [92, 3, 1], [110, 1, 0], [130, 2, 2], [150, 3, 1], [170, 1, 0], [190, 2, 1]];
+  for (var i = 0; i < cs.length; i++) L.cloud(cs[i][0], cs[i][1], cs[i][2]);
+  L.hill(16, 11, true); L.hill(72, 12, false); L.hill(120, 12, false); L.hill(176, 12, false);
+  L.bush(36, 12, 2); L.bush(100, 12, 0); L.bush(160, 12, 1);
+  // rows of bricks and coins
+  for (var x = 20; x <= 26; x++) { L.set(x, 9, 'B'); L.set(x, 8, 'o'); }
+  L.set(23, 7, 'M');
+  for (var x2 = 64; x2 <= 70; x2++) L.set(x2, 9, 'B');
+  L.set(67, 9, 'M'); L.set(67, 8, 'o'); L.set(69, 8, 'o');
+  // platforms over pits
+  L.row(11, 44, 49, '=');
+  L.row(11, 56, 61, '=');
+  L.row(11, 84, 89, '=');
+  // pipe pair
+  L.pipe(96, 2); L.pipe(104, 3);
+  // high brick bridge
+  for (var bx = 130; bx <= 150; bx += 5) { L.set(bx, 8, 'B'); L.set(bx + 1, 8, 'B'); L.set(bx + 2, 8, 'o'); L.set(bx + 3, 8, 'B'); L.set(bx + 4, 8, 'B'); }
+  L.set(140, 5, 'M');
+  // descending stairs then stairs up
+  L.stair(160, 12, 4, 1, 'S'); L.stair(176, 12, 8, -1, 'S');
+  // gap before flag
+  L.ground([[200, 201]]);
+  L.set(196, 9, 'M');
+  L.castle(220, false);
+  L.gob(24, 12); L.gobPair(40, 12); L.gob(66, 12); L.gob(70, 12);
+  L.koopa(78, 12); L.gob(100, 12); L.gobPair(120, 12); L.koopa(126, 12);
+  L.gob(145, 12); L.gobPair(156, 12); L.gob(190, 12); L.gobPair(194, 12);
+  return L;
+}
+
+/* ================= WORLD 1-3 ================= */
+function buildW13() {
+  var L = new Level(224, { name: 'WORLD 1-3', time: 300, startX: 2, startY: 12, flagX: 210, castleX: 212 });
+  // many small gaps — the "tree tops" level
+  var holes = [];
+  var hx = 30;
+  while (hx < 190) { holes.push([hx, hx + 1]); hx += 14; }
+  L.ground(holes);
+  var cs = [[10, 2, 0], [30, 3, 1], [50, 1, 2], [70, 2, 0], [90, 3, 1], [110, 1, 0], [130, 2, 2], [150, 3, 1], [170, 1, 0]];
+  for (var i = 0; i < cs.length; i++) L.cloud(cs[i][0], cs[i][1], cs[i][2]);
+  L.hill(24, 12, false); L.hill(64, 12, false); L.hill(104, 12, false); L.hill(144, 12, false);
+  // floating brick islands over gaps
+  for (var x = 26; x < 190; x += 14) {
+    L.set(x, 9, 'B'); L.set(x + 1, 9, 'B'); L.set(x + 3, 9, 'o');
+    if (x % 28 === 12) L.set(x + 2, 9, 'M');
+  }
+  L.pipe(20, 2); L.pipe(80, 3); L.pipe(140, 2);
+  // mid level brick row
+  for (var bx = 96; bx <= 130; bx += 3) L.set(bx, 8, 'B');
+  L.set(113, 5, 'M');
+  // final stairs
+  L.stair(196, 12, 4, 1, 'S'); L.stair(202, 12, 8, -1, 'S');
+  L.castle(212, false);
+  L.gob(16, 12); L.gobPair(24, 12); L.koopa(36, 12); L.gob(52, 12);
+  L.gobPair(68, 12); L.koopa(76, 12); L.gob(96, 12); L.gobPair(112, 12);
+  L.koopa(128, 12); L.gob(150, 12); L.gobPair(166, 12); L.gob(186, 12); L.koopa(190, 12);
+  return L;
+}
+
+/* ================= WORLD 1-4 ================= */
+function buildW14() {
+  var L = new Level(224, { name: 'WORLD 1-4', time: 300, startX: 2, startY: 12, flagX: 206, castleX: 208 });
+  var holes = [];
+  var hx = 40;
+  while (hx < 190) { holes.push([hx, hx + 2]); hx += 12; }
+  L.ground(holes);
+  var cs = [[8, 2, 0], [28, 3, 1], [48, 1, 2], [68, 2, 0], [88, 3, 1], [108, 1, 0], [128, 2, 2], [148, 3, 1], [168, 1, 0]];
+  for (var i = 0; i < cs.length; i++) L.cloud(cs[i][0], cs[i][1], cs[i][2]);
+  L.hill(12, 12, false); L.hill(52, 12, false); L.hill(92, 12, false); L.hill(132, 12, false);
+  // pipes of increasing height
+  L.pipe(18, 2); L.pipe(28, 3); L.pipe(60, 4); L.pipe(70, 3); L.pipe(100, 4); L.pipe(110, 2);
+  // brick platforms + coins
+  for (var x = 34; x <= 46; x += 4) { L.set(x, 9, 'B'); L.set(x + 1, 9, 'o'); L.set(x + 2, 9, 'M'); }
+  for (var x2 = 82; x2 <= 94; x2 += 4) { L.set(x2, 9, 'B'); L.set(x2 + 1, 9, 'o'); }
+  L.set(120, 9, 'B'); L.set(121, 9, 'B'); L.set(122, 9, 'o'); L.set(123, 9, 'B'); L.set(124, 9, 'B');
+  L.set(122, 6, 'M');
+  // long stair pyramid
+  for (var s = 0; s < 8; s++) { for (var y = 12 - s; y <= 12; y++) L.set(150 + s, y, 'S'); }
+  for (var s2 = 0; s2 < 8; s2++) { for (var y2 = 12 - (7 - s2); y2 <= 12; y2++) L.set(158 + s2, y2, 'S'); }
+  L.castle(208, false);
+  L.gob(22, 12); L.gobPair(46, 12); L.koopa(56, 12); L.gob(84, 12); L.gobPair(96, 12);
+  L.koopa(106, 12); L.gob(126, 12); L.gobPair(144, 12); L.gob(170, 12); L.gobPair(180, 12);
+  return L;
+}
+
+/* ==== c6_levels_extra.js ==== */
+'use strict';
+/* ===== WORLD 1-3 style UNDERGROUND / COIN ROOM (bonus stage) =====
+   Reached by entering a specific pipe. Enters a coin room, exits via a pipe
+   back into the next level's start. In SMB this is 1-1's coin room; here it is
+   presented as a standalone bonus stage between 1-2 and 1-3.
+*/
+function buildUB() {
+  var L = new Level(64, { name: 'UNDERGROUND', time: 300, sky: '#000000', underground: true,
+    startX: 2, startY: 12, noFlag: true, flagX: 60, castleX: 60 });
+  L.ground([]);
+  // ceiling + walls
+  L.row(0, 0, L.w - 1, 'X');
+  L.col(0, 0, GRID_H - 1, 'X'); L.col(L.w - 1, 0, GRID_H - 1, 'X');
+  // brick ceiling rows
+  L.row(2, 2, L.w - 3, 'B');
+  // platforms
+  L.row(6, 4, 12, '='); L.row(9, 20, 30, '='); L.row(6, 40, 50, '=');
+  // coins everywhere
+  for (var x = 4; x <= 12; x += 2) L.set(x, 5, 'o');
+  for (var x2 = 21; x2 <= 29; x2 += 2) L.set(x2, 8, 'o');
+  for (var x3 = 41; x3 <= 49; x3 += 2) L.set(x3, 5, 'o');
+  for (var x4 = 2; x4 < L.w - 1; x4 += 3) L.set(x4, 3, 'o');
+  L.set(33, 12, 'M'); L.set(45, 12, 'M');
+  // exit pipe at the end
+  L.pipe(57, 2);
+  L.set(16, 12, 'o'); L.set(17, 12, 'o');
+  L.koopa(26, 8); L.gob(46, 5);
+  return L;
+}
+
+/* ================= CASTLE (bowser-style mini stage, after 1-4) ===== */
+function buildCastleStage() {
+  var L = new Level(96, { name: 'CASTLE', time: 300, sky: '#000000', underground: true,
+    startX: 2, startY: 12, noFlag: true, flagX: 92, castleX: 92 });
+  L.ground([]);
+  L.row(0, 0, L.w - 1, 'X');
+  L.col(0, 0, GRID_H - 1, 'X'); L.col(L.w - 1, 0, GRID_H - 1, 'X');
+  // floor bridge with two lava gaps
+  L.row(13, 1, L.w - 2, 'X');
+  L.row(14, 1, L.w - 2, 'X');
+  var lava = [[20, 24], [46, 50], [70, 74]];
+  for (var i = 0; i < lava.length; i++) {
+    for (var x = lava[i][0]; x <= lava[i][1]; x++) { L.set(x, 13, ' '); L.set(x, 14, 'l'); }
+  }
+  // walkways
+  L.row(10, 25, 45, '='); L.row(10, 51, 69, '=');
+  L.row(7, 26, 33, '='); L.row(7, 38, 45, '=');
+  for (var x2 = 2; x2 < 94; x2 += 4) L.set(x2, 12, 'o');
+  L.set(30, 6, 'M'); L.set(42, 6, 'M');
+  // fire bars guard the bridges
+  L.set(35, 9, 'd');   // fire bar marker
+  L.set(60, 9, 'd');
+  L.koopa(28, 12); L.koopa(40, 12); L.koopa(56, 12); L.koopa(66, 12);
+  L.gob(12, 12); L.gob(80, 12);
+  L.exitPipe = { tx: 90 };
+  return L;
+}
+
+/* ================= level registry ================= */
+function buildAllLevels() {
+  return [buildW11(), buildW12(), buildW13(), buildW14(), buildUB(), buildCastleStage()];
+}
+</script>
+<script>/* ==== c7_tiles.js ==== */
+'use strict';
+/* ===== TILE PHYSICS TABLE ===== */
+var SOLID = { 'X': 1, 'B': 1, 'b': 1, '?': 1, 'M': 1, 'U': 1, 'T': 1, 'S': 1, 's': 1,
+              'P': 1, 'p': 1, 'L': 1, 'R': 1, '=': 1 };
+var BUMPABLE = { '?': 1, 'M': 1, 'U': 1, 'T': 1, 'B': 1, 'b': 1, 'S': 1, 's': 1 };
+function isSolid(ch) { return SOLID[ch] === 1; }
+function isBumpable(ch) { return BUMPABLE[ch] === 1; }
+
+/* Level world instance: holds grid + dynamic block state */
+function World(level) {
+  this.L = level;
+  this.g = [];
+  for (var y = 0; y < level.h; y++) this.g.push(level.g[y].slice());
+  this.coinUsed = {};   // "x,y" -> true  (multi-coin block empties)
+  this.blockBump = {};  // "x,y" -> frames remaining of bump animation
+  this.blockBumpDir = {};
+  this.brokenBlocks = {};
+}
+World.prototype.at = function (px, py) {
+  var tx = Math.floor(px / TS), ty = Math.floor(py / TS);
+  if (tx < 0 || tx >= this.L.w || ty < 0 || ty >= this.L.h) return ' ';
+  return this.g[ty][tx];
+};
+World.prototype.atTile = function (tx, ty) {
+  if (tx < 0 || tx >= this.L.w || ty < 0 || ty >= this.L.h) return ' ';
+  return this.g[ty][tx];
+};
+World.prototype.setTile = function (tx, ty, ch) {
+  if (tx < 0 || tx >= this.L.w || ty < 0 || ty >= this.L.h) return;
+  this.g[ty][tx] = ch;
+};
+World.prototype.solidAtPx = function (px, py) { return isSolid(this.at(px, py)); };
+
+/* Does a vertical move hit a ceiling/floor? returns tile or null */
+World.prototype.tileAbove = function (x, y, w) {
+  // scan columns spanned
+  var t0 = Math.floor(x / TS), t1 = Math.floor((x + w - 1) / TS);
+  for (var tx = t0; tx <= t1; tx++) {
+    var ty = Math.floor(y / TS);
+    if (isSolid(this.atTile(tx, ty))) return { tx: tx, ty: ty, ch: this.atTile(tx, ty) };
+  }
+  return null;
+};
+World.prototype.tileBelow = function (x, y, w) {
+  var t0 = Math.floor(x / TS), t1 = Math.floor((x + w - 1) / TS);
+  var ty = Math.floor(y / TS);
+  for (var tx = t0; tx <= t1; tx++) {
+    if (isSolid(this.atTile(tx, ty))) return { tx: tx, ty: ty, ch: this.atTile(tx, ty) };
+  }
+  return null;
+};
+/* step-up: a 1px ledge within stepHeight */
+World.prototype.ledgeAt = function (x, y, w, h, stepH) {
+  var x0 = x, x1 = x + w;
+  // left edge
+  for (var sy = y - stepH; sy <= y - 1; sy++) {
+    if (this.solidAtPx(x0, sy)) return sy;
+  }
+  for (var sy2 = y - stepH; sy2 <= y - 1; sy2++) {
+    if (this.solidAtPx(x1 - 1, sy2)) return sy2;
+  }
+  return null;
+};
+
+/* bump animation offset for a block */
+World.prototype.bumpOffset = function (tx, ty) {
+  var k = tx + ',' + ty;
+  var n = this.blockBump[k];
+  if (!n) return 0;
+  return -Math.round(Math.sin((n / 8) * Math.PI) * 6);
+};
+
+/* ==== c8_player.js ==== */
+'use strict';
+/* ===== PLAYER: SMB-exact movement, power states, physics ===== */
+var PWR = { SMALL: 0, BIG: 1, FIRE: 2 };
+
+function Player(x, y) {
+  this.x = x; this.y = y;      // top-left, px
+  this.w = 12; this.h = 15;    // small hitbox
+  this.vx = 0; this.vy = 0;
+  this.dir = 1;
+  this.onGround = false;
+  this.jumping = false;
+  this.power = PWR.SMALL;
+  this.anim = 0;
+  this.animT = 0;
+  this.invuln = 0;            // frames after taking damage
+  this.growT = 0;             // grow/shrink freeze frames
+  this.dead = false;
+  this.deadT = 0;
+  this.skidding = false;
+  this.crouching = false;
+  this.autoWalk = 0;          // >0 = flagpole slide / level-end walk
+  this.fireCd = 0;
+  this.fireballs = [];
+  this.jumpHoldFrames = 0;
+  this.facingLocked = false;
+}
+Player.prototype.bigH = function () { return this.power === PWR.SMALL ? 15 : 23; };
+
+Player.prototype.box = function () {
+  var h = this.bigH();
+  var w = this.power === PWR.SMALL ? 12 : 13;
+  return { x: this.x + (this.w - w) / 2, y: this.y + (this.h - h), w: w, h: h };
+};
+
+Player.prototype.update = function (W, G) {
+  if (this.dead) {
+    if (this.deadT === 0) { this.vy = -6.2; this.deadT = 1; }
+    this.y += this.vy; this.vy += 0.32;
+    return;
+  }
+  if (this.growT > 0) {
+    this.growT--;
+    return;
+  }
+  var b = this.box();
+  var run = IN.B && this.onGround;
+  var maxSpd = run ? RUN_MAX : WALK_MAX;
+  var acc = this.onGround ? ACC_GROUND : ACC_AIR;
+
+  // --- crouch: only when big and on ground ---
+  var wantCrouch = false;
+  if (this.power !== PWR.SMALL && this.onGround && IN.down && !this.autoWalk) wantCrouch = true;
+  this.crouching = wantCrouch;
+  if (this.crouching) maxSpd = 0.4;
+
+  var dirIn = 0;
+  if (!this.autoWalk) {
+    if (IN.left && !IN.right) dirIn = -1;
+    else if (IN.right && !IN.left) dirIn = 1;
+  } else {
+    dirIn = this.autoWalk > 0 ? 1 : -1;
+  }
+
+  // horizontal accel / friction / skid
+  if (dirIn !== 0) {
+    if (this.autoWalk) {
+      this.vx = dirIn * Math.max(Math.abs(this.vx), 0.55);
+    } else {
+      var turning = (this.vx > 0 && dirIn < 0) || (this.vx < 0 && dirIn > 0);
+      this.skidding = false;
+      if (this.onGround && turning && Math.abs(this.vx) > 0.6) {
+        this.vx += dirIn * DEC_SKID;
+        this.skidding = true;
+        if (Math.abs(this.vx) < 0.25) this.vx = 0;
+      } else {
+        this.vx += dirIn * acc;
+        if (Math.abs(this.vx) > maxSpd) this.vx = dirIn * maxSpd;
+        this.skidding = false;
+      }
+    }
+    if (!this.facingLocked) this.dir = dirIn;
+  } else if (!this.autoWalk) {
+    this.skidding = false;
+    if (this.onGround) {
+      var d = Math.abs(this.vx) < DEC_REL ? DEC_REL : DEC_REL;
+      if (Math.abs(this.vx) <= d) this.vx = 0; else this.vx -= Math.sign(this.vx) * d;
+    } else {
+      if (Math.abs(this.vx) <= DEC_REL * 0.5) this.vx = 0; else this.vx -= Math.sign(this.vx) * DEC_REL * 0.5;
+    }
+  }
+
+  // --- jump ---
+  if (this.autoWalk === 0) {
+    if (IN.A && this.onGround && !this.jumping) {
+      this.vy = VY_MIN - (Math.abs(this.vx) > 1.6 ? 0.55 : 0);
+      this.onGround = false; this.jumping = true; this.jumpHoldFrames = 0;
+      if (this.power === PWR.SMALL) SFX.jump(); else SFX.bigjump();
+    }
+    if (!IN.A && this.jumping && this.vy < 0) {
+      // cut the jump short (variable jump height)
+      this.vy += 0.55; this.jumpHoldFrames++;
+    }
+  }
+  // gravity
+  var g = GRAV;
+  if (this.vy < 0 && IN.A && this.jumping) g = GRAV_HOLD;
+  this.vy += g;
+  if (this.vy > VY_MAX) this.vy = VY_MAX;
+
+  // --- move X ---
+  var nx = this.x + this.vx;
+  var W2 = W;
+  if (this.vx > 0) {
+    var edge = nx + this.w;
+    var hitR = false;
+    for (var ty = Math.floor(b.y / TS); ty <= Math.floor((b.y + b.h - 1) / TS); ty++) {
+      if (W2.solidAtPx(edge, ty * TS + 2) || W2.solidAtPx(edge, ty * TS + 8)) { hitR = true; break; }
+    }
+    if (hitR) {
+      var txr = Math.floor((edge - 1) / TS);
+      nx = txr * TS - this.w;
+      this.vx = 0;
+    }
+  } else if (this.vx < 0) {
+    var edgeL = nx;
+    var hitL = false;
+    for (var ty2 = Math.floor(b.y / TS); ty2 <= Math.floor((b.y + b.h - 1) / TS); ty2++) {
+      if (W2.solidAtPx(edgeL, ty2 * TS + 2) || W2.solidAtPx(edgeL, ty2 * TS + 8)) { hitL = true; break; }
+    }
+    if (hitL) {
+      var txl = Math.floor((edgeL + 1) / TS);
+      nx = (txl + 1) * TS;
+      this.vx = 0;
+    }
+  }
+  // level left wall
+  if (nx < 0) { nx = 0; this.vx = 0; }
+  this.x = nx;
+
+  // --- move Y ---
+  var ny = this.y + this.vy;
+  this.onGround = false;
+  var b2 = this.box();
+  if (this.vy >= 0) {
+    var foot = ny + b2.h;
+    var tx0 = Math.floor((b2.x + 1) / TS), tx1 = Math.floor((b2.x + b2.w - 2) / TS);
+    var tyF = Math.floor(foot / TS);
+    var hitF = false;
+    for (var tx = tx0; tx <= tx1; tx++) {
+      if (W2.solidAtPx(tx * TS + 4, foot) || W2.solidAtPx(tx * TS + 10, foot)) { hitF = true; break; }
+    }
+    if (hitF) {
+      ny = tyF * TS - b2.h;
+      this.onGround = true; this.jumping = false; this.vy = 0;
+    }
+  } else {
+    var top = ny;
+    var txa = Math.floor((b2.x + 1) / TS), txb = Math.floor((b2.x + b2.w - 2) / TS);
+    var tya = Math.floor(top / TS);
+    var hitC = null;
+    for (var tx2 = txa; tx2 <= txb; tx2++) {
+      var ch = W2.atTile(tx2, tya);
+      if (isSolid(ch)) { hitC = { tx: tx2, ty: tya, ch: ch }; break; }
+    }
+    if (hitC) {
+      ny = (hitC.ty + 1) * TS;
+      this.vy = 0.1;
+      Game.bumpBlock(hitC.tx, hitC.ty, hitC.ch, this);
+    }
+  }
+  this.y = ny;
+
+  // --- anim ---
+  this.animT++;
+  if (Math.abs(this.vx) > 0.15 && this.onGround) {
+    if (this.animT % 4 === 0) this.anim++;
+  } else if (this.onGround) {
+    this.anim = 0;
+  }
+  if (this.invuln > 0) this.invuln--;
+  if (this.fireCd > 0) this.fireCd--;
+};
+
+Player.prototype.hurt = function () {
+  if (this.invuln > 0 || this.dead) return false;
+  if (this.power === PWR.SMALL) { this.die(); return true; }
+  // shrink
+  this.power = PWR.SMALL;
+  this.invuln = 120;
+  this.growT = 40;
+  SFX.shrink();
+  return true;
+};
+Player.prototype.grow = function (to) {
+  var oldH = this.bigH();
+  this.power = to;
+  this.growT = 30;
+  SFX.grow();
+};
+Player.prototype.die = function () {
+  if (this.dead) return;
+  this.dead = true; this.deadT = 0; this.vy = -6.2; this.vx = 0;
+  this.power = PWR.SMALL;
+  SFX.die();
+};
+Player.prototype.fire = function () {
+  if (this.power !== PWR.FIRE || this.fireCd > 0 || !this.onGround && false) return false;
+  if (this.fireCd > 0) return false;
+  var b = this.box();
+  var fb = {
+    x: this.dir > 0 ? b.x + b.w + 1 : b.x - 9,
+    y: b.y + (this.crouching ? 12 : 4),
+    vx: this.dir * 3.4, vy: 0.6,
+    life: 190
+  };
+  this.fireballs.push(fb);
+  this.fireCd = 14;
+  SFX.fire();
+  return true;
+};
+</script>
+<script>/* ==== c9_enemy.js ==== */
+'use strict';
+/* ===== ENEMIES + ITEMS =====
+   Shared base for walkers (goomba, koopa) with SMB rules:
+   - walk forward, turn at walls and ledges (koopa turns at ledges, goomba does not)
+   - stomping flips/kills them; touching hurts the player
+*/
+function EnemyBase(x, y, type) {
+  this.type = type;
+  this.x = x; this.y = y;
+  this.vx = -0.42; this.vy = 0;
+  this.w = 16; this.h = 16;
+  this.dead = false; this.deadT = 0;
+  this.squashT = 0;
+  this.flip = false;
+  this.anim = 0; this.animT = 0;
+  this.active = false;   // becomes active when near camera
+  this.mode = 'walk';     // walk | shell | shellSlide | flip | off
+  this.stompable = true;
+  this.gravityOn = true;
+}
+EnemyBase.prototype.box = function () {
+  return { x: this.x, y: this.y, w: this.w, h: this.h };
+};
+
+function Goomba(x, y) { EnemyBase.call(this, x, y, 'goomba'); }
+Goomba.prototype = Object.create(EnemyBase.prototype);
+Goomba.prototype.constructor = Goomba;
+Goomba.prototype.squash = function () {
+  this.squashT = 30; this.stompable = false; this.vx = 0;
+  SFX.stomp();
+};
+Goomba.prototype.killFlip = function () { this.flip = true; this.vy = -3.4; this.stompable = false; SFX.stomp(); };
+
+function Koopa(x, y) { EnemyBase.call(this, x, y, 'koopa'); this.w = 16; this.h = 24; this.baseY = y; this.footY = y + 24; }
+Koopa.prototype = Object.create(EnemyBase.prototype);
+Koopa.prototype.constructor = Koopa;
+Koopa.prototype.squash = function () {
+  // turn into a shell: hitbox becomes 16x16, feet stay on the same ground line
+  this.mode = 'shell';
+  this.h = 16; this.w = 16;
+  this.y = this.footY - 16;
+  this.vx = 0; this.stompable = true;
+  SFX.stomp();
+};
+Koopa.prototype.killFlip = function () { this.flip = true; this.vy = -3.4; this.stompable = false; SFX.stomp(); };
+Koopa.prototype.wake = function () {
+  // re-inflate: hitbox back to 16x24 with the same feet line
+  this.mode = 'walk'; this.h = 24; this.w = 16; this.y = this.footY - 24;
+  this.vx = this.dirSave || -0.42;
+  this.stompable = true;
+};
+
+EnemyBase.prototype.update = function (W, G) {
+  if (this.dead && this.deadT > 0) {
+    this.deadT--;
+    if (this.mode === 'off' && this.deadT <= 0) this.remove = true;
+    return;
+  }
+  // flip-death arc
+  if (this.flip) {
+    this.y += this.vy; this.vy += 0.32;
+    if (this.type === 'goomba' || (this.type === 'koopa' && this.mode === 'shell')) {
+      // offscreen removal handled below
+    }
+    this.x += this.vx * 0.6;
+    if (this.y > VH + 80) this.remove = true;
+    return;
+  }
+  if (this.squashT > 0) {
+    this.squashT--;
+    if (this.squashT === 0) this.mode = 'off';
+    return;
+  }
+  if (this.mode === 'off') return;
+
+  // activate when on screen (or close)
+  var camX = G.cam.x;
+  if (!this.active) {
+    if (this.x + this.w > camX - 32 && this.x < camX + VW + 32) this.active = true;
+    else return;
+  }
+
+  // gravity
+  if (this.mode !== 'shellStill') {
+    this.vy += 0.32;
+    if (this.vy > 5) this.vy = 5;
+  }
+  // walk speed by mode
+  if (this.mode === 'walk') this.vx = this.vx < 0 ? -0.42 : 0.42;
+  else if (this.mode === 'shellSlide') { this.vx = this.vx < 0 ? -2.6 : 2.6; }
+
+  // horizontal move + wall turn
+  var nx = this.x + this.vx;
+  var probeY0 = this.y + 2, probeY1 = this.y + this.h - 2;
+  var hitWall = false;
+  if (this.vx > 0) {
+    if (W.solidAtPx(nx + this.w, probeY0) || W.solidAtPx(nx + this.w, probeY1)) hitWall = true;
+  } else if (this.vx < 0) {
+    if (W.solidAtPx(nx, probeY0) || W.solidAtPx(nx, probeY1)) hitWall = true;
+  }
+  if (hitWall && this.mode !== 'shellSlide') { this.vx = -this.vx; }
+  else nx = this.x; // shells keep momentum (SMB shells do stop actually) -> keep
+  this.x = nx;
+  if (this.x < 0) { this.x = 0; this.vx = Math.abs(this.vx); }
+
+  // vertical
+  var ny = this.y + this.vy;
+  var tyF = Math.floor((ny + this.h) / TS);
+  var hitF = false;
+  var tx0 = Math.floor((this.x + 1) / TS), tx1 = Math.floor((this.x + this.w - 2) / TS);
+  for (var tx = tx0; tx <= tx1; tx++) {
+    if (W.solidAtPx(tx * TS + 4, ny + this.h) || W.solidAtPx(tx * TS + 10, ny + this.h)) { hitF = true; break; }
+  }
+  if (hitF && this.vy >= 0) {
+    ny = tyF * TS - this.h;
+    // koopa shells rest on ground
+    if (this.mode === 'shell' || this.mode === 'shellSlide') { this.vy = 0; this.shellRest = true; }
+    else this.vy = 0;
+  } else if (this.mode === 'shell' || this.mode === 'shellSlide') {
+    this.vy = 0.0001;
+  }
+  this.y = ny;
+
+  // ledge turn for walkers (koopa/goomba in SMB: goomba walks off; koopa turns)
+  if (this.mode === 'walk' && this.shellRest !== true) {
+    var onGround = this.onGroundNow(W);
+    if (!onGround) {
+      // koopa turns at ledge, goomba does not
+      if (this.type === 'koopa') { this.vx = -this.vx; this.x += this.vx * 0.5; }
+    }
+  }
+  this.shellRest = false;
+
+  // remove if far offscreen behind
+  if (this.x < camX - 120) this.remove = true;
+  this.animT++;
+  if (this.animT % 8 === 0) this.anim ^= 1;
+};
+EnemyBase.prototype.onGroundNow = function (W) {
+  var footY = this.y + this.h;
+  var tx0 = Math.floor((this.x + 1) / TS), tx1 = Math.floor((this.x + this.w - 2) / TS);
+  for (var tx = tx0; tx <= tx1; tx++) {
+    if (W.solidAtPx(tx * TS + 4, footY) || W.solidAtPx(tx * TS + 10, footY)) return true;
+  }
+  return false;
+};
+
+/* ---------- items ---------- */
+function ItemBase(x, y, type) {
+  this.x = x; this.y = y; this.vy = 0; this.vx = 0;
+  this.type = type;        // mushroom | oneup | star | coin
+  this.emerge = 0;         // frames rising out of block
+  this.emergeFrom = y;
+  this.collected = false;
+  this.remove = false;
+  this.active = false;
+  this.dir = 1;
+  this.life = 0;
+}
+ItemBase.prototype.update = function (W, G) {
+  if (this.collected) { this.remove = true; return; }
+  var camX = G.cam.x;
+  if (!this.active) {
+    if (this.x > camX - 48 && this.x < camX + VW + 64) this.active = true;
+    else return;
+  }
+  if (this.emerge > 0) {
+    this.emerge--;
+    this.y = this.emergeFrom - (1 - this.emerge / 16) * 16;
+    return;
+  }
+  if (this.type === 'coin' || this.type === 'star') {
+    if (this.type === 'star') {
+      this.vy += 0.3; this.y += this.vy;
+      var fy = this.y + 16;
+      var tx0 = Math.floor((this.x + 1) / TS), tx1 = Math.floor((this.x + 14) / TS);
+      var hit = false;
+      for (var tx = tx0; tx <= tx1; tx++) if (W.solidAtPx(tx * TS + 4, fy) || W.solidAtPx(tx * TS + 10, fy)) hit = true;
+      if (hit) { this.y = Math.floor((this.y + 16) / TS) * TS - 16; this.vy = -2.6; this.vx += 0.2; if (this.vx > 2.6) this.vx = 2.6; }
+      this.x += this.vx;
+      if (this.x < camX) { this.vx = Math.abs(this.vx); }
+      this.life++;
+      if (this.life > 600) this.remove = true;
+    }
+    return;
+  }
+  // mushroom/1up: walk with gravity, turn at walls
+  this.vy += 0.32; if (this.vy > 5) this.vy = 5;
+  var nx = this.x + this.vx;
+  if (this.vx > 0 && (W.solidAtPx(nx + 16, this.y + 4) || W.solidAtPx(nx + 16, this.y + 12))) this.vx = -Math.abs(this.vx);
+  else if (this.vx < 0 && (W.solidAtPx(nx, this.y + 4) || W.solidAtPx(nx, this.y + 12))) this.vx = Math.abs(this.vx);
+  else this.x = nx;
+  var ny = this.y + this.vy;
+  var tyF = Math.floor((ny + 16) / TS);
+  var hitF = false;
+  for (var tx2 = Math.floor((this.x + 1) / TS); tx2 <= Math.floor((this.x + 14) / TS); tx2++)
+    if (W.solidAtPx(tx2 * TS + 4, ny + 16) || W.solidAtPx(tx2 * TS + 10, ny + 16)) hitF = true;
+  if (hitF) { ny = tyF * TS - 16; this.vy = 0; } else this.y = ny;
+  if (this.y < 0) this.remove = true;
+  this.life++;
+  if (this.life > 900) this.remove = true;
+};
+ItemBase.prototype.box = function () { return { x: this.x, y: this.y, w: 16, h: 16 }; };
+</script>
+<script>/* ==== c10_render.js ==== */
+'use strict';
+/* ===== RENDERER =====
+   Draws the tile map + decor + entities to the 256x240 canvas.
+*/
+function Render(G) {
+  var W = G.world, L = G.level, cam = G.cam;
+  cx.fillStyle = L.underground ? '#000000' : L.sky;
+  cx.fillRect(0, 0, VW, VH);
+
+  // parallax-ish background (SMB uses static bg + hills; hills scroll slower)
+  var bgOff = Math.floor(cam.x * 0.5);
+  var bgW = cam.x * 0.5;
+  for (var i = 0; i < L.decor.length; i++) {
+    var d = L.decor[i];
+    var sx = d.x * TS - Math.floor(bgOff * (d.t === 'hillB' || d.t === 'hillS' ? 1 : 1));
+    // SMB: background scrolls at same rate; only distant clouds are static. Keep same for fidelity.
+    sx = d.x * TS - Math.floor(cam.x);
+    if (sx > -40 && sx < VW + 40) {
+      if (d.t === 'cloud') cx.drawImage(SPR.cloud[d.k % 3], Math.round(sx), Math.round(d.y * TS));
+      else if (d.t === 'bush') cx.drawImage(SPR.bush[d.k % 3], Math.round(sx), Math.round(d.y * TS));
+      else if (d.t === 'hillB') cx.drawImage(SPR.hillBig, Math.round(sx), Math.round(d.y * TS));
+      else if (d.t === 'hillS') cx.drawImage(SPR.hillSmall, Math.round(sx), Math.round(d.y * TS));
+    }
+  }
+
+  // tile map
+  var x0 = Math.max(0, Math.floor(cam.x / TS));
+  var x1 = Math.min(L.w - 1, Math.ceil((cam.x + VW) / TS));
+  for (var y = 0; y < L.h; y++) {
+    for (var x = x0; x <= x1; x++) {
+      var ch = W.g[y][x];
+      if (ch === ' ') continue;
+      var px = x * TS - cam.x, py = y * TS;
+      var off = W.bumpOffset(x, y);
+      py += off;
+      switch (ch) {
+        case 'X': cx.drawImage(SPR.t_ground, px, py); break;
+        case 'B': cx.drawImage(SPR.t_brick, px, py); break;
+        case 'b': cx.drawImage(SPR.t_brick, px, py); break;
+        case '?': cx.drawImage(SPR.t_q, px, py); break;
+        case 'M': cx.drawImage(SPR.t_q, px, py); break;
+        case 'U': cx.drawImage(SPR.t_q, px, py); break;
+        case 'T': break; // hidden block: invisible
+        case 'S': cx.drawImage(SPR.t_solid, px, py); break;
+        case 's': cx.drawImage(SPR.t_solid_b, px, py); break;
+        case '=': cx.drawImage(SPR.t_solid_b, px, py); break;
+        case 'o': drawWorldCoin(px, py + 4, G.frame); break;
+        case 'l': cx.fillStyle = '#f83800'; cx.fillRect(px, py + 8, 16, 8); cx.fillStyle = '#fc9838'; cx.fillRect(px, py + 11, 16, 3); break;
+        case 'd': drawFireBar(px, py, G.frame); break;
+        default: break;
+      }
+    }
+  }
+
+  // used blocks (drawn over map)
+  for (var key in W.coinUsed) {
+    var kp = key.split(',');
+    var kx = parseInt(kp[0]), ky = parseInt(kp[1]);
+    var kpx = kx * TS - cam.x;
+    if (kpx > -20 && kpx < VW) cx.drawImage(SPR.t_used, kpx, ky * TS + W.bumpOffset(kx, ky));
+  }
+
+  // free-standing items
+  for (var it = 0; it < G.items.length; it++) {
+    var I = G.items[it];
+    if (I.remove) continue;
+    var ix = I.x - cam.x, iy = I.y;
+    if (I.type === 'coin') drawWorldCoin(ix, iy + 4, G.frame);
+    else if (I.type === 'star') { cx.save(); cx.translate(ix + 8, iy + 8); cx.rotate(G.frame * 0.15); cx.drawImage(SPR.item.star, -8, -8); cx.restore(); }
+    else cx.drawImage(I.type === 'oneup' ? SPR.item.oneup : (I.type === 'fire' ? SPR.item.fire : SPR.item.mushroom), Math.round(ix), Math.round(iy));
+  }
+
+  // flag pole
+  if (!L.noFlag) {
+    var fx = L.flagX * TS + 8 - cam.x;
+    var fBase = (GRID_H - 2) * TS;
+    // pole
+    cx.fillStyle = '#00a800'; cx.fillRect(fx + 4, fBase - 8 * TS, 3, 8 * TS);
+    cx.fillStyle = '#a4e4fc'; cx.fillRect(fx + 5, fBase - 8 * TS, 1, 8 * TS);
+    // ball on top
+    cx.fillStyle = '#f8b800'; cx.beginPath(); cx.arc(fx + 5, fBase - 8 * TS - 3, 4, 0, 7); cx.fill();
+    cx.fillStyle = '#000'; cx.fillRect(fx + 3, fBase - 8 * TS - 5, 5, 2);
+    // flag (only while player hasn't grabbed)
+    if (!G.flagGrabbed) {
+      var fy = G.flagY != null ? G.flagY : fBase - 5 * TS;
+      cx.drawImage(SPR.flag, fx + 6, fy);
+    }
+  }
+
+  // castle
+  var csx = L.castleX * TS - cam.x;
+  if (csx > -80 && csx < VW + 40) {
+    cx.drawImage(L.castleSmall ? SPR.castleSmall : SPR.castleBig, Math.round(csx), Math.round((GRID_H - 2) * TS - (L.castleSmall ? 48 : 80)));
+  }
+
+  // enemies
+  for (var e = 0; e < G.enemies.length; e++) {
+    var en = G.enemies[e];
+    if (en.remove) continue;
+    var ex = Math.round(en.x - cam.x);
+    if (ex < -24 || ex > VW + 24) continue;
+    drawEnemy(en, ex);
+  }
+
+  // fireballs
+  for (var fb = 0; fb < G.player.fireballs.length; fb++) {
+    var F = G.player.fireballs[fb];
+    cx.drawImage(SPR.fireball, Math.round(F.x - cam.x), Math.round(F.y));
+  }
+
+  // player
+  var p = G.player;
+  if (!p.hidden) {
+    var ppx = Math.round(p.x - cam.x);
+    var ppy = Math.round(p.y);
+    if (p.invuln > 0 && Math.floor(G.frame / 2) % 2 === 0 && !p.dead) { /* blink */ }
+    else drawPlayer(p, ppx, ppy, G.frame);
+  }
+
+  // score/time popups
+  for (var q = 0; q < G.popups.length; q++) {
+    var pp = G.popups[q];
+    cx.fillStyle = '#fff'; cx.font = '8px monospace'; cx.textAlign = 'center';
+    cx.globalAlpha = Math.max(0, pp.life / 30);
+    cx.fillText(pp.text, Math.round(pp.x - cam.x), Math.round(pp.y));
+    cx.globalAlpha = 1;
+  }
+}
+
+function drawWorldCoin(px, py, frame) {
+  var f = Math.floor(frame / 8) % 4;
+  drawCoin(cx, px, py, f);
+}
+function drawPlayer(p, px, py, frame) {
+  var set = p.power === PWR.SMALL ? SPR.mario : (p.power === PWR.FIRE ? SPR.fire : SPR.big);
+  var img;
+  if (p.dead) img = (p.power === PWR.SMALL ? SPR.mario : SPR.big).die;
+  else if (p.crouching) img = set.crouch;
+  else if (!p.onGround) img = set.jump;
+  else if (p.skidding) img = set.skid;
+  else if (Math.abs(p.vx) > 0.15) img = (p.anim % 2 === 0 ? set.walk1 : set.walk2);
+  else img = set.stand;
+  // big sprites are 24px tall and authored 16x24 -> draw at native size,
+  // anchored so the FEET line up with the physics hitbox bottom.
+  var spr = img;
+  cx.drawImage(spr, px - 1, py + (16 - spr.height));
+}
+function drawEnemy(en, ex) {
+  if (en.squashT > 0) { cx.drawImage(SPR.goomba.flat, ex, en.y + 8); return; }
+  if (en.flip) {
+    cx.save();
+    cx.translate(ex + 8, en.y + 8); cx.scale(1, -1);
+    var fi = en.type === 'goomba' ? SPR.goomba.walk1
+           : ((en.mode === 'shell' || en.mode === 'shellSlide') ? SPR.koopa.shell16 : SPR.koopa.walk1);
+    cx.drawImage(fi, -8, -8);
+    cx.restore();
+    return;
+  }
+  if (en.type === 'goomba') {
+    cx.drawImage(en.anim ? SPR.goomba.walk1 : SPR.goomba.walk2, ex, en.y);
+  } else {
+    if (en.mode === 'shell' || en.mode === 'shellSlide') {
+      // shell is a 16x16 sprite sitting on the ground; en.y already bottom-aligned
+      cx.drawImage(SPR.koopa.shell16, ex, en.y);
+    } else {
+      // koopa walks as a 16x24 sprite: en.y is the top of the 24px body
+      cx.drawImage(en.anim ? SPR.koopa.walk1 : SPR.koopa.walk2, ex, en.y);
+    }
+  }
+}
+function drawFireBar(px, py, frame) {
+  var cx0 = px + 8, cy0 = py + 8;
+  var len = 40, seg = 4;
+  var ang = frame * 0.06;
+  cx.fillStyle = '#fc9838';
+  for (var i = 0; i < 6; i++) {
+    var a = ang + i * 0.9;
+    var bx = cx0 + Math.cos(a) * (i + 1) * 5;
+    var by = cy0 + Math.sin(a) * (i + 1) * 5;
+    cx.fillStyle = (i % 2) ? '#f83800' : '#fc9838';
+    cx.fillRect(bx - 2, by - 2, 4, 4);
+  }
+}
+</script>
+<script>/* ==== c11_game.js ==== */
+'use strict';
+/* ===== GAME CONTROLLER ===== */
+var Game = {
+  state: 'title',   // title | playing | dying | levelclear | gameover | paused | timeup
+  levels: [],
+  li: 0,
+  level: null, world: null,
+  player: null,
+  enemies: [], items: [], popups: [],
+  cam: { x: 0 },
+  score: 0, coins: 0, lives: 3,
+  time: 400, timeAcc: 0,
+  frame: 0,
+  levelTimer: 0,
+  worldIdx: 0,
+  hiScore: 0,
+  startLevel: function (i, keepPower) {
+    this.li = i;
+    var L = this.levels[i];
+    this.level = L;
+    this.world = new World(L);
+    this.enemies = [];
+    this.items = [];
+    this.popups = [];
+    for (var e = 0; e < L.enemies.length; e++) {
+      var ed = L.enemies[e];
+      var ex = ed.x * TS, ey = ed.y * TS;
+      this.enemies.push(ed.type === 'goomba' ? new Goomba(ex, ey) : new Koopa(ex, ey - 8));
+    }
+    for (var it = 0; it < L.items.length; it++) {
+      var id = L.items[it];
+      this.items.push(new ItemBase(id.x * TS, id.y * TS, id.type));
+    }
+    var p = new Player(L.startX * TS, L.startY * TS);
+    if (keepPower) p.power = this.keepPower || PWR.SMALL;
+    this.player = p;
+    this.cam.x = 0;
+    this.time = L.time;
+    this.timeAcc = 0;
+    this.frame = 0;
+    this.flagGrabbed = false;
+    this.flagY = null;
+    this.deathCount = 0;
+    this.state = 'playing';
+    document.getElementById('hud-top').classList.remove('hide');
+    updateHUD();
+  },
+  addScore: function (n, x, y, text) {
+    this.score += n;
+    if (x != null) this.popups.push({ x: x, y: y, text: text || String(n), life: 30 });
+    if (this.score > this.hiScore) { this.hiScore = this.score; try { localStorage.setItem('smb_hi', this.hiScore); } catch (e) {} }
+  },
+  startBumpPop: function (tx, ty) {
+    this.popups.push({ x: tx * TS + 8, y: ty * TS - 4, text: '', life: 1 });
+  },
+  bumpBlock: function (tx, ty, ch, p) {
+    var W = this.world, key = tx + ',' + ty;
+    // a block bumped from below
+    if (ch === 'M') {
+      // mushroom (or flower if big)
+      if (p.power === PWR.SMALL) {
+        W.setTile(tx, ty, 'U'); W.coinUsed[key] = true;
+        var it = new ItemBase(tx * TS, ty * TS - 16, 'mushroom'); it.emerge = 16; it.emergeFrom = ty * TS; it.vx = 1.0;
+        this.items.push(it);
+      } else {
+        W.setTile(tx, ty, 'U'); W.coinUsed[key] = true;
+        var itf = new ItemBase(tx * TS, ty * TS - 16, 'fire'); itf.emerge = 16; itf.emergeFrom = ty * TS; itf.vx = 0;
+        this.items.push(itf);
+      }
+      W.blockBump[key] = 8;
+      SFX.power();
+      this.startBumpPop(tx, ty);
+    } else if (ch === 'T') {
+      W.setTile(tx, ty, 'U'); W.coinUsed[key] = true;
+      var i1 = new ItemBase(tx * TS, ty * TS - 16, 'oneup'); i1.emerge = 16; i1.emergeFrom = ty * TS; i1.vx = 1.0;
+      this.items.push(i1);
+      W.blockBump[key] = 8;
+      SFX.power();
+    } else if (ch === '?') {
+      W.setTile(tx, ty, 'U'); W.coinUsed[key] = true;
+      this.addCoin(tx * TS + 8, ty * TS);
+      W.blockBump[key] = 8;
+      SFX.coin();
+      this.startBumpPop(tx, ty);
+    } else if (ch === 'U') {
+      // multi-coin: gives up to N coins
+      var cnt = W.coinCount && W.coinCount[key] ? W.coinCount[key] : 0;
+      if (cnt < 8) {
+        W.coinCount = W.coinCount || {};
+        W.coinCount[key] = cnt + 1;
+        this.addCoin(tx * TS + 8, ty * TS);
+        W.blockBump[key] = 8;
+        SFX.coin();
+      }
+    } else if (ch === 'B' || ch === 'b') {
+      // break brick if big; else bump
+      if (p.power !== PWR.SMALL) {
+        if (W.coinUsed[key] || containsCoin(W, tx, ty)) {
+          var ic = new ItemBase(tx * TS, ty * TS - 16, 'coin'); ic.active = true; ic.emerge = 8; ic.emergeFrom = ty*TS;
+          this.items.push(ic); this.addCoin(tx*TS+8, ty*TS);
+        }
+        W.setTile(tx, ty, ' '); W.brokenBlocks[key] = true;
+        W.blockBump[key] = 8;
+        this.addScore(50, tx*TS+8, ty*TS-16, '50');
+        SFX.breakblk();
+      } else {
+        W.blockBump[key] = 8;
+        // if an enemy sits on it, flip it
+        var flipped = this.flipEnemyOn(tx, ty);
+        if (!flipped) SFX.bump();
+      }
+    } else {
+      W.blockBump[key] = 8;
+      SFX.bump();
+    }
+  },
+  flipEnemyOn: function (tx, ty) {
+    var topY = ty * TS;
+    var flipped = false;
+    for (var i = 0; i < this.enemies.length; i++) {
+      var e = this.enemies[i];
+      if (e.remove || e.flip || e.squashT > 0) continue;
+      if (Math.abs((e.x + e.w/2) - (tx * TS + 8)) < 12 && Math.abs((e.y + e.h) - topY) < 6) {
+        e.killFlip(); this.addScore(100, e.x, e.y, '100'); flipped = true;
+      }
+    }
+    return flipped;
+  },
+  addCoin: function (x, y) {
+    this.coins++;
+    this.addScore(200, x, y - 8, null);
+    if (this.coins >= 100) { this.coins -= 100; this.lives++; SFX.clear(); }
+    updateHUD();
+  },
+  collectCoinTile: function (tx, ty) {
+    this.world.setTile(tx, ty, ' ');
+    this.addCoin(tx * TS + 8, ty * TS);
+  },
+  killPlayer: function () {
+    if (this.player.dead) return;
+    this.player.die();
+    this.state = 'dying';
+  },
+  playerHurt: function () {
+    var p = this.player;
+    if (p.invuln > 0 || p.dead) return;
+    if (p.power === PWR.SMALL) { this.killPlayer(); }
+    else p.hurt();
+  },
+  stompEnemy: function (e) {
+    var p = this.player;
+    if (e.type === 'koopa' && e.mode === 'shell') {
+      // kick the shell
+      var dir = (p.x + p.w/2) < (e.x + e.w/2) ? 1 : -1;
+      e.mode = 'shellSlide'; e.vx = dir * 2.6; e.shellWakeT = 400;
+      SFX.kick(); this.addScore(400, e.x, e.y, '400');
+      return;
+    }
+    if (e.type === 'koopa' && e.mode === 'shellSlide') {
+      e.mode = 'shell'; e.vx = 0; e.shellWakeT = 400;
+      SFX.kick(); this.addScore(400, e.x, e.y, '400');
+      return;
+    }
+    if (e.mode === 'shell') { // stomping a still shell kicks it
+      var dir2 = (p.x + p.w/2) < (e.x + e.w/2) ? 1 : -1;
+      e.mode = 'shellSlide'; e.vx = dir2 * 2.6; e.shellWakeT = 400;
+      SFX.kick(); this.addScore(400, e.x, e.y, '400');
+      return;
+    }
+    // stomp a walking enemy
+    if (e.type === 'goomba') { e.squash(); this.addScore(100, e.x, e.y, '100'); }
+    else { e.squash(); this.addScore(100, e.x, e.y, '100'); } // koopa -> shell
+    p.vy = IN.A ? STOMP_VHOLD : STOMP_V;
+    p.jumping = true;
+    p.onGround = false;
+  },
+  enemyVsPlayer: function (e) {
+    var p = this.player;
+    if (e.remove || e.flip || p.dead) return;
+    if (e.squashT > 0) return;
+    var pb = p.box(), eb = e.box();
+    if (pb.x < eb.x + eb.w && pb.x + pb.w > eb.x && pb.y < eb.y + eb.h && pb.y + pb.h > eb.y) {
+      // shell sliding can also kill the player
+      if (e.mode === 'shellSlide' || (e.type === 'koopa' && e.mode === 'shell' && Math.abs(e.vx) > 0.5)) {
+        this.playerHurt();
+        return;
+      }
+      // stomping test: player falling and feet near enemy top
+      var stomping = p.vy > 0 && (pb.y + pb.h) - e.y < 10;
+      if (stomping && e.stompable) this.stompEnemy(e);
+      else this.playerHurt();
+    }
+  },
+  itemVsPlayer: function (it) {
+    var p = this.player;
+    if (it.remove || it.collected || it.emerge > 0) return;
+    var pb = p.box(), ib = it.box();
+    if (pb.x < ib.x + ib.w && pb.x + pb.w > ib.x && pb.y < ib.y + ib.h && pb.y + pb.h > ib.y) {
+      if (it.type === 'mushroom') {
+        if (p.power === PWR.SMALL) { p.grow(PWR.BIG); this.addScore(1000, it.x, it.y, '1000'); }
+        else this.addScore(1000, it.x, it.y, '1000');
+        it.collected = true; SFX.power();
+      } else if (it.type === 'fire') {
+        p.grow(PWR.FIRE); this.addScore(1000, it.x, it.y, '1000'); it.collected = true; SFX.power();
+      } else if (it.type === 'oneup') {
+        this.lives++; SFX.power(); it.collected = true; updateHUD();
+      } else if (it.type === 'star') {
+        p.invuln = 600; SFX.power(); it.collected = true;
+      } else if (it.type === 'coin') {
+        it.collected = true; this.addCoin(it.x, it.y);
+      }
+    }
+  },
+  update: function (dt) {
+    this.frame++;
+    var p = this.player;
+    if (this.state === 'title') return;
+    if (this.state === 'dying') {
+      p.update(this.world, this);
+      this.frameCountdown(180, function () { Game.afterDeath(); });
+      return;
+    }
+    if (this.state === 'gameover') { this.frameCountdown(240, function () { Game.toTitle(); }); return; }
+    if (this.state === 'levelclear') {
+      // flag slide + walk to castle
+      this.levelClearTick();
+      return;
+    }
+    if (this.state === 'timeup') { this.timeUpTick(); return; }
+    if (this.state !== 'playing') return;
+
+    // timer
+    this.timeAcc += dt;
+    if (this.timeAcc >= 0.4) { this.timeAcc = 0; this.time--; if (this.time <= 0) { this.time = 0; this.state = 'timeup'; } updateHUD(); }
+
+    p.update(this.world, this);
+
+    // firing
+    if (p.power === PWR.FIRE && IN.B && !p.autoWalk) { /* B also runs; fire on B+? */ }
+    if (p.power === PWR.FIRE && pressed('B') && !p.autoWalk) { /* handled: B is run */ }
+    // fireball spawn on A? No—use a dedicated: hold B while fire to shoot (common). We'll shoot on B tap when fire.
+    // Actually SMB uses B to run & shoot. We let B both run and shoot.
+    if (p.power === PWR.FIRE && pressed('B')) p.fire();
+
+    // fireballs physics
+    for (var fb = p.fireballs.length - 1; fb >= 0; fb--) {
+      var F = p.fireballs[fb];
+      F.life--;
+      F.vy += 0.4; if (F.vy > 4) F.vy = 4;
+      // horizontal
+      if (this.world.solidAtPx(F.x + F.vx, F.y + 4)) { this.burstFireball(F); p.fireballs.splice(fb, 1); continue; }
+      F.x += F.vx;
+      // vertical
+      var nfy = F.y + F.vy;
+      if (this.world.solidAtPx(F.x + 4, nfy + 8)) {
+        this.burstFireball(F); p.fireballs.splice(fb, 1); continue;
+      }
+      F.y = nfy;
+      if (F.life <= 0 || F.x < this.cam.x - 16 || F.x > this.cam.x + VW + 16) p.fireballs.splice(fb, 1);
+      // vs enemies
+      var killed = false;
+      for (var ei = 0; ei < this.enemies.length; ei++) {
+        var en = this.enemies[ei];
+        if (en.remove || en.flip || en.squashT > 0) continue;
+        var eb = en.box();
+        if (F.x < eb.x + eb.w && F.x + 8 > eb.x && F.y < eb.y + eb.h && F.y + 8 > eb.y) {
+          if (en.type === 'koopa' && (en.mode === 'shell' || en.mode === 'shellSlide')) { en.mode = 'shell'; en.vx = 0; en.shellWakeT = 400; }
+          else en.killFlip();
+          this.addScore(200, en.x, en.y, '200');
+          this.burstFireball(F); p.fireballs.splice(fb, 1); killed = true; break;
+        }
+      }
+      if (killed) continue;
+    }
+
+    // enemies
+    for (var i = this.enemies.length - 1; i >= 0; i--) {
+      var e = this.enemies[i];
+      e.update(this.world, this);
+      // koopa shell revives after a while, but only once Mario has walked away
+      if ((e.mode === 'shell' || e.mode === 'shellSlide') && e.shellWakeT != null) {
+        e.shellWakeT--;
+        if (e.shellWakeT <= 0) {
+          var far = Math.abs(p.x - e.x) > 72;
+          if (far) e.wake();
+          else e.shellWakeT = 60; // still close: keep waiting
+        }
+      }
+      this.enemyVsPlayer(e);
+      // fireball already handled
+      if (e.remove) this.enemies.splice(i, 1);
+    }
+
+    // items
+    for (var j = this.items.length - 1; j >= 0; j--) {
+      var it = this.items[j];
+      it.update(this.world, this);
+      this.itemVsPlayer(it);
+      if (it.remove) this.items.splice(j, 1);
+    }
+
+    // world coins (tile 'o')
+    this.collectWorldCoins(p);
+
+    // camera
+    var targetCam = p.x - 112;
+    if (targetCam > this.cam.x) this.cam.x = Math.min(targetCam, this.level.w * TS - VW);
+    if (this.cam.x < 0) this.cam.x = 0;
+    if (this.cam.x > this.level.w * TS - VW) this.cam.x = this.level.w * TS - VW;
+
+    // fall off / pit death
+    if (p.y > VH + 40) { this.killPlayer(); }
+
+    // lava
+    this.checkLava(p);
+
+    // block bump timers
+    var W = this.world;
+    for (var bk in W.blockBump) { W.blockBump[bk]--; if (W.blockBump[bk] <= 0) delete W.blockBump[bk]; }
+
+    // flagpole / goal
+    this.checkGoal(p);
+
+    // time-up sequence
+    if (this.state === 'timeup') this.timeUpTick();
+  },
+  burstFireball: function (F) {
+    this.popups.push({ x: F.x, y: F.y, text: '·', life: 10 });
+  },
+  collectWorldCoins: function (p) {
+    var pb = p.box();
+    var x0 = Math.floor(pb.x / TS), x1 = Math.floor((pb.x + pb.w - 1) / TS);
+    var y0 = Math.floor(pb.y / TS), y1 = Math.floor((pb.y + pb.h - 1) / TS);
+    for (var ty = y0; ty <= y1; ty++) for (var tx = x0; tx <= x1; tx++) {
+      if (this.world.atTile(tx, ty) === 'o') this.collectCoinTile(tx, ty);
+    }
+  },
+  checkLava: function (p) {
+    var pb = p.box();
+    var x0 = Math.floor(pb.x / TS), x1 = Math.floor((pb.x + pb.w - 1) / TS);
+    var y0 = Math.floor(pb.y / TS), y1 = Math.floor((pb.y + pb.h - 1) / TS);
+    for (var ty = y0; ty <= y1; ty++) for (var tx = x0; tx <= x1; tx++) {
+      if (this.world.atTile(tx, ty) === 'l') this.killPlayer();
+    }
+  },
+  checkGoal: function (p) {
+    var L = this.level;
+    if (L.noFlag) {
+      // bonus stages: reach the exit pipe on the right
+      var ex = (L.exitPipe ? L.exitPipe.tx : L.w - 8) * TS;
+      if (p.x + p.w > ex) {
+        p.autoWalk = 1; p.facingLocked = true; this.state = 'levelclear'; this.clearTick = 0;
+      }
+      return;
+    }
+    var fx = L.flagX * TS + 8;
+    if (!this.flagGrabbed && p.x + p.w > fx && p.x < fx + 12) {
+      this.flagGrabbed = true;
+      // slide down; height determines points
+      var poleTopY = (GRID_H - 2) * TS - 8 * TS;
+      var grabH = poleTopY - p.y;
+      var pts = grabH > 150 ? 5000 : (grabH > 100 ? 2000 : (grabH > 50 ? 800 : (grabH > 20 ? 400 : 100)));
+      this.addScore(pts, p.x, p.y - 16, String(pts));
+      p.autoWalk = 1; p.facingLocked = false;
+      p.vx = 0; p.vy = 0;
+      this.state = 'levelclear'; this.clearTick = 0;
+      SFX.flag();
+    }
+  },
+  levelClearTick: function () {
+    var p = this.player, L = this.level;
+    this.clearTick++;
+    if (L.noFlag) {
+      // walk right into pipe
+      p.x += 1.0;
+      var ex = (L.exitPipe ? L.exitPipe.tx : L.w - 8) * TS;
+      if (p.x > ex + 8) {
+        // descend into pipe
+        p.autoWalk = 0;
+        p.y += 1.2; p.hidden = p.y > (GRID_H - 2) * TS;
+        if (p.hidden) { this.nextLevel(); }
+      }
+      return;
+    }
+    // flag slide: move down to base then walk right into castle
+    var fBase = (GRID_H - 2) * TS;
+    if (this.flagGrabbed && p.y < fBase - 24 && !p.slideDone) {
+      p.y += 2.4;
+      if (this.flagY == null) this.flagY = fBase - 5 * TS;
+      this.flagY = Math.min(fBase - 3 * TS, (this.flagY || 0) + 2.4);
+    } else {
+      if (!p.slideDone) { p.slideDone = true; p.autoWalk = 1; }
+      p.x += 1.0;
+      var castleLeft = L.castleX * TS;
+      if (p.x > castleLeft + 20) { this.timeTally = 0; this.nextLevel(); }
+    }
+    // if we overshoot base, snap
+    if (p.y > fBase - 24) { p.y = fBase - 24; }
+  },
+  nextLevel: function () {
+    this.keepPower = this.player.power;
+    var nLi = this.li + 1;
+    if (nLi >= this.levels.length) {
+      // beat the game
+      this.state = 'gameover'; this.gameWon = true;
+      return;
+    }
+    // convert time to score at level end (SMB behavior)
+    this.addScore(this.time * 50, null, null, null);
+    this.startLevel(nLi, true);
+    SFX.clear();
+  },
+  afterDeath: function () {
+    this.lives--;
+    updateHUD();
+    if (this.lives <= 0) { this.state = 'gameover'; this.gameWon = false; return; }
+    this.startLevel(this.li, false);
+    this.state = 'playing';
+  },
+  timeUpTick: function () {
+    var p = this.player;
+    if (!p.dead) { p.die(); this.state = 'timeup'; this.timeUpDying = true; }
+    if (this.timeUpDying) {
+      p.update(this.world, this);
+      this.timeCountdown = (this.timeCountdown || 0) + 1;
+      if (this.timeCountdown > 150) { this.timeCountdown = 0; this.afterDeath(); }
+      return;
+    }
+  },
+  frameCountdown: function (n, cb) {
+    this.cdN = (this.cdN || 0) + 1;
+    if (this.cdN > n) { this.cdN = 0; cb(); }
+  },
+  toTitle: function () {
+    this.state = 'title';
+    document.getElementById('hud-top').classList.add('hide');
+  }
+};
+function containsCoin(W, tx, ty) { return false; }
+
+/* ==== c12_ui.js ==== */
+'use strict';
+/* ===== UI: title screen, HUD, overlays, boot ===== */
+function updateHUD() {
+  var set = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+  if (Game.level) set('h-lv', Game.level.name || ('WORLD ' + (Game.li + 1)));
+  set('h-coin', '×' + (Game.coins < 10 ? '0' : '') + Game.coins);
+  var s = Game.score;
+  var str = '';
+  for (var i = 6; i >= 0; i--) { str += (Math.floor(s / Math.pow(10, i)) % 10); }
+  set('h-score', str);
+}
+
+/* ---- title screen overlay ---- */
+var uiOv = null;
+function showOverlay(html, opts) {
+  hideOverlay();
+  opts = opts || {};
+  var d = document.createElement('div');
+  d.id = 'overlay';
+  d.style.cssText = 'position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;' +
+    'align-items:center;justify-content:center;gap:14px;background:rgba(0,0,0,.72);text-align:center;padding:5vh 6vw';
+  d.innerHTML = html;
+  if (opts.onTap) {
+    d.addEventListener('click', function (ev) { ev.preventDefault(); opts.onTap(); }, { passive: false });
+    d.addEventListener('touchstart', function (ev) { ev.preventDefault(); opts.onTap(); }, { passive: false });
+  }
+  document.body.appendChild(d);
+  uiOv = d;
+  return d;
+}
+function hideOverlay() { if (uiOv) { uiOv.remove(); uiOv = null; } }
+
+function titleScreen() {
+  var hi = Game.hiScore || 0;
+  var html =
+    '<div style="font-size:min(9vw,44px);font-weight:bold;color:#e45c10;text-shadow:3px 3px 0 #fff,6px 6px 0 #000;letter-spacing:1px">' +
+    'SUPER<br>MARIO BROS.</div>' +
+    '<div style="font-size:min(4vw,16px);color:#f8d878">還原版 · 手機可玩</div>' +
+    '<div style="font-size:min(3.4vw,14px);color:#aaa;line-height:1.9">' +
+    '◀ ▶ 移動　　B 跑／衝刺<br>' +
+    'A 跳（長按跳更高）<br>' +
+    '火焰瑪莉：按 B 發射火球' +
+    '</div>' +
+    '<div style="font-size:min(3.4vw,14px);color:#8f8">最高分：' + hi + '</div>' +
+    '<div class="chip" style="margin-top:6px;font-size:min(5vw,20px);padding:2vh 8vw">▶ 開始遊戲</div>' +
+    '<div style="font-size:min(2.8vw,12px);color:#777;margin-top:2vh">點 anywhere 或按 Enter / A 開始</div>';
+  showOverlay(html, { onTap: startGame });
+}
+
+function startGame() {
+  hideOverlay();
+  audioInit();
+  Game.score = 0; Game.coins = 0; Game.lives = 3;
+  Game.levels = buildAllLevels();
+  // load mid-level power only on continue; fresh game starts small
+  Game.startLevel(0, false);
+  SFX.power();
+}
+
+function gameOverScreen() {
+  var won = Game.gameWon;
+  var html =
+    '<div style="font-size:min(8vw,38px);font-weight:bold;color:#fff">' +
+    (won ? 'YOU SAVE THE KINGDOM!' : 'GAME OVER') + '</div>' +
+    '<div style="font-size:min(4.6vw,20px);color:#f8d878">得分：' + Game.score + '</div>' +
+    '<div style="font-size:min(3.4vw,14px);color:#aaa">金幣：' + Game.coins + '　生命：' + Game.lives + '</div>' +
+    '<div class="chip" style="font-size:min(4.4vw,18px);padding:1.6vh 7vw;margin-top:4px">再玩一次</div>';
+  showOverlay(html, { onTap: function () { hideOverlay(); titleScreen(); } });
+  setTimeout(function () { if (Game.state === 'gameover') { /* keep showing */ } }, 100);
+}
+
+/* HUD top-right lives display */
+function drawHUDOverlay() {
+  // lives shown via DOM chip? add lives into coin chip area — simpler: overlay text top-left
+  cx.font = '8px monospace'; cx.textAlign = 'left';
+  cx.fillStyle = '#fff';
+  cx.fillText('x' + Game.lives, 2, 8);
+  cx.textAlign = 'right';
+  cx.fillText(Game.level ? (Game.level.name || '') : '', VW - 2, 8);
+}
+
+/* ---- boot ---- */
+function boot() {
+  buildSprites();
+  fitCanvas();
+  Game.hiScore = 0;
+  try { Game.hiScore = parseInt(localStorage.getItem('smb_hi') || '0') || 0; } catch (e) {}
+  Game.levels = buildAllLevels();
+  tickHook = function (dt) {
+    if (Game.state === 'title') { Game.frame++; return; }
+    Game.update(dt);
+  };
+  drawHook = function () {
+    if (Game.state === 'title') { drawTitleBackdrop(); drawTitleText(); return; }
+    if (Game.state === 'gameover') { drawBackdropFromLevel(); drawGameOverText(); return; }
+    Render(Game);
+    drawHUDOverlay();
+    if (Game.state === 'dying') { cx.fillStyle='rgba(0,0,0,.0)'; }
+  };
+  startLoop();
+  titleScreen();
+}
+
+/* title: render level 1-1 as a live backdrop */
+function drawTitleBackdrop() {
+  if (!Game.levels.length) Game.levels = buildAllLevels();
+  if (!Game.world) {
+    Game.level = Game.levels[0];
+    Game.world = new World(Game.level);
+    Game.enemies = [];
+    for (var e = 0; e < Game.level.enemies.length; e++) {
+      var ed = Game.level.enemies[e];
+      Game.enemies.push(ed.type === 'goomba' ? new Goomba(ed.x * TS, ed.y * TS) : new Koopa(ed.x * TS, ed.y * TS - 8));
+    }
+    Game.items = [];
+    Game.popups = [];
+    Game.player = new Player(2 * TS, 12 * TS);
+    Game.cam.x = 0;
+  }
+  // slowly pan camera + run enemies for a live feel
+  Game.frame++;
+  Game.cam.x = (Game.frame * 0.35) % Math.max(1, (Game.level.w - 16) * TS);
+  for (var i = 0; i < Game.enemies.length; i++) Game.enemies[i].update(Game.world, Game);
+  Render(Game);
+}
+function drawTitleText() {
+  // overlay darkening + big text drawn by DOM overlay already; keep canvas clean
+}
+function drawBackdropFromLevel() {
+  if (Game.world) Render(Game);
+}
+function drawGameOverText() {}
+
+// ---- input hooks for title / start ----
+window.addEventListener('keydown', function (e) {
+  if (Game.state === 'title' && (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyX')) startGame();
+  if (Game.state === 'gameover' && (e.code === 'Enter' || e.code === 'Space')) { hideOverlay(); titleScreen(); }
+});
+
+/* pause button */
+document.getElementById('b-pause').addEventListener('click', function () {
+  if (Game.state === 'playing') {
+    showOverlay('<div style="font-size:min(7vw,32px);font-weight:bold">暫停 PAUSED</div>' +
+      '<div class="chip" style="font-size:min(4vw,16px);padding:1.4vh 6vw">繼續 / 回到標題</div>', {
+      onTap: function () {
+        hideOverlay();
+        Game.state = 'playing';
+      }
+    });
+    Game.state = 'paused';
+  }
+});
+document.getElementById('b-mute').addEventListener('click', function (e) {
+  e.stopPropagation();
+  AU.on = !AU.on;
+  this.textContent = AU.on ? '🔊' : '🔇';
+});
+document.getElementById('b-fs').addEventListener('click', function () {
+  var el = document.documentElement;
+  if (!document.fullscreenElement) { if (el.requestFullscreen) el.requestFullscreen(); }
+  else if (document.exitFullscreen) document.exitFullscreen();
+});
+
+// watch for gameover -> show overlay once
+var _prevState = '';
+function stateWatch() {
+  if (Game.state === 'gameover' && _prevState !== 'gameover') gameOverScreen();
+  _prevState = Game.state;
+  setTimeout(stateWatch, 120);
+}
+setTimeout(stateWatch, 300);
+
+boot();
+</script>
+<script>/* ==== c13_test.js ==== */
+'use strict';
+/* ===== TEST HARNESS (dev only, stripped in release) =====
+   Loaded via ?test=1 in the browser console: window.T.runSim(opts)
+*/
+var T = {
+  runSim: function (o) {
+    o = o || {};
+    var frames = o.frames || 300;
+    var p = Game.player;
+    var log = { maxX: 0, stomps: 0, deaths: 0, errs: [], state: Game.state, coins: Game.coins, score: Game.score };
+    var prevEnemies = Game.enemies.length;
+    for (var i = 0; i < frames; i++) {
+      IN.right = 1; IN.B = o.run ? 1 : 0;
+      if (o.jump) IN.A = (i % 36) < 14 ? 1 : 0; else IN.A = 0;
+      try { Game.update(1 / 60); }
+      catch (e) { log.errs.push('f' + i + ' ' + e.name + ': ' + e.message); break; }
+      if (p.x > log.maxX) log.maxX = p.x;
+      if (Game.state !== 'playing') { log.errs.push('state=' + Game.state + '@f' + i); break; }
+      if (p.dead) { log.deaths++; break; }
+    }
+    log.finalX = Math.round(p.x); log.finalY = Math.round(p.y);
+    log.onGround = p.onGround; log.power = p.power;
+    log.enemies = Game.enemies.length; log.camX = Math.round(Game.cam.x);
+    log.coins = Game.coins; log.score = Game.score; log.state = Game.state;
+    IN.right = 0; IN.B = 0; IN.A = 0;
+    return JSON.stringify(log);
+  },
+  stomp: function () {
+    // place a goomba BELOW the falling player and stomp it
+    var p = Game.player;
+    p.x = 20 * TS; p.y = 9 * TS; p.vy = 1; p.onGround = false; p.jumping = true;
+    var e = new Goomba(p.x, p.y + 22);
+    e.active = true;
+    Game.enemies.push(e);
+    var trace = [];
+    for (var i = 0; i < 40; i++) {
+      Game.update(1 / 60);
+      trace.push([Math.round(p.y), Math.round(e.y), p.vy.toFixed(1), e.squashT]);
+      if (e.squashT > 0) break;
+    }
+    var r = { squashT: e.squashT, score: Game.score, pvy: Math.round(p.vy * 10) / 10, trace: trace.slice(0, 14) };
+    e.remove = true;
+    return JSON.stringify(r);
+  },
+  powerup: function () {
+    // stand under the mushroom ? block at col 16 row 9 and jump into it
+    var p = Game.player;
+    p.x = 16 * TS; p.y = 11 * TS; p.vy = 0; p.onGround = false;
+    var hits = [], itemsSeen = [];
+    for (var i = 0; i < 60; i++) {
+      IN.A = 1;
+      Game.update(1 / 60);
+      if (Game.items.length) itemsSeen.push([i, Game.items[0].type, Game.items[0].emerge]);
+      if (Game.items.length && Game.items[0].emerge === 0) break;
+      IN.A = 0;
+    }
+    IN.A = 0;
+    return JSON.stringify({ items: Game.items.length, power: p.power, score: Game.score, itemsSeen: itemsSeen.slice(0, 4), y: Math.round(p.y) });
+  },
+  headBump: function (tx, ty) {
+    var ch = Game.world.atTile(tx, ty);
+    var before = { ch: ch, items: Game.items.length };
+    Game.bumpBlock(tx, ty, ch, Game.player);
+    return JSON.stringify({ before: before, after: { ch: Game.world.atTile(tx, ty), items: Game.items.length, score: Game.score } });
+  },
+  fireTest: function () {
+    var p = Game.player;
+    p.power = PWR.FIRE;
+    IN.B = 0; Game.update(1 / 60);
+    IN.B = 1; INP.B = 0;
+    p.fire();
+    var n = p.fireballs.length;
+    for (var i = 0; i < 30; i++) { IN.B = 0; Game.update(1 / 60); }
+    return JSON.stringify({ spawned: n, left: p.fireballs.length });
+  },
+  growFull: function () {
+    // jump into the mushroom block, chase the mushroom, confirm power-up
+    var p = Game.player;
+    p.x = 16 * TS; p.y = 11 * TS; p.vy = 0; p.onGround = false;
+    var log = [];
+    for (var i = 0; i < 200; i++) {
+      IN.A = (i % 30 < 16) ? 1 : 0;
+      IN.right = 1; // walk right to catch it
+      Game.update(1 / 60);
+      if (i % 12 === 0) log.push([i, Math.round(p.x), Math.round(p.y), p.power, Game.items.length]);
+      if (p.power > 0) break;
+    }
+    IN.A = 0; IN.right = 0;
+    return JSON.stringify({ power: p.power, score: Game.score, items: Game.items.length, log: log.slice(0, 12) });
+  },
+  autoBot: function (o) {
+    // A bot that runs right, stomps enemies and clears gaps — used to prove
+    // each level is actually completable end-to-end.
+    o = o || {};
+    var maxFrames = o.frames || 9000;
+    var p = Game.player;
+    var log = { deaths: 0, levelsCleared: [], errs: [], frames: 0, jumps: 0, stomps: 0 };
+    var startLi = Game.li;
+    var stuckFrames = 0, lastX = p.x;
+    var holdJump = 0;
+    for (var i = 0; i < maxFrames; i++) {
+      log.frames++;
+      IN.right = 1; IN.B = 1;
+      var box = p.box();
+      var footY = box.y + box.h;
+      var W = Game.world;
+      var needJump = false;
+      // wall / step ahead: sample several distances at feet level and body level
+      for (var d = 3; d <= 18; d += 3) {
+        if (W.solidAtPx(box.x + box.w + d, box.y + box.h - 2) ||
+            W.solidAtPx(box.x + box.w + d, box.y + box.h * 0.45)) { needJump = true; break; }
+      }
+      // gap ahead: no floor within the next 24px
+      var gap = true;
+      var gx = 0;
+      for (var g = 4; g <= 22; g += 4) {
+        if (W.solidAtPx(box.x + box.w + g, footY + 2) || W.solidAtPx(box.x + box.w + g, footY + 8)) { gap = false; break; }
+        gx = g;
+      }
+      if (gap && p.onGround) needJump = true;
+      for (var e = 0; e < Game.enemies.length; e++) {
+        var en = Game.enemies[e];
+        if (en.remove || en.flip || en.squashT > 0) continue;
+        var dx = en.x - (box.x + box.w);
+        var dy = box.y + box.h - en.y;   // >0 means feet below enemy top => stompable
+        if (dx > -8 && dx < 62 && dy > -10 && dy < 40) { needJump = true; break; }
+      }
+      if (p.onGround && needJump) { holdJump = 14; if (!p.jumping) log.jumps++; }
+      if (holdJump > 0 && (!p.onGround || p.vy < 0)) holdJump--;
+      IN.A = holdJump > 0 ? 1 : 0;
+      var stompedBefore = log.stomps;
+      for (var e2 = 0; e2 < Game.enemies.length; e2++)
+        if (Game.enemies[e2].squashT > 0) { log.stomps++; break; }
+      try { Game.update(1 / 60); } catch (err) { log.errs.push('f' + i + ' ' + err.name + ': ' + err.message); break; }
+      if (Game.state === 'dying' || Game.state === 'timeup') {
+        log.deaths++;
+        var guard = 0;
+        while (Game.state !== 'playing' && guard++ < 900) { IN.right = 0; IN.A = 0; Game.update(1 / 60); }
+        if (guard >= 900) { log.errs.push('stuck in ' + Game.state); break; }
+        if (Game.lives <= 0) { log.errs.push('GAME OVER at frame ' + i); break; }
+      }
+      if (Game.li !== startLi) { log.levelsCleared.push(Game.level.name); startLi = Game.li; }
+      if (Math.abs(p.x - lastX) < 0.2) { stuckFrames++; if (stuckFrames > 600) { log.errs.push('stuck at x=' + Math.round(p.x) + ' y=' + Math.round(p.y)); break; } }
+      else { stuckFrames = 0; lastX = p.x; }
+    }
+    IN.right = 0; IN.A = 0; IN.B = 0;
+    log.li = Game.li; log.level = Game.level.name; log.state = Game.state;
+    log.px = Math.round(p.x); log.py = Math.round(p.y);
+    log.coins = Game.coins; log.score = Game.score; log.lives = Game.lives;
+    return JSON.stringify(log);
+  },
+  levelEnd: function (li) {
+    Game.startLevel(li || 0, false);
+    var p = Game.player;
+    p.x = Game.level.flagX * TS;
+    p.y = 10 * TS;
+    var seen = [];
+    for (var i = 0; i < 1200; i++) {
+      Game.update(1 / 60);
+      if (Game.state !== 'playing' && seen.indexOf(Game.state) < 0) seen.push(Game.state);
+      if (Game.li !== (li || 0)) { seen.push('advanced->' + Game.li); break; }
+    }
+    return JSON.stringify({ seen: seen, li: Game.li, level: Game.level.name, state: Game.state });
+  },
+  probe: function () {
+    // return a snapshot of tile map around the player + level metrics
+    var L = Game.level;
+    var counts = {};
+    for (var y = 0; y < L.h; y++) for (var x = 0; x < L.w; x++) {
+      var c = L.g[y][x]; if (c === ' ') continue;
+      counts[c] = (counts[c] || 0) + 1;
+    }
+    return JSON.stringify({
+      level: L.name, w: L.w, h: L.h, startX: L.startX, startY: L.startY,
+      flagX: L.flagX, castleX: L.castleX, tileCounts: counts,
+      enemies: L.enemies.length, decor: L.decor.length,
+      spawnTile: L.g[L.startY][L.startX]
+    });
+  },
+  dumpRow: function (y) {
+    var L = Game.level, s = '';
+    for (var x = 0; x < Math.min(L.w, 120); x++) s += (L.g[y][x] === ' ' ? '.' : L.g[y][x]);
+    return 'row' + y + ': ' + s;
+  },
+  tp: function (tx, ty) {
+    Game.player.x = tx * TS; Game.player.y = ty * TS; Game.player.vy = 0;
+    return JSON.stringify({ x: Game.player.x, y: Game.player.y });
+  }
+};
+</script>
+</body>
+</html>
