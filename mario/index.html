@@ -203,7 +203,9 @@ var PAL = {
   K: '#000000', W: '#fcffff', w: '#a4e4fc', G: '#00a800', g: '#58d854',
   R: '#e45c10', r: '#fca044', Y: '#f8b800', y: '#f8d878',
   B: '#0058f8', b: '#3cbcfc', C: '#b8f818', c: '#d8f878',
-  M: '#f87858', m: '#f0a0a0', O: '#a44000', S: '#503000', P: '#000000'
+  M: '#f87858', m: '#f0a0a0', O: '#a44000', S: '#503000', P: '#000000',
+  N: '#fcb08c'   // SKIN. Was missing entirely -> bake() skipped it silently,
+                 // so Mario's whole face/eyes baked as transparent holes.
 };
 function bake(rows, scale) {
   var h = rows.length, w = rows[0].length;
@@ -313,11 +315,11 @@ var M_JUMP = [
   '....K.KNNNNK....',
   '..KRRK.KRRK.K...',
   '..KRRRRKRRRK....',
-  '..KKKK.KKK.....',
+  '..KKKK.KKK......',
   '.....K.SS.......',
   '....SS.SS.S.....',
   '....SS.SS.SS....',
-  '.....SSSSS......'
+  '.....SSSSS......',
 ];
 /* skid */
 var M_SKID = [
@@ -420,7 +422,7 @@ var B_WALK1 = [
   '....KRRRRRRK....',
   '...KRRRRRRRRK...',
   '..KRRKRRRRKRRK..',
-  '..KRRK.KKKK.RRK..',
+  '..KRRK.KKKK.RRK.',
   '..KKK..SS..KKK..',
   '......KNNK......',
   '.....KRRRRK.....',
@@ -430,7 +432,7 @@ var B_WALK1 = [
   '...KKK.SS.KKK...',
   '......KNNK......',
   '....KRRRRRRK....',
-  '...KSS......SSK..'
+  '...KSS......SSK.',
 ];
 var B_WALK2 = [
   '.....KKKKKK.....',
@@ -577,11 +579,11 @@ var G_WALK1 = [
   '...KKKKKKKKKK...',
   '..KMMMMMMMMMMK..',
   '.KMMMMMMMMMMMMK.',
-  '.KMOOOOOOOOOOOMK.',
-  '.KMOOOOOOOOOOOMK.',
+  '.KMOOOOOOOOOOMK.',
+  '.KMOOOOOOOOOOMK.',
   '..KOOOOOOOOOOK..',
   '...KKKKKKKKKK...',
-  '..KKK......KKK..'
+  '..KKK......KKK..',
 ];
 var G_WALK2 = [
   '.....KKKKKK.....',
@@ -595,11 +597,11 @@ var G_WALK2 = [
   '...KKKKKKKKKK...',
   '..KMMMMMMMMMMK..',
   '.KMMMMMMMMMMMMK.',
-  '.KMOOOOOOOOOOOMK.',
-  '.KMOOOOOOOOOOOMK.',
+  '.KMOOOOOOOOOOMK.',
+  '.KMOOOOOOOOOOMK.',
   '..KOOOOOOOOOOK..',
   '...KKKKKKKKKK...',
-  '.KKK........KKK.'
+  '.KKK........KKK.',
 ];
 var G_FLAT = [
   '................',
@@ -985,8 +987,8 @@ function buildSprites() {
     var hpx = [32, 48, 64, 80][ph];
     var head = document.createElement('canvas'); head.width = 32; head.height = 16;
     drawPipe(head.getContext('2d'), 0, 0, 32, 16, true);
-    var body = document.createElement('canvas'); body.width = 32; body.height = hpx - 8;
-    drawPipe(body.getContext('2d'), 0, 0, 32, hpx - 8, false);
+    var body = document.createElement('canvas'); body.width = 32; body.height = hpx - 16;
+    drawPipe(body.getContext('2d'), 0, 0, 32, hpx - 16, false);
     SPR.pipe[ph] = { head: head, body: body, h: hpx };
   }
   // scenery
@@ -1548,7 +1550,7 @@ Player.prototype.update = function (W, G) {
   this.onGround = false;
   var b2 = this.box();
   if (this.vy >= 0) {
-    var foot = ny + b2.h;
+    var foot = ny + this.h;   // this.h = feet anchor; box() grows upward for big
     var tx0 = Math.floor((b2.x + 1) / TS), tx1 = Math.floor((b2.x + b2.w - 2) / TS);
     var tyF = Math.floor(foot / TS);
     var hitF = false;
@@ -1556,11 +1558,11 @@ Player.prototype.update = function (W, G) {
       if (W2.solidAtPx(tx * TS + 4, foot) || W2.solidAtPx(tx * TS + 10, foot)) { hitF = true; break; }
     }
     if (hitF) {
-      ny = tyF * TS - b2.h;
+      ny = tyF * TS - this.h;
       this.onGround = true; this.jumping = false; this.vy = 0;
     }
   } else {
-    var top = ny;
+    var top = ny - (b2.h - this.h);   // box top: big is 8px taller than this.h
     var txa = Math.floor((b2.x + 1) / TS), txb = Math.floor((b2.x + b2.w - 2) / TS);
     var tya = Math.floor(top / TS);
     var hitC = null;
@@ -1569,7 +1571,7 @@ Player.prototype.update = function (W, G) {
       if (isSolid(ch)) { hitC = { tx: tx2, ty: tya, ch: ch }; break; }
     }
     if (hitC) {
-      ny = (hitC.ty + 1) * TS;
+      ny = (hitC.ty + 1) * TS + (b2.h - this.h);   // keep the box top flush with the ceiling
       this.vy = 0.1;
       Game.bumpBlock(hitC.tx, hitC.ty, hitC.ch, this);
     }
@@ -1726,8 +1728,12 @@ EnemyBase.prototype.update = function (W, G) {
   } else if (this.vx < 0) {
     if (W.solidAtPx(nx, probeY0) || W.solidAtPx(nx, probeY1)) hitWall = true;
   }
-  if (hitWall && this.mode !== 'shellSlide') { this.vx = -this.vx; }
-  else nx = this.x; // shells keep momentum (SMB shells do stop actually) -> keep
+  if (hitWall && this.mode !== 'shellSlide') {
+    // blocked: turn around, don't move into the wall this frame.
+    // (was inverted -- `else nx = this.x` made enemies move ONLY on the frame
+    //  they hit a wall, so they stood still on open ground)
+    this.vx = -this.vx; nx = this.x;
+  }
   this.x = nx;
   if (this.x < 0) { this.x = 0; this.vx = Math.abs(this.vx); }
 
@@ -1874,6 +1880,18 @@ function Render(G) {
         case 'M': cx.drawImage(SPR.t_q, px, py); break;
         case 'U': cx.drawImage(SPR.t_q, px, py); break;
         case 'T': break; // hidden block: invisible
+        case 'P': {
+          // pipe top-left: scan the shaft, draw head+body once for both columns
+          var ph = 1;
+          while (W.atTile(x, y + ph) === 'L' || W.atTile(x, y + ph) === 'R') ph++;
+          var pi = Math.max(0, Math.min(3, ph - 2));
+          cx.drawImage(SPR.pipe[pi].head, px, py);
+          cx.drawImage(SPR.pipe[pi].body, px, py + 16);
+          break;
+        }
+        case 'p': break;  // pipe top-right: drawn with 'P'
+        case 'L': break;  // pipe shaft: drawn with 'P'
+        case 'R': break;
         case 'S': cx.drawImage(SPR.t_solid, px, py); break;
         case 's': cx.drawImage(SPR.t_solid_b, px, py); break;
         case '=': cx.drawImage(SPR.t_solid_b, px, py); break;
@@ -2113,7 +2131,7 @@ var Game = {
     } else if (ch === 'B' || ch === 'b') {
       // break brick if big; else bump
       if (p.power !== PWR.SMALL) {
-        if (W.coinUsed[key] || containsCoin(W, tx, ty)) {
+        if (W.coinUsed[key]) {
           var ic = new ItemBase(tx * TS, ty * TS - 16, 'coin'); ic.active = true; ic.emerge = 8; ic.emergeFrom = ty*TS;
           this.items.push(ic); this.addCoin(tx*TS+8, ty*TS);
         }
@@ -2454,7 +2472,8 @@ var Game = {
     document.getElementById('hud-top').classList.add('hide');
   }
 };
-function containsCoin(W, tx, ty) { return false; }
+/* (removed dead containsCoin() that always returned false: coin blocks are
+   tracked by W.coinUsed, so the live code path is identical.) */
 
 /* ==== c12_ui.js ==== */
 'use strict';
